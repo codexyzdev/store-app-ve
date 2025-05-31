@@ -54,11 +54,13 @@ export interface Producto {
 // Funciones CRUD para Clientes
 export const clientesDB = {
   async crear(cliente: Omit<Cliente, 'id'>) {
-    const id = ref(database, 'clientes').push().key;
+    const clientesRef = ref(database, 'clientes');
+    const newClienteRef = push(clientesRef);
+    const id = newClienteRef.key;
     if (!id) throw new Error('Error al generar ID');
     
     const nuevoCliente = { ...cliente, id };
-    await set(ref(database, `clientes/${id}`), nuevoCliente);
+    await set(newClienteRef, nuevoCliente);
     return nuevoCliente;
   },
 

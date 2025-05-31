@@ -11,6 +11,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
+import HeaderBackButton from "./components/HeaderBackButton";
 
 export const metadata: Metadata = {
   title: "Store App Ve",
@@ -24,13 +25,16 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider localization={esES}>
-      <html lang='es'>
+      <html lang="es">
         <body>
-        <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <SignedIn>
+          <SignedIn>
+            <header className="flex justify-between items-center p-4 gap-4 h-16 border-b">
+              <div className="flex items-center gap-4">
+                <HeaderBackButton />
+              </div>
               <UserButton />
-            </SignedIn>
-          </header>
+            </header>
+          </SignedIn>
 
           {children}
         </body>
