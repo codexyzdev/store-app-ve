@@ -1,0 +1,35 @@
+[debug] [2025-05-25T15:09:08.484Z] ----------------------------------------------------------------------
+[debug] [2025-05-25T15:09:08.487Z] Command:       /home/codexyzdev/.nvm/versions/node/v22.16.0/bin/node /home/codexyzdev/.nvm/versions/node/v22.16.0/bin/firebase init
+[debug] [2025-05-25T15:09:08.488Z] CLI Version:   14.4.0
+[debug] [2025-05-25T15:09:08.488Z] Platform:      linux
+[debug] [2025-05-25T15:09:08.488Z] Node Version:  v22.16.0
+[debug] [2025-05-25T15:09:08.488Z] Time:          Sun May 25 2025 11:09:08 GMT-0400 (Venezuela Time)
+[debug] [2025-05-25T15:09:08.488Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-25T15:09:08.491Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-05-25T15:09:08.538Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-25T15:09:16.563Z] Error: Timed out.
+    at Timeout._onTimeout (/home/codexyzdev/.nvm/versions/node/v22.16.0/lib/node_modules/firebase-tools/lib/utils.js:267:49)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2025-05-25T15:09:41.475Z] ----------------------------------------------------------------------
+[debug] [2025-05-25T15:09:41.477Z] Command:       /home/codexyzdev/.nvm/versions/node/v22.16.0/bin/node /home/codexyzdev/.nvm/versions/node/v22.16.0/bin/firebase login
+[debug] [2025-05-25T15:09:41.477Z] CLI Version:   14.4.0
+[debug] [2025-05-25T15:09:41.477Z] Platform:      linux
+[debug] [2025-05-25T15:09:41.477Z] Node Version:  v22.16.0
+[debug] [2025-05-25T15:09:41.478Z] Time:          Sun May 25 2025 11:09:41 GMT-0400 (Venezuela Time)
+[debug] [2025-05-25T15:09:41.478Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-25T15:09:41.479Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you.
+ 
+[info] i  To change your data collection preference at any time, run `firebase logout` and log in again. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://accounts.google.com/o/oauth2/auth?client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com&scope=email%20openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffirebase%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&response_type=code&state=527796567&redirect_uri=http%3A%2F%2Flocalhost%3A9005
+[info] 
+[info] Waiting for authentication...
+[debug] [2025-05-25T15:09:55.411Z] >>> [apiv2][query] POST https://accounts.google.com/o/oauth2/token [none]
+[debug] [2025-05-25T15:09:55.411Z] >>> [apiv2][body] POST https://accounts.google.com/o/oauth2/token [omitted]
