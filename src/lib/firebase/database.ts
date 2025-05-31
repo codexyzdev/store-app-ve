@@ -30,6 +30,8 @@ export interface Prestamo {
   cuotas: number;
   fechaInicio: number;
   estado: 'activo' | 'completado' | 'atrasado';
+  productoId: string;
+  descripcion?: string;
 }
 
 export interface Cobro {
@@ -94,11 +96,13 @@ export const clientesDB = {
 // Funciones CRUD para Préstamos
 export const prestamosDB = {
   async crear(prestamo: Omit<Prestamo, 'id'>) {
-    const id = ref(database, 'prestamos').push().key;
+    const prestamosRef = ref(database, 'prestamos');
+    const newPrestamoRef = push(prestamosRef);
+    const id = newPrestamoRef.key;
     if (!id) throw new Error('Error al generar ID');
     
     const nuevoPrestamo = { ...prestamo, id };
-    await set(ref(database, `prestamos/${id}`), nuevoPrestamo);
+    await set(newPrestamoRef, nuevoPrestamo);
     return nuevoPrestamo;
   },
 
@@ -142,11 +146,13 @@ export const prestamosDB = {
 // Funciones CRUD para Cobros
 export const cobrosDB = {
   async crear(cobro: Omit<Cobro, 'id'>) {
-    const id = ref(database, 'cobros').push().key;
+    const cobrosRef = ref(database, 'cobros');
+    const newCobroRef = push(cobrosRef);
+    const id = newCobroRef.key;
     if (!id) throw new Error('Error al generar ID');
     
     const nuevoCobro = { ...cobro, id };
-    await set(ref(database, `cobros/${id}`), nuevoCobro);
+    await set(newCobroRef, nuevoCobro);
     return nuevoCobro;
   },
 
@@ -168,6 +174,17 @@ export const cobrosDB = {
     );
     const snapshot = await get(cobrosQuery);
     return snapshot.val() as Record<string, Cobro>;
+  },
+
+  // Suscripción en tiempo real a todos los cobros
+  suscribir(callback: (cobros: Cobro[]) => void) {
+    const cobrosRef = ref(database, 'cobros');
+    onValue(cobrosRef, (snapshot) => {
+      const data = snapshot.val();
+      const cobros = data ? Object.values(data) : [];
+      callback(cobros as Cobro[]);
+    });
+    return () => off(cobrosRef);
   },
 
   // Suscripción en tiempo real a cobros del día

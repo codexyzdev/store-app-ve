@@ -30,6 +30,7 @@ export default function RootLayout({
           <SignedIn>
             <header className="flex justify-between items-center p-4 gap-4 h-16 border-b">
               <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-bold">Store App Ve</h1>
                 <HeaderBackButton />
               </div>
               <UserButton />
