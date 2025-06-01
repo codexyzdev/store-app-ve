@@ -2,7 +2,18 @@
 
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import HeaderBackButton from "@/components/header/HeaderBackButton";
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  ExclamationCircleIcon,
+  UsersIcon,
+  UserPlusIcon,
+  ListBulletIcon,
+  PlusCircleIcon,
+  ArchiveBoxIcon,
+  ChartBarIcon,
+  Bars3Icon,
+  FolderIcon,
+} from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -37,34 +48,73 @@ export default function Header() {
       <div
         className={`fixed inset-y-0 left-0 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 bg-white border-r transition-transform duration-200 ease-in-out z-50`}
+        } w-80 bg-gray-50 border-r transition-transform duration-200 ease-in-out z-50`}
       >
-        <div className='p-4'>
-          <h2 className='text-lg font-semibold mb-4'>Navegación</h2>
-          <nav className='space-y-2'>
+        <div className='p-6'>
+          <h2 className='text-lg font-semibold mb-6'>Navegación</h2>
+          <nav className='flex flex-col gap-2'>
             <button
               onClick={() => navigateTo("/dashboard")}
-              className='w-full text-left px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg'
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition mb-2'
             >
-              Dashboard
+              <FolderIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Inicio</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/cobros-dia")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
+            >
+              <CalendarDaysIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Cobros del día</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/cobranza/cuotas-atrasadas")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
+            >
+              <ExclamationCircleIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Cuotas atrasadas</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/clientes")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
+            >
+              <UsersIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Clientes</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/clientes/nuevo")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
+            >
+              <UserPlusIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Nuevo Cliente</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/prestamos")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
+            >
+              <ListBulletIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Préstamos</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/prestamos/nuevo")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
+            >
+              <PlusCircleIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Nuevo Préstamo</span>
             </button>
             <button
               onClick={() => navigateTo("/inventario")}
-              className='w-full text-left px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg'
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
             >
-              Inventario
+              <ArchiveBoxIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Inventario</span>
             </button>
             <button
-              onClick={() => navigateTo("/ventas")}
-              className='w-full text-left px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg'
+              onClick={() => navigateTo("/estadisticas")}
+              className='flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow hover:bg-indigo-50 transition'
             >
-              Ventas
-            </button>
-            <button
-              onClick={() => navigateTo("/reportes")}
-              className='w-full text-left px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg'
-            >
-              Reportes
+              <ChartBarIcon className='w-5 h-5 text-gray-700' />
+              <span className='font-semibold text-sm'>Estadísticas</span>
             </button>
           </nav>
         </div>
