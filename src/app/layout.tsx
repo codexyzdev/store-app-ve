@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/roboto";
 import "./globals.css";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignIn,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
+import Header from "@/components/header/Header";
+import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
-import HeaderBackButton from "@/components/header/HeaderBackButton";
 
 export const metadata: Metadata = {
   title: "Store App Ve",
@@ -25,18 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider localization={esES}>
-      <html lang="es">
+      <html lang='es'>
         <body>
-          <SignedIn>
-            <header className="flex justify-between items-center p-4 gap-4 h-16 border-b">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold">Store App Ve</h1>
-                <HeaderBackButton />
-              </div>
-              <UserButton />
-            </header>
-          </SignedIn>
-
+          <Header />
           {children}
         </body>
       </html>
