@@ -166,6 +166,28 @@ export default function EditarClientePage({
           </button>
         </div>
       </form>
+
+      <div className='mb-8'>
+        <h2 className='text-xl font-semibold mb-2 text-gray-800'>
+          Resumen global
+        </h2>
+        <div className='flex flex-col md:flex-row gap-6'>
+          <div className='flex-1 bg-indigo-50 border border-indigo-200 rounded-lg px-6 py-4 flex flex-col items-center min-w-[180px]'>
+            <span className='text-xs text-gray-500 font-semibold uppercase flex items-center'>
+              Monto pendiente total
+              {/* Aquí va el icono si lo tienes */}
+            </span>
+            <span className='text-3xl font-bold text-indigo-700'>$1200.00</span>
+          </div>
+          <div className='flex-1 bg-red-50 border border-red-200 rounded-lg px-6 py-4 flex flex-col items-center min-w-[180px]'>
+            <span className='text-xs text-gray-500 font-semibold uppercase flex items-center'>
+              Cuotas atrasadas totales
+              {/* Aquí va el icono si lo tienes */}
+            </span>
+            <span className='text-3xl font-bold text-red-700'>$80.00</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

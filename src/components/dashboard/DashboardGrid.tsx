@@ -14,7 +14,7 @@ import {
 
 export const DashboardGrid = () => {
   return (
-    <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6'>
+    <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4'>
       {/* Sección de Cobranza */}
       <DashboardCard
         title='Cobros del día'
@@ -60,15 +60,15 @@ export const DashboardGrid = () => {
 
       {/* Sección de Análisis y Configuración */}
       <DashboardCard
-        title='Estadísticas Generales'
+        title='Estadísticas'
         icon={<ChartBarIcon className='w-8 h-8' />}
         href='/estadisticas'
       />
-      <DashboardCard
+      {/* <DashboardCard
         title='Configuración'
         icon={<Cog6ToothIcon className='w-8 h-8' />}
         href='/configuracion'
-      />
+      /> */}
     </div>
   );
 };
