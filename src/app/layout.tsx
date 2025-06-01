@@ -11,7 +11,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
-import HeaderBackButton from "./components/HeaderBackButton";
+import HeaderBackButton from "@/components/header/HeaderBackButton";
 
 export const metadata: Metadata = {
   title: "Store App Ve",

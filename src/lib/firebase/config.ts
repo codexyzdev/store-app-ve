@@ -1,8 +1,10 @@
-import { initializeApp } from 'firebase/app';
+
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
+import { getFirestore } from 'firebase/firestore';
+
 
 const firebaseConfig = {
-  // Aquí irán tus credenciales de Firebase
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
@@ -10,11 +12,14 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
 
-// Inicializar Realtime Database
-export const database = getDatabase(app); 
+// Inicializa Firebase solo si no está inicializado
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Exporta instancias de servicios
+export const database = getDatabase(app);
+export const db = getFirestore(app);
+export default app;
