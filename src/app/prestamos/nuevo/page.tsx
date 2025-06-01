@@ -138,16 +138,21 @@ export default function NuevoPrestamoPage() {
                 value={busquedaCliente}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
                   setBusquedaCliente(e.target.value);
-                  setClienteSeleccionado(null);
+                  if (
+                    clienteSeleccionado &&
+                    e.target.value !== clienteSeleccionado.nombre
+                  ) {
+                    setClienteSeleccionado(null);
+                  }
                 }}
                 className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
                 autoComplete='off'
                 required
               />
-              {busquedaCliente && (
+              {busquedaCliente && !clienteSeleccionado && (
                 <div
                   className='border border-gray-200 rounded-lg bg-white shadow-lg mt-1 max-h-48 overflow-y-auto z-30 absolute left-0 right-0 min-w-0'
-                  style={{ width: '100%', maxWidth: '100%' }}
+                  style={{ width: "100%", maxWidth: "100%" }}
                 >
                   {clientesFiltrados.length === 0 && (
                     <div className='p-3 text-gray-400 text-sm'>
@@ -202,16 +207,22 @@ export default function NuevoPrestamoPage() {
                 id='producto-busqueda'
                 placeholder='Buscar producto...'
                 value={busquedaProducto}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setBusquedaProducto(e.target.value)
-                }
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  setBusquedaProducto(e.target.value);
+                  if (
+                    productoSeleccionado &&
+                    e.target.value !== productoSeleccionado.nombre
+                  ) {
+                    setProductoSeleccionado(null);
+                  }
+                }}
                 className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
                 autoComplete='off'
               />
-              {busquedaProducto && (
+              {busquedaProducto && !productoSeleccionado && (
                 <div
                   className='border border-gray-200 rounded-lg bg-white shadow-lg mt-1 max-h-48 overflow-y-auto z-30 absolute left-0 right-0 min-w-0'
-                  style={{ width: '100%', maxWidth: '100%' }}
+                  style={{ width: "100%", maxWidth: "100%" }}
                 >
                   {productosFiltrados.length === 0 && (
                     <div className='p-3 text-gray-400 text-sm'>
