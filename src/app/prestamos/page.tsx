@@ -196,12 +196,17 @@ export default function PrestamosPage() {
                               prestamo.clienteId
                             )[0]?.toUpperCase()}
                           </div>
-                          <Link
-                            href={`/prestamos/${prestamo.clienteId}`}
-                            className='text-indigo-700 font-semibold hover:underline'
-                          >
-                            {getClienteNombre(prestamo.clienteId)}
-                          </Link>
+                          <div>
+                            <Link
+                              href={`/prestamos/${prestamo.clienteId}`}
+                              className='text-indigo-700 font-semibold hover:underline'
+                            >
+                              {getClienteNombre(prestamo.clienteId)}
+                            </Link>
+                            <div className='text-xs text-gray-500'>
+                              C.I.: {getClienteCedula(prestamo.clienteId)}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className='px-4 py-3'>
@@ -277,9 +282,14 @@ export default function PrestamosPage() {
                     <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base'>
                       {getClienteNombre(prestamo.clienteId)[0]?.toUpperCase()}
                     </div>
-                    <span className='text-indigo-700 font-semibold'>
-                      {getClienteNombre(prestamo.clienteId)}
-                    </span>
+                    <div>
+                      <span className='text-indigo-700 font-semibold'>
+                        {getClienteNombre(prestamo.clienteId)}
+                      </span>
+                      <span className='ml-2 text-xs text-gray-500'>
+                        C.I.: {getClienteCedula(prestamo.clienteId)}
+                      </span>
+                    </div>
                   </div>
                   <div className='flex flex-wrap gap-4 text-sm'>
                     <div>
