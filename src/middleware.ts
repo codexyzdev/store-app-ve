@@ -8,6 +8,7 @@ const isProtectedRoute = createRouteMatcher([
   '/inventario(.*)',
   '/estadisticas(.*)',
   '/configuracion(.*)',
+  '/prestamos(.*)',
   '/api(.*)'  // Proteger todas las rutas de API
 ]);
 

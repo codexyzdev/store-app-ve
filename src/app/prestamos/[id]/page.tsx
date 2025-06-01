@@ -178,9 +178,23 @@ export default function PrestamosClientePage() {
       </h1>
       {cliente ? (
         <div className='mb-8 p-6 bg-white rounded-xl shadow flex flex-col gap-1'>
-          <div className='font-bold text-xl text-indigo-700'>
-            {cliente.nombre}
+          <div className='flex items-center gap-4'>
+            {cliente.fotoCedulaUrl && (
+              <img
+                src={cliente.fotoCedulaUrl}
+                alt={`Foto de ${cliente.nombre}`}
+                className='w-16 h-16 rounded-full object-cover border'
+              />
+            )}
+            <span className='font-bold text-xl text-indigo-700'>
+              {cliente.nombre}
+            </span>
           </div>
+          {cliente.cedula && (
+            <div className='text-gray-600'>
+              🪪 <span className='font-medium'>Cédula:</span> {cliente.cedula}
+            </div>
+          )}
           <div className='text-gray-600'>
             📞 <span className='font-medium'>Teléfono:</span> {cliente.telefono}
           </div>
@@ -224,7 +238,7 @@ export default function PrestamosClientePage() {
       {prestamos.length === 0 ? (
         <div className='text-gray-500'>No hay préstamos para este cliente.</div>
       ) : (
-        <div className='flex flex-col gap-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
           {prestamos.map((prestamo: Prestamo) => {
             const producto = productos.find(
               (p: Producto) => p.id === prestamo.productoId

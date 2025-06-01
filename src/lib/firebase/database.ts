@@ -18,9 +18,11 @@ import {
 export interface Cliente {
   id: string;
   nombre: string;
+  cedula: string;
   telefono: string;
   direccion: string;
   createdAt: number;
+  fotoCedulaUrl?: string;
 }
 
 export interface Prestamo {
