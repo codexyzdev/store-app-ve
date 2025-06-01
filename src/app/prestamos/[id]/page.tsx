@@ -170,41 +170,41 @@ export default function PrestamosClientePage() {
   };
 
   return (
-    <div className='max-w-3xl mx-auto p-4'>
-      <button
+    <div className='max-w-4xl mx-auto p-4 sm:p-6 md:p-8'>
+      {/* <button
         onClick={() => router.back()}
-        className='mb-4 text-indigo-600 hover:underline'
+        className='mb-6 text-indigo-600 hover:underline flex items-center text-base font-medium px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition'
+        aria-label='Volver'
       >
         ← Volver
-      </button>
-      <h1 className='text-3xl font-bold mb-6 text-gray-900'>
+      </button> */}
+      <h1 className='text-3xl font-extrabold mb-8 text-gray-900 tracking-tight leading-tight'>
         Detalle del Cliente
       </h1>
       {cliente ? (
-        <div className='mb-8 p-6 bg-white rounded-xl shadow flex flex-col gap-1'>
-          <div className='flex items-center gap-4'>
-            {cliente.fotoCedulaUrl && (
-              <img
-                src={cliente.fotoCedulaUrl}
-                alt={`Foto de ${cliente.nombre}`}
-                className='w-16 h-16 rounded-full object-cover border'
-              />
-            )}
-            <span className='font-bold text-xl text-indigo-700'>
+        <div className='mb-8 p-6 bg-white rounded-xl shadow flex flex-col md:flex-row items-center gap-6'>
+          <div className='flex-shrink-0 w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-3xl'>
+            {cliente.nombre[0]?.toUpperCase()}
+          </div>
+          <div className='flex-1 w-full'>
+            <div className='text-2xl font-bold text-indigo-800 mb-1'>
               {cliente.nombre}
-            </span>
-          </div>
-          {cliente.cedula && (
-            <div className='text-gray-600'>
-              🪪 <span className='font-medium'>Cédula:</span> {cliente.cedula}
             </div>
-          )}
-          <div className='text-gray-600'>
-            📞 <span className='font-medium'>Teléfono:</span> {cliente.telefono}
-          </div>
-          <div className='text-gray-600'>
-            🏠 <span className='font-medium'>Dirección:</span>{" "}
-            {cliente.direccion}
+            <div className='flex items-center text-gray-600 mt-1'>
+              <span className='mr-2'>📞</span>{" "}
+              <span className='font-medium'>Teléfono:</span> {cliente.telefono}
+            </div>
+            <div className='flex items-center text-gray-600 mt-1'>
+              <span className='mr-2'>🏠</span>{" "}
+              <span className='font-medium'>Dirección:</span>{" "}
+              {cliente.direccion}
+            </div>
+            {cliente.cedula && (
+              <div className='flex items-center text-gray-600 mt-1'>
+                <span className='mr-2'>🪪</span>{" "}
+                <span className='font-medium'>Cédula:</span> {cliente.cedula}
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -212,23 +212,21 @@ export default function PrestamosClientePage() {
       )}
 
       {/* Resumen global */}
-      <div className='mb-8'>
-        <h2 className='text-xl font-semibold mb-2 text-gray-800'>
-          Resumen global
-        </h2>
-        <div className='flex flex-wrap gap-6'>
-          <div className='bg-indigo-50 border border-indigo-200 rounded-lg px-6 py-4 flex flex-col items-center min-w-[180px]'>
-            <span className='text-xs text-gray-500 font-semibold uppercase flex items-center'>
-              Monto pendiente total
+      <div className='mb-12'>
+        <h2 className='text-xl font-bold mb-4 text-gray-800'>Resumen global</h2>
+        <div className='flex flex-col sm:flex-row gap-6'>
+          <div className='flex-1 bg-indigo-50 border border-indigo-200 rounded-lg px-6 py-4 flex flex-col items-center shadow'>
+            <span className='text-xs text-gray-500 font-semibold uppercase flex items-center mb-1'>
+              <span className='mr-1'>💰</span> Monto pendiente total
               <Tooltip text='Suma de todos los montos pendientes de todos los préstamos activos de este cliente.' />
             </span>
             <span className='text-3xl font-bold text-indigo-700'>
               ${totalPendiente.toFixed(2)}
             </span>
           </div>
-          <div className='bg-red-50 border border-red-200 rounded-lg px-6 py-4 flex flex-col items-center min-w-[180px]'>
-            <span className='text-xs text-gray-500 font-semibold uppercase flex items-center'>
-              Cuotas atrasadas totales
+          <div className='flex-1 bg-red-50 border border-red-200 rounded-lg px-6 py-4 flex flex-col items-center shadow'>
+            <span className='text-xs text-gray-500 font-semibold uppercase flex items-center mb-1'>
+              <span className='mr-1'>⏰</span> Cuotas atrasadas totales
               <Tooltip text='Suma del valor de todas las cuotas vencidas y no pagadas de todos los préstamos.' />
             </span>
             <span className='text-3xl font-bold text-red-700'>
@@ -238,11 +236,13 @@ export default function PrestamosClientePage() {
         </div>
       </div>
 
-      <h2 className='text-2xl font-semibold mb-4 text-gray-800'>Préstamos</h2>
+      <h2 className='text-2xl font-bold mb-6 text-gray-800'>Préstamos</h2>
       {prestamos.length === 0 ? (
-        <div className='text-gray-500'>No hay préstamos para este cliente.</div>
+        <div className='text-gray-500 text-base'>
+          No hay préstamos para este cliente.
+        </div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
           {prestamos.map((prestamo: Prestamo) => {
             const producto = productos.find(
               (p: Producto) => p.id === prestamo.productoId
@@ -305,9 +305,9 @@ export default function PrestamosClientePage() {
             return (
               <div
                 key={prestamo.id}
-                className='p-6 bg-gray-50 rounded-xl shadow border border-gray-200 flex flex-col gap-2'
+                className='p-6 bg-white rounded-2xl shadow border border-gray-200 flex flex-col gap-4 min-h-[220px]'
               >
-                <div className='flex flex-wrap gap-4 items-center mb-2'>
+                <div className='flex flex-wrap gap-2 items-center mb-2'>
                   {estadoPrincipal}
                   <span
                     className={`px-2 py-1 rounded text-xs font-semibold ml-2 ${
@@ -327,99 +327,49 @@ export default function PrestamosClientePage() {
                     {prestamo.tipoVenta === "contado" ? "Contado" : "Cuotas"}
                   </span>
                 </div>
-                <div className='flex flex-wrap gap-4 items-center'>
-                  <span className='font-semibold text-gray-700'>Producto:</span>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <span className='font-semibold'>📦 Producto:</span>
                   <span className='text-gray-900'>
                     {getProductoNombre(prestamo.productoId)}
                   </span>
                 </div>
-                <div className='flex flex-wrap gap-4 items-center'>
-                  <span className='font-semibold text-gray-700'>
-                    Monto total:
-                  </span>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <span className='font-semibold'>💵 Monto total:</span>
                   <span className='text-gray-900'>
                     ${montoTotal.toFixed(2)}
                   </span>
                 </div>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <span className='font-semibold'>📅 Inicio:</span>
+                  <span className='text-gray-900'>
+                    {new Date(prestamo.fechaInicio).toLocaleDateString()}
+                  </span>
+                </div>
                 {prestamo.tipoVenta === "cuotas" && (
                   <>
-                    <div className='flex flex-wrap gap-4 items-center'>
-                      <span className='font-semibold text-gray-700'>
-                        Monto pendiente:
-                      </span>
+                    <div className='flex items-center gap-2 text-gray-700'>
+                      <span className='font-semibold'>⏳ Monto pendiente:</span>
                       <span className='text-gray-900'>
                         ${montoPendiente.toFixed(2)}
                       </span>
                       <Tooltip text='Lo que falta por pagar de este préstamo.' />
                     </div>
-                    <div className='flex flex-wrap gap-4 items-center'>
-                      <span className='font-semibold text-gray-700'>
-                        Cuotas atrasadas:
+                    <div className='flex items-center gap-2 text-gray-700'>
+                      <span className='font-semibold'>
+                        ⏰ Cuotas atrasadas:
                       </span>
                       <span className='text-red-700 font-bold'>
                         {cuotasAtrasadas}
                       </span>
                       <Tooltip text='Cuotas vencidas y no pagadas de este préstamo.' />
                     </div>
-                    <div className='flex flex-wrap gap-4 items-center'>
-                      <span className='font-semibold text-gray-700'>
-                        Cuotas pendientes:
+                    <div className='flex items-center gap-2 text-gray-700'>
+                      <span className='font-semibold'>
+                        📋 Cuotas pendientes:
                       </span>
                       <span className='text-gray-900'>{cuotasPendientes}</span>
                       <Tooltip text='Cuotas que faltan por pagar para completar el préstamo.' />
                     </div>
-                  </>
-                )}
-                <div className='flex flex-wrap gap-4 items-center'>
-                  <span className='font-semibold text-gray-700'>Inicio:</span>
-                  <span className='text-gray-900'>
-                    {new Date(prestamo.fechaInicio).toLocaleDateString()}
-                  </span>
-                </div>
-                {/* Historial de pagos y abonos solo para cuotas */}
-                {prestamo.tipoVenta === "cuotas" && (
-                  <>
-                    <button
-                      className='mt-2 text-sm text-indigo-600 hover:underline flex items-center'
-                      onClick={() =>
-                        setShowPagos((prev: Record<string, boolean>) => ({
-                          ...prev,
-                          [prestamo.id]: !prev[prestamo.id],
-                        }))
-                      }
-                    >
-                      {showPagos[prestamo.id]
-                        ? "Ocultar historial de pagos"
-                        : "Ver historial de pagos"}
-                    </button>
-                    {showPagos[prestamo.id] && (
-                      <div className='mt-3'>
-                        {getCobrosPrestamo(prestamo.id).length === 0 ? (
-                          <span className='ml-2 text-gray-500'>Sin pagos</span>
-                        ) : (
-                          <ul className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
-                            {getCobrosPrestamo(prestamo.id).map(
-                              (cobro: Cobro) => (
-                                <li
-                                  key={cobro.id}
-                                  className='flex items-center gap-3 bg-white rounded shadow-sm px-3 py-2 border border-gray-200'
-                                >
-                                  <span className='text-green-500 text-lg'>
-                                    ✔️
-                                  </span>
-                                  <span className='font-semibold text-gray-800'>
-                                    {new Date(cobro.fecha).toLocaleDateString()}
-                                  </span>
-                                  <span className='ml-auto px-2 py-1 rounded bg-green-100 text-green-800 font-bold text-sm'>
-                                    ${cobro.monto.toFixed(2)}
-                                  </span>
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        )}
-                      </div>
-                    )}
                   </>
                 )}
                 {/* Botón de abonar cuota solo para cuotas y si está activo */}
@@ -427,7 +377,7 @@ export default function PrestamosClientePage() {
                   prestamo.estado === "activo" && (
                     <>
                       <button
-                        className={`mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed w-fit`}
+                        className='mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-fit text-base'
                         onClick={() => {
                           // Al mostrar el formulario, poner el valor de la cuota por defecto
                           const producto = productos.find(
@@ -495,7 +445,7 @@ export default function PrestamosClientePage() {
                           />
                           <button
                             type='submit'
-                            className='px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition disabled:opacity-50 disabled:cursor-not-allowed text-base'
                             disabled={abonando[prestamo.id]}
                           >
                             {abonando[prestamo.id]

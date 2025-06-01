@@ -8,12 +8,14 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = clientesDB.suscribir((clientes) => {
@@ -95,7 +97,10 @@ export default function ClientesPage() {
         <ul className='divide-y divide-gray-200'>
           {clientesFiltrados.map((cliente) => (
             <li key={cliente.id}>
-              <div className='px-4 py-4 sm:px-6 hover:bg-indigo-50 transition-colors duration-150 rounded-lg flex items-center justify-between'>
+              <Link
+                href={`/prestamos/${cliente.id}`}
+                className='block px-4 py-4 sm:px-6 hover:bg-indigo-50 transition-colors duration-150 rounded-lg flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              >
                 <div className='flex items-center gap-3 flex-1 min-w-0'>
                   <div className='w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg'>
                     {cliente.nombre[0]?.toUpperCase()}
@@ -113,22 +118,32 @@ export default function ClientesPage() {
                   </div>
                 </div>
                 <div className='ml-4 flex-shrink-0 flex space-x-2'>
-                  <Link
-                    href={`/clientes/${cliente.id}`}
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      router.push(`/clientes/${cliente.id}`);
+                    }}
                     className='inline-flex items-center p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
                     title='Editar'
                   >
                     <PencilIcon className='h-5 w-5' />
-                  </Link>
+                  </button>
                   <button
-                    onClick={() => handleEliminar(cliente.id)}
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleEliminar(cliente.id);
+                    }}
                     className='inline-flex items-center p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'
                     title='Eliminar'
                   >
                     <TrashIcon className='h-5 w-5' />
                   </button>
                 </div>
-              </div>
+              </Link>
             </li>
           ))}
         </ul>
