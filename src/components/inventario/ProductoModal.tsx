@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Producto } from "@/lib/firebase/database";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
@@ -249,7 +249,7 @@ export function ProductoModal({
               </div>
             </div>
           </div>
-          <div className='bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 mt-6 rounded-xl'>
+          <div className='bg-gray-50  py-3 sm:flex sm:flex-row-reverse  mt-6 rounded-xl'>
             <button
               type='submit'
               disabled={loading}
