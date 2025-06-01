@@ -131,6 +131,10 @@ export default function PrestamosClientePage() {
 
   // Función para abonar cuota
   const abonarCuota = async (prestamo: Prestamo) => {
+    if (prestamo.tipoVenta === "contado") {
+      alert("No se pueden abonar cuotas en una venta al contado.");
+      return;
+    }
     setAbonando((prev: { [key: string]: boolean }) => ({
       ...prev,
       [prestamo.id]: true,
@@ -249,9 +253,12 @@ export default function PrestamosClientePage() {
               !isNaN(producto.precio)
                 ? producto.precio
                 : 0;
-            const montoTotal = Number.isFinite(precioProducto * 1.5)
-              ? precioProducto * 1.5
-              : 0;
+            const montoTotal =
+              prestamo.tipoVenta === "contado"
+                ? precioProducto
+                : Number.isFinite(precioProducto * 1.5)
+                ? precioProducto * 1.5
+                : 0;
             const abonos = getCobrosPrestamo(prestamo.id).reduce(
               (acc: number, cobro: Cobro) =>
                 acc +
@@ -265,14 +272,27 @@ export default function PrestamosClientePage() {
               Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
             );
             const valorCuota =
-              Number.isFinite(montoTotal / 15) && montoTotal > 0
+              prestamo.tipoVenta === "contado"
+                ? 0
+                : Number.isFinite(montoTotal / 15) && montoTotal > 0
                 ? montoTotal / 15
                 : 0.01;
             const cuotasPendientes =
-              valorCuota > 0 ? Math.ceil(montoPendiente / valorCuota) : 0;
-            const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo);
+              prestamo.tipoVenta === "contado"
+                ? 0
+                : valorCuota > 0
+                ? Math.ceil(montoPendiente / valorCuota)
+                : 0;
+            const cuotasAtrasadas =
+              prestamo.tipoVenta === "contado"
+                ? 0
+                : calcularCuotasAtrasadas(prestamo);
             const estadoPrincipal =
-              cuotasAtrasadas > 0 ? (
+              prestamo.tipoVenta === "contado" ? (
+                <span className='text-blue-700 font-bold text-lg flex items-center'>
+                  <span className='mr-1'>💵</span>Pagado
+                </span>
+              ) : cuotasAtrasadas > 0 ? (
                 <span className='text-red-700 font-bold text-lg flex items-center'>
                   <span className='mr-1'>⏰</span>Atrasado: {cuotasAtrasadas}{" "}
                   cuota{cuotasAtrasadas > 1 ? "s" : ""}
@@ -298,7 +318,13 @@ export default function PrestamosClientePage() {
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {prestamo.estado}
+                    {prestamo.tipoVenta === "contado"
+                      ? "Contado"
+                      : prestamo.estado}
+                  </span>
+                  <span className='ml-2 px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700'>
+                    Tipo:{" "}
+                    {prestamo.tipoVenta === "contado" ? "Contado" : "Cuotas"}
                   </span>
                 </div>
                 <div className='flex flex-wrap gap-4 items-center'>
@@ -309,161 +335,177 @@ export default function PrestamosClientePage() {
                 </div>
                 <div className='flex flex-wrap gap-4 items-center'>
                   <span className='font-semibold text-gray-700'>
-                    Monto pendiente:
-                  </span>
-                  <span className='text-gray-900'>
-                    ${montoPendiente.toFixed(2)}
-                  </span>
-                  <Tooltip text='Lo que falta por pagar de este préstamo.' />
-                </div>
-                <div className='flex flex-wrap gap-4 items-center'>
-                  <span className='font-semibold text-gray-700'>
-                    Cuotas atrasadas:
-                  </span>
-                  <span className='text-red-700 font-bold'>
-                    {cuotasAtrasadas}
-                  </span>
-                  <Tooltip text='Cuotas vencidas y no pagadas de este préstamo.' />
-                </div>
-                <div className='flex flex-wrap gap-4 items-center'>
-                  <span className='font-semibold text-gray-700'>
-                    Cuotas pendientes:
-                  </span>
-                  <span className='text-gray-900'>{cuotasPendientes}</span>
-                  <Tooltip text='Cuotas que faltan por pagar para completar el préstamo.' />
-                </div>
-                <div className='flex flex-wrap gap-4 items-center'>
-                  <span className='font-semibold text-gray-700'>
-                    Monto total deuda:
+                    Monto total:
                   </span>
                   <span className='text-gray-900'>
                     ${montoTotal.toFixed(2)}
                   </span>
                 </div>
+                {prestamo.tipoVenta === "cuotas" && (
+                  <>
+                    <div className='flex flex-wrap gap-4 items-center'>
+                      <span className='font-semibold text-gray-700'>
+                        Monto pendiente:
+                      </span>
+                      <span className='text-gray-900'>
+                        ${montoPendiente.toFixed(2)}
+                      </span>
+                      <Tooltip text='Lo que falta por pagar de este préstamo.' />
+                    </div>
+                    <div className='flex flex-wrap gap-4 items-center'>
+                      <span className='font-semibold text-gray-700'>
+                        Cuotas atrasadas:
+                      </span>
+                      <span className='text-red-700 font-bold'>
+                        {cuotasAtrasadas}
+                      </span>
+                      <Tooltip text='Cuotas vencidas y no pagadas de este préstamo.' />
+                    </div>
+                    <div className='flex flex-wrap gap-4 items-center'>
+                      <span className='font-semibold text-gray-700'>
+                        Cuotas pendientes:
+                      </span>
+                      <span className='text-gray-900'>{cuotasPendientes}</span>
+                      <Tooltip text='Cuotas que faltan por pagar para completar el préstamo.' />
+                    </div>
+                  </>
+                )}
                 <div className='flex flex-wrap gap-4 items-center'>
                   <span className='font-semibold text-gray-700'>Inicio:</span>
                   <span className='text-gray-900'>
                     {new Date(prestamo.fechaInicio).toLocaleDateString()}
                   </span>
                 </div>
-                {/* Botón para mostrar/ocultar historial de pagos */}
-                <button
-                  className='mt-2 text-sm text-indigo-600 hover:underline flex items-center'
-                  onClick={() =>
-                    setShowPagos((prev: Record<string, boolean>) => ({
-                      ...prev,
-                      [prestamo.id]: !prev[prestamo.id],
-                    }))
-                  }
-                >
-                  {showPagos[prestamo.id]
-                    ? "Ocultar historial de pagos"
-                    : "Ver historial de pagos"}
-                </button>
-                {showPagos[prestamo.id] && (
-                  <div className='mt-3'>
-                    {getCobrosPrestamo(prestamo.id).length === 0 ? (
-                      <span className='ml-2 text-gray-500'>Sin pagos</span>
-                    ) : (
-                      <ul className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
-                        {getCobrosPrestamo(prestamo.id).map((cobro: Cobro) => (
-                          <li
-                            key={cobro.id}
-                            className='flex items-center gap-3 bg-white rounded shadow-sm px-3 py-2 border border-gray-200'
-                          >
-                            <span className='text-green-500 text-lg'>✔️</span>
-                            <span className='font-semibold text-gray-800'>
-                              {new Date(cobro.fecha).toLocaleDateString()}
-                            </span>
-                            <span className='ml-auto px-2 py-1 rounded bg-green-100 text-green-800 font-bold text-sm'>
-                              ${cobro.monto.toFixed(2)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-                {prestamo.estado === "activo" && (
+                {/* Historial de pagos y abonos solo para cuotas */}
+                {prestamo.tipoVenta === "cuotas" && (
                   <>
                     <button
-                      className={`mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed w-fit`}
-                      onClick={() => {
-                        // Al mostrar el formulario, poner el valor de la cuota por defecto
-                        const producto = productos.find(
-                          (p: Producto) => p.id === prestamo.productoId
-                        );
-                        const precioProducto =
-                          producto &&
-                          typeof producto.precio === "number" &&
-                          !isNaN(producto.precio)
-                            ? producto.precio
-                            : 0;
-                        const montoTotal = Number.isFinite(precioProducto * 1.5)
-                          ? precioProducto * 1.5
-                          : 0;
-                        const valorCuota =
-                          Number.isFinite(montoTotal / 15) && montoTotal > 0
-                            ? montoTotal / 15
-                            : 0.01;
-                        setMontoAbono((prev: { [key: string]: number }) => ({
+                      className='mt-2 text-sm text-indigo-600 hover:underline flex items-center'
+                      onClick={() =>
+                        setShowPagos((prev: Record<string, boolean>) => ({
                           ...prev,
-                          [prestamo.id]: valorCuota,
-                        }));
-                        setMostrarFormularioAbono(
-                          (prev: { [key: string]: boolean }) => ({
-                            ...prev,
-                            [prestamo.id]: !prev[prestamo.id],
-                          })
-                        );
-                      }}
-                      disabled={abonando[prestamo.id]}
+                          [prestamo.id]: !prev[prestamo.id],
+                        }))
+                      }
                     >
-                      {mostrarFormularioAbono[prestamo.id]
-                        ? "Cancelar"
-                        : "Abonar cuota"}
+                      {showPagos[prestamo.id]
+                        ? "Ocultar historial de pagos"
+                        : "Ver historial de pagos"}
                     </button>
-                    {mostrarFormularioAbono[prestamo.id] && (
-                      <form
-                        className='mt-2 flex flex-col sm:flex-row gap-2 items-start'
-                        onSubmit={(e: FormEvent<HTMLFormElement>) => {
-                          e.preventDefault();
-                          abonarCuota(prestamo);
-                        }}
-                      >
-                        <input
-                          type='number'
-                          min='0.01'
-                          step='0.01'
-                          className='border rounded px-2 py-1 w-32'
-                          value={
-                            Number.isFinite(montoAbono[prestamo.id])
-                              ? montoAbono[prestamo.id]
-                              : ""
-                          }
-                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setMontoAbono(
-                              (prev: { [key: string]: number }) => ({
-                                ...prev,
-                                [prestamo.id]: parseFloat(e.target.value),
-                              })
-                            )
-                          }
-                          required
-                        />
-                        <button
-                          type='submit'
-                          className='px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
-                          disabled={abonando[prestamo.id]}
-                        >
-                          {abonando[prestamo.id]
-                            ? "Abonando..."
-                            : "Confirmar abono"}
-                        </button>
-                      </form>
+                    {showPagos[prestamo.id] && (
+                      <div className='mt-3'>
+                        {getCobrosPrestamo(prestamo.id).length === 0 ? (
+                          <span className='ml-2 text-gray-500'>Sin pagos</span>
+                        ) : (
+                          <ul className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
+                            {getCobrosPrestamo(prestamo.id).map(
+                              (cobro: Cobro) => (
+                                <li
+                                  key={cobro.id}
+                                  className='flex items-center gap-3 bg-white rounded shadow-sm px-3 py-2 border border-gray-200'
+                                >
+                                  <span className='text-green-500 text-lg'>
+                                    ✔️
+                                  </span>
+                                  <span className='font-semibold text-gray-800'>
+                                    {new Date(cobro.fecha).toLocaleDateString()}
+                                  </span>
+                                  <span className='ml-auto px-2 py-1 rounded bg-green-100 text-green-800 font-bold text-sm'>
+                                    ${cobro.monto.toFixed(2)}
+                                  </span>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        )}
+                      </div>
                     )}
                   </>
                 )}
+                {/* Botón de abonar cuota solo para cuotas y si está activo */}
+                {prestamo.tipoVenta === "cuotas" &&
+                  prestamo.estado === "activo" && (
+                    <>
+                      <button
+                        className={`mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed w-fit`}
+                        onClick={() => {
+                          // Al mostrar el formulario, poner el valor de la cuota por defecto
+                          const producto = productos.find(
+                            (p: Producto) => p.id === prestamo.productoId
+                          );
+                          const precioProducto =
+                            producto &&
+                            typeof producto.precio === "number" &&
+                            !isNaN(producto.precio)
+                              ? producto.precio
+                              : 0;
+                          const montoTotal = Number.isFinite(
+                            precioProducto * 1.5
+                          )
+                            ? precioProducto * 1.5
+                            : 0;
+                          const valorCuota =
+                            Number.isFinite(montoTotal / 15) && montoTotal > 0
+                              ? montoTotal / 15
+                              : 0.01;
+                          setMontoAbono((prev: { [key: string]: number }) => ({
+                            ...prev,
+                            [prestamo.id]: valorCuota,
+                          }));
+                          setMostrarFormularioAbono(
+                            (prev: { [key: string]: boolean }) => ({
+                              ...prev,
+                              [prestamo.id]: !prev[prestamo.id],
+                            })
+                          );
+                        }}
+                        disabled={abonando[prestamo.id]}
+                      >
+                        {mostrarFormularioAbono[prestamo.id]
+                          ? "Cancelar"
+                          : "Abonar cuota"}
+                      </button>
+                      {mostrarFormularioAbono[prestamo.id] && (
+                        <form
+                          className='mt-2 flex flex-col sm:flex-row gap-2 items-start'
+                          onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                            e.preventDefault();
+                            abonarCuota(prestamo);
+                          }}
+                        >
+                          <input
+                            type='number'
+                            min='0.01'
+                            step='0.01'
+                            className='border rounded px-2 py-1 w-32'
+                            value={
+                              Number.isFinite(montoAbono[prestamo.id])
+                                ? montoAbono[prestamo.id]
+                                : ""
+                            }
+                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              setMontoAbono(
+                                (prev: { [key: string]: number }) => ({
+                                  ...prev,
+                                  [prestamo.id]: parseFloat(e.target.value),
+                                })
+                              )
+                            }
+                            required
+                          />
+                          <button
+                            type='submit'
+                            className='px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
+                            disabled={abonando[prestamo.id]}
+                          >
+                            {abonando[prestamo.id]
+                              ? "Abonando..."
+                              : "Confirmar abono"}
+                          </button>
+                        </form>
+                      )}
+                    </>
+                  )}
               </div>
             );
           })}

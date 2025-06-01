@@ -29,10 +29,12 @@ export interface Prestamo {
   id: string;
   clienteId: string;
   monto: number;
-  cuotas: number;
+  cuotas: number; // 0 si es contado
   fechaInicio: number;
   estado: 'activo' | 'completado' | 'atrasado';
   productoId: string;
+  tipoVenta: 'contado' | 'cuotas';
+  pagado?: boolean; // solo para contado
   descripcion?: string;
 }
 

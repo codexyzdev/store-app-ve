@@ -157,6 +157,9 @@ export default function PrestamosPage() {
                     Monto
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                    Tipo
+                  </th>
+                  <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
                     Cuotas
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
@@ -215,7 +218,16 @@ export default function PrestamosPage() {
                       <td className='px-4 py-3'>
                         ${prestamo.monto.toFixed(2)}
                       </td>
-                      <td className='px-4 py-3'>{prestamo.cuotas}</td>
+                      <td className='px-4 py-3'>
+                        {prestamo.tipoVenta === "contado"
+                          ? "Contado"
+                          : "Cuotas"}
+                      </td>
+                      <td className='px-4 py-3'>
+                        {prestamo.tipoVenta === "contado"
+                          ? "-"
+                          : prestamo.cuotas}
+                      </td>
                       <td className='px-4 py-3'>
                         {new Date(prestamo.fechaInicio).toLocaleDateString()}
                       </td>
@@ -229,7 +241,9 @@ export default function PrestamosPage() {
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {prestamo.estado}
+                          {prestamo.tipoVenta === "contado"
+                            ? "Pagado"
+                            : prestamo.estado}
                         </span>
                       </td>
                       <td className='px-4 py-3'>
@@ -241,7 +255,8 @@ export default function PrestamosPage() {
                         })()}
                       </td>
                       <td className='px-4 py-3'>
-                        {getAlertaPago(prestamo.id) ? (
+                        {prestamo.tipoVenta ===
+                        "contado" ? null : getAlertaPago(prestamo.id) ? (
                           <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
                             Pendiente por pagar
                           </span>
@@ -252,12 +267,14 @@ export default function PrestamosPage() {
                         )}
                       </td>
                       <td className='px-4 py-3'>
-                        <button
-                          className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-                          onClick={() => handleAbonarCuota(prestamo)}
-                        >
-                          Abonar cuota
-                        </button>
+                        {prestamo.tipoVenta === "contado" ? null : (
+                          <button
+                            className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                            onClick={() => handleAbonarCuota(prestamo)}
+                          >
+                            Abonar cuota
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -305,10 +322,8 @@ export default function PrestamosPage() {
                       ${prestamo.monto.toFixed(2)}
                     </div>
                     <div>
-                      <span className='font-semibold text-gray-700'>
-                        Cuotas:
-                      </span>{" "}
-                      {prestamo.cuotas}
+                      <span className='font-semibold text-gray-700'>Tipo:</span>{" "}
+                      {prestamo.tipoVenta === "contado" ? "Contado" : "Cuotas"}
                     </div>
                   </div>
                   <div className='flex flex-wrap gap-4 text-sm'>
@@ -331,7 +346,9 @@ export default function PrestamosPage() {
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {prestamo.estado}
+                        {prestamo.tipoVenta === "contado"
+                          ? "Pagado"
+                          : prestamo.estado}
                       </span>
                     </div>
                   </div>
@@ -348,7 +365,9 @@ export default function PrestamosPage() {
                       })()}
                     </div>
                     <div>
-                      {getAlertaPago(prestamo.id) ? (
+                      {prestamo.tipoVenta === "contado" ? null : getAlertaPago(
+                          prestamo.id
+                        ) ? (
                         <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
                           Pendiente por pagar
                         </span>
@@ -360,12 +379,14 @@ export default function PrestamosPage() {
                     </div>
                   </div>
                   <div className='flex justify-end mt-2'>
-                    <button
-                      className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-                      onClick={() => handleAbonarCuota(prestamo)}
-                    >
-                      Abonar cuota
-                    </button>
+                    {prestamo.tipoVenta === "cuotas" && (
+                      <button
+                        className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                        onClick={() => handleAbonarCuota(prestamo)}
+                      >
+                        Abonar cuota
+                      </button>
+                    )}
                   </div>
                 </div>
               ))

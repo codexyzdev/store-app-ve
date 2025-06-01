@@ -20,6 +20,7 @@ export default function NuevoPrestamoPage() {
     cuotas: "",
     fechaInicio: "",
     descripcion: "",
+    tipoVenta: "cuotas", // por defecto cuotas
   });
   const [busquedaProducto, setBusquedaProducto] = useState("");
   // Estados para búsqueda y selección de cliente
@@ -45,10 +46,14 @@ export default function NuevoPrestamoPage() {
       setFormData((prev) => ({
         ...prev,
         producto: productoSeleccionado.id,
-        monto: productoSeleccionado.precio.toString(),
+        monto:
+          formData.tipoVenta === "contado"
+            ? productoSeleccionado.precio.toString()
+            : (productoSeleccionado.precio * 1.5).toFixed(2),
       }));
     }
-  }, [productoSeleccionado]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productoSeleccionado, formData.tipoVenta]);
 
   // Actualiza formData cuando se selecciona un cliente
   useEffect(() => {
@@ -85,10 +90,13 @@ export default function NuevoPrestamoPage() {
       await prestamosDB.crear({
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
-        cuotas: parseInt(formData.cuotas, 10),
+        cuotas:
+          formData.tipoVenta === "contado" ? 0 : parseInt(formData.cuotas, 10),
         fechaInicio: new Date(formData.fechaInicio).getTime(),
-        estado: "activo",
+        estado: formData.tipoVenta === "contado" ? "completado" : "activo",
         productoId: productoSeleccionado.id,
+        tipoVenta: formData.tipoVenta,
+        ...(formData.tipoVenta === "contado" ? { pagado: true } : {}),
         descripcion: formData.descripcion || "",
       });
 
@@ -270,6 +278,25 @@ export default function NuevoPrestamoPage() {
                 </div>
               )}
             </div>
+            {/* Selector de tipo de venta */}
+            <div className='flex flex-col gap-2'>
+              <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
+                Tipo de venta
+              </span>
+              <select
+                value={formData.tipoVenta}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    tipoVenta: e.target.value as "contado" | "cuotas",
+                  })
+                }
+                className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition outline-none'
+              >
+                <option value='cuotas'>A cuotas (precio + 50%)</option>
+                <option value='contado'>Contado (precio al contado)</option>
+              </select>
+            </div>
             {/* Monto del préstamo */}
             <div className='flex flex-col gap-2'>
               <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
@@ -292,28 +319,31 @@ export default function NuevoPrestamoPage() {
                   }
                   className='pl-7 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
                   placeholder='0.00'
+                  readOnly={formData.tipoVenta === "contado"}
                 />
               </div>
             </div>
             {/* Cuotas del préstamo */}
-            <div className='flex flex-col gap-2'>
-              <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                Cuotas del préstamo
-              </span>
-              <input
-                type='number'
-                name='cuotas'
-                id='cuotas'
-                required
-                min='1'
-                value={formData.cuotas}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, cuotas: e.target.value })
-                }
-                className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                placeholder='Ej: 12'
-              />
-            </div>
+            {formData.tipoVenta === "cuotas" && (
+              <div className='flex flex-col gap-2'>
+                <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
+                  Cuotas del préstamo
+                </span>
+                <input
+                  type='number'
+                  name='cuotas'
+                  id='cuotas'
+                  required
+                  min='1'
+                  value={formData.cuotas}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, cuotas: e.target.value })
+                  }
+                  className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
+                  placeholder='Ej: 12'
+                />
+              </div>
+            )}
             {/* Fecha de inicio del préstamo */}
             <div className='flex flex-col gap-2'>
               <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
