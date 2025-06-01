@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { clientesDB, Cliente } from "@/lib/firebase/database";
 import { inventarioDB, Producto } from "@/lib/firebase/database";

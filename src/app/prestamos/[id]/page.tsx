@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   clientesDB,
@@ -37,6 +38,11 @@ export default function PrestamosClientePage() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPagos, setShowPagos] = useState<{ [key: string]: boolean }>({});
+  const [abonando, setAbonando] = useState<{ [key: string]: boolean }>({});
+  const [mostrarFormularioAbono, setMostrarFormularioAbono] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [montoAbono, setMontoAbono] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     if (!clienteId) return;
@@ -122,6 +128,42 @@ export default function PrestamosClientePage() {
     const atrasadas = calcularCuotasAtrasadas(p);
     return acc + atrasadas * valorCuota;
   }, 0);
+
+  // Función para abonar cuota
+  const abonarCuota = async (prestamo: Prestamo) => {
+    setAbonando((prev: { [key: string]: boolean }) => ({
+      ...prev,
+      [prestamo.id]: true,
+    }));
+    try {
+      const monto = montoAbono[prestamo.id];
+      if (!monto || isNaN(monto) || monto <= 0) {
+        alert("Por favor ingresa un monto válido");
+        setAbonando((prev: { [key: string]: boolean }) => ({
+          ...prev,
+          [prestamo.id]: false,
+        }));
+        return;
+      }
+      await cobrosDB.crear({
+        prestamoId: prestamo.id,
+        monto: monto,
+        fecha: Date.now(),
+        tipo: "cuota",
+      });
+      setMostrarFormularioAbono((prev: { [key: string]: boolean }) => ({
+        ...prev,
+        [prestamo.id]: false,
+      }));
+    } catch (e) {
+      alert("Error al abonar cuota");
+    } finally {
+      setAbonando((prev: { [key: string]: boolean }) => ({
+        ...prev,
+        [prestamo.id]: false,
+      }));
+    }
+  };
 
   return (
     <div className='max-w-3xl mx-auto p-4'>
@@ -327,6 +369,86 @@ export default function PrestamosClientePage() {
                       </ul>
                     )}
                   </div>
+                )}
+                {prestamo.estado === "activo" && (
+                  <>
+                    <button
+                      className={`mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed w-fit`}
+                      onClick={() => {
+                        // Al mostrar el formulario, poner el valor de la cuota por defecto
+                        const producto = productos.find(
+                          (p: Producto) => p.id === prestamo.productoId
+                        );
+                        const precioProducto =
+                          producto &&
+                          typeof producto.precio === "number" &&
+                          !isNaN(producto.precio)
+                            ? producto.precio
+                            : 0;
+                        const montoTotal = Number.isFinite(precioProducto * 1.5)
+                          ? precioProducto * 1.5
+                          : 0;
+                        const valorCuota =
+                          Number.isFinite(montoTotal / 15) && montoTotal > 0
+                            ? montoTotal / 15
+                            : 0.01;
+                        setMontoAbono((prev: { [key: string]: number }) => ({
+                          ...prev,
+                          [prestamo.id]: valorCuota,
+                        }));
+                        setMostrarFormularioAbono(
+                          (prev: { [key: string]: boolean }) => ({
+                            ...prev,
+                            [prestamo.id]: !prev[prestamo.id],
+                          })
+                        );
+                      }}
+                      disabled={abonando[prestamo.id]}
+                    >
+                      {mostrarFormularioAbono[prestamo.id]
+                        ? "Cancelar"
+                        : "Abonar cuota"}
+                    </button>
+                    {mostrarFormularioAbono[prestamo.id] && (
+                      <form
+                        className='mt-2 flex flex-col sm:flex-row gap-2 items-start'
+                        onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                          e.preventDefault();
+                          abonarCuota(prestamo);
+                        }}
+                      >
+                        <input
+                          type='number'
+                          min='0.01'
+                          step='0.01'
+                          className='border rounded px-2 py-1 w-32'
+                          value={
+                            Number.isFinite(montoAbono[prestamo.id])
+                              ? montoAbono[prestamo.id]
+                              : ""
+                          }
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            setMontoAbono(
+                              (prev: { [key: string]: number }) => ({
+                                ...prev,
+                                [prestamo.id]: parseFloat(e.target.value),
+                              })
+                            )
+                          }
+                          required
+                        />
+                        <button
+                          type='submit'
+                          className='px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
+                          disabled={abonando[prestamo.id]}
+                        >
+                          {abonando[prestamo.id]
+                            ? "Abonando..."
+                            : "Confirmar abono"}
+                        </button>
+                      </form>
+                    )}
+                  </>
                 )}
               </div>
             );
