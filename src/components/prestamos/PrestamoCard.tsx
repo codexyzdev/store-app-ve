@@ -1,5 +1,4 @@
-import React from "react";
-import type { ReactNode, FormEvent } from "react";
+import React, { useState } from "react";
 import HistorialPagos from "@/components/prestamos/HistorialPagos";
 import AbonarCuotaForm from "@/components/prestamos/AbonarCuotaForm";
 
@@ -12,13 +11,13 @@ interface PrestamoCardProps {
   valorCuota: number;
   cuotasPendientes: number;
   cuotasAtrasadas: number;
-  estadoPrincipal: ReactNode;
+  estadoPrincipal: any; // ReactNode fallback
   mostrarFormularioAbono: boolean;
   abonando: boolean;
   montoAbono: number;
   onMostrarFormularioAbono: () => void;
   onChangeMontoAbono: (valor: number) => void;
-  onAbonarCuota: (e: FormEvent<HTMLFormElement>) => void;
+  onAbonarCuota: (e: any) => void; // FormEvent fallback
   pagos: any[];
   Tooltip: React.FC<{ text: string }>;
 }
@@ -42,6 +41,8 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
   pagos,
   Tooltip,
 }) => {
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
+
   return (
     <div className='p-6 bg-white rounded-2xl shadow border border-gray-200 flex flex-col gap-4 min-h-[220px]'>
       <div className='flex flex-wrap gap-2 items-center mb-2'>
@@ -131,8 +132,21 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
             ✅ Préstamo pagado
           </div>
         )}
-      {/* Historial de pagos siempre visible para cuotas */}
-      {prestamo.tipoVenta === "cuotas" && <HistorialPagos pagos={pagos} />}
+      {/* Botón para mostrar/ocultar historial de pagos */}
+      {prestamo.tipoVenta === "cuotas" && (
+        <div className='mt-2'>
+          <button
+            type='button'
+            className='text-indigo-600 font-semibold hover:underline focus:outline-none mb-2'
+            onClick={() => setMostrarHistorial((v: boolean) => !v)}
+          >
+            {mostrarHistorial
+              ? "Ocultar historial de pagos"
+              : "Ver historial de pagos"}
+          </button>
+          {mostrarHistorial && <HistorialPagos pagos={pagos} />}
+        </div>
+      )}
     </div>
   );
 };

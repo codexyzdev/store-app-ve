@@ -205,133 +205,183 @@ export default function PrestamosClientePage() {
         </div>
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-          {prestamos.map((prestamo: Prestamo) => {
-            const producto = productos.find(
-              (p: Producto) => p.id === prestamo.productoId
-            );
-            const precioProducto =
-              producto &&
-              typeof producto.precio === "number" &&
-              !isNaN(producto.precio)
-                ? producto.precio
-                : 0;
-            const montoTotal =
-              prestamo.tipoVenta === "contado"
-                ? precioProducto
-                : Number.isFinite(precioProducto * 1.5)
-                ? precioProducto * 1.5
-                : 0;
-            const abonos = getCobrosPrestamo(prestamo.id).reduce(
-              (acc: number, cobro: Cobro) =>
-                acc +
-                (typeof cobro.monto === "number" && !isNaN(cobro.monto)
-                  ? cobro.monto
-                  : 0),
-              0
-            );
-            const montoPendiente = Math.max(
-              0,
-              Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
-            );
-            const valorCuota =
-              prestamo.tipoVenta === "contado"
-                ? 0
-                : Number.isFinite(montoTotal / 15) && montoTotal > 0
-                ? montoTotal / 15
-                : 0.01;
-            const cuotasPendientes =
-              prestamo.tipoVenta === "contado"
-                ? 0
-                : valorCuota > 0
-                ? Math.ceil(montoPendiente / valorCuota)
-                : 0;
-            const cuotasAtrasadas =
-              prestamo.tipoVenta === "contado"
-                ? 0
-                : calcularCuotasAtrasadas(prestamo);
-            const estadoPrincipal =
-              prestamo.tipoVenta === "contado" ? (
-                <span className='text-blue-700 font-bold text-lg flex items-center'>
-                  <span className='mr-1'>💵</span>Pagado
-                </span>
-              ) : cuotasAtrasadas > 0 ? (
-                <span className='text-red-700 font-bold text-lg flex items-center'>
-                  <span className='mr-1'>⏰</span>Atrasado: {cuotasAtrasadas}{" "}
-                  cuota{cuotasAtrasadas > 1 ? "s" : ""}
-                </span>
-              ) : (
-                <span className='text-green-700 font-bold text-lg flex items-center'>
-                  <span className='mr-1'>✔️</span>Al día
-                </span>
+          {prestamos
+            .filter((prestamo: Prestamo) => {
+              const producto = productos.find(
+                (p: Producto) => p.id === prestamo.productoId
               );
+              const precioProducto =
+                producto &&
+                typeof producto.precio === "number" &&
+                !isNaN(producto.precio)
+                  ? producto.precio
+                  : 0;
+              const montoTotal =
+                prestamo.tipoVenta === "contado"
+                  ? precioProducto
+                  : Number.isFinite(precioProducto * 1.5)
+                  ? precioProducto * 1.5
+                  : 0;
+              const abonos = getCobrosPrestamo(prestamo.id).reduce(
+                (acc: number, cobro: Cobro) =>
+                  acc +
+                  (typeof cobro.monto === "number" && !isNaN(cobro.monto)
+                    ? cobro.monto
+                    : 0),
+                0
+              );
+              const montoPendiente = Math.max(
+                0,
+                Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
+              );
+              const valorCuota =
+                prestamo.tipoVenta === "contado"
+                  ? 0
+                  : Number.isFinite(montoTotal / 15) && montoTotal > 0
+                  ? montoTotal / 15
+                  : 0.01;
+              const cuotasPendientes =
+                prestamo.tipoVenta === "contado"
+                  ? 0
+                  : valorCuota > 0
+                  ? Math.ceil(montoPendiente / valorCuota)
+                  : 0;
+              // Ocultar si está completado o no hay monto/cuotas pendientes
+              return (
+                prestamo.estado !== "completado" &&
+                montoPendiente > 0 &&
+                cuotasPendientes > 0
+              );
+            })
+            .map((prestamo: Prestamo) => {
+              const producto = productos.find(
+                (p: Producto) => p.id === prestamo.productoId
+              );
+              const precioProducto =
+                producto &&
+                typeof producto.precio === "number" &&
+                !isNaN(producto.precio)
+                  ? producto.precio
+                  : 0;
+              const montoTotal =
+                prestamo.tipoVenta === "contado"
+                  ? precioProducto
+                  : Number.isFinite(precioProducto * 1.5)
+                  ? precioProducto * 1.5
+                  : 0;
+              const abonos = getCobrosPrestamo(prestamo.id).reduce(
+                (acc: number, cobro: Cobro) =>
+                  acc +
+                  (typeof cobro.monto === "number" && !isNaN(cobro.monto)
+                    ? cobro.monto
+                    : 0),
+                0
+              );
+              const montoPendiente = Math.max(
+                0,
+                Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
+              );
+              const valorCuota =
+                prestamo.tipoVenta === "contado"
+                  ? 0
+                  : Number.isFinite(montoTotal / 15) && montoTotal > 0
+                  ? montoTotal / 15
+                  : 0.01;
+              const cuotasPendientes =
+                prestamo.tipoVenta === "contado"
+                  ? 0
+                  : valorCuota > 0
+                  ? Math.ceil(montoPendiente / valorCuota)
+                  : 0;
+              const cuotasAtrasadas =
+                prestamo.tipoVenta === "contado"
+                  ? 0
+                  : calcularCuotasAtrasadas(prestamo);
+              const estadoPrincipal =
+                prestamo.tipoVenta === "contado" ? (
+                  <span className='text-blue-700 font-bold text-lg flex items-center'>
+                    <span className='mr-1'>💵</span>Pagado
+                  </span>
+                ) : cuotasAtrasadas > 0 ? (
+                  <span className='text-red-700 font-bold text-lg flex items-center'>
+                    <span className='mr-1'>⏰</span>Atrasado: {cuotasAtrasadas}{" "}
+                    cuota{cuotasAtrasadas > 1 ? "s" : ""}
+                  </span>
+                ) : (
+                  <span className='text-green-700 font-bold text-lg flex items-center'>
+                    <span className='mr-1'>✔️</span>Al día
+                  </span>
+                );
 
-            return (
-              <div key={prestamo.id} className='space-y-6'>
-                <PrestamoCard
-                  prestamo={prestamo}
-                  producto={producto}
-                  abonos={abonos}
-                  montoTotal={montoTotal}
-                  montoPendiente={montoPendiente}
-                  valorCuota={valorCuota}
-                  cuotasPendientes={cuotasPendientes}
-                  cuotasAtrasadas={cuotasAtrasadas}
-                  estadoPrincipal={estadoPrincipal}
-                  mostrarFormularioAbono={!!mostrarFormularioAbono[prestamo.id]}
-                  abonando={!!abonando[prestamo.id]}
-                  montoAbono={montoAbono[prestamo.id] || 0}
-                  onMostrarFormularioAbono={() => {
-                    const producto = productos.find(
-                      (p: Producto) => p.id === prestamo.productoId
-                    );
-                    const precioProducto =
-                      producto &&
-                      typeof producto.precio === "number" &&
-                      !isNaN(producto.precio)
-                        ? producto.precio
-                        : 0;
-                    const montoTotal = Number.isFinite(precioProducto * 1.5)
-                      ? precioProducto * 1.5
-                      : 0;
-                    const valorCuota =
-                      Number.isFinite(montoTotal / 15) && montoTotal > 0
-                        ? montoTotal / 15
-                        : 0.01;
-                    setMontoAbono((prev: { [key: string]: number }) => ({
-                      ...prev,
-                      [prestamo.id]: valorCuota,
-                    }));
-                    setMostrarFormularioAbono(
-                      (prev: { [key: string]: boolean }) => ({
-                        ...prev,
-                        [prestamo.id]: !prev[prestamo.id],
-                      })
-                    );
-                  }}
-                  onChangeMontoAbono={(valor) =>
-                    setMontoAbono((prev: { [key: string]: number }) => ({
-                      ...prev,
-                      [prestamo.id]: valor,
-                    }))
-                  }
-                  onAbonarCuota={(e) => {
-                    e.preventDefault();
-                    abonarCuota(prestamo);
-                  }}
-                  pagos={getCobrosPrestamo(prestamo.id)}
-                  Tooltip={Tooltip}
-                />
-
-                {prestamo.tipoVenta === "cuotas" && (
-                  <CuadriculaCuotas
-                    fechaInicio={prestamo.fechaInicio}
-                    cobros={getCobrosPrestamo(prestamo.id)}
+              return (
+                <div key={prestamo.id} className='space-y-6'>
+                  <PrestamoCard
+                    prestamo={prestamo}
+                    producto={producto}
+                    abonos={abonos}
+                    montoTotal={montoTotal}
+                    montoPendiente={montoPendiente}
                     valorCuota={valorCuota}
+                    cuotasPendientes={cuotasPendientes}
+                    cuotasAtrasadas={cuotasAtrasadas}
+                    estadoPrincipal={estadoPrincipal}
+                    mostrarFormularioAbono={
+                      !!mostrarFormularioAbono[prestamo.id]
+                    }
+                    abonando={!!abonando[prestamo.id]}
+                    montoAbono={montoAbono[prestamo.id] || 0}
+                    onMostrarFormularioAbono={() => {
+                      const producto = productos.find(
+                        (p: Producto) => p.id === prestamo.productoId
+                      );
+                      const precioProducto =
+                        producto &&
+                        typeof producto.precio === "number" &&
+                        !isNaN(producto.precio)
+                          ? producto.precio
+                          : 0;
+                      const montoTotal = Number.isFinite(precioProducto * 1.5)
+                        ? precioProducto * 1.5
+                        : 0;
+                      const valorCuota =
+                        Number.isFinite(montoTotal / 15) && montoTotal > 0
+                          ? montoTotal / 15
+                          : 0.01;
+                      setMontoAbono((prev: { [key: string]: number }) => ({
+                        ...prev,
+                        [prestamo.id]: valorCuota,
+                      }));
+                      setMostrarFormularioAbono(
+                        (prev: { [key: string]: boolean }) => ({
+                          ...prev,
+                          [prestamo.id]: !prev[prestamo.id],
+                        })
+                      );
+                    }}
+                    onChangeMontoAbono={(valor) =>
+                      setMontoAbono((prev: { [key: string]: number }) => ({
+                        ...prev,
+                        [prestamo.id]: valor,
+                      }))
+                    }
+                    onAbonarCuota={(e) => {
+                      e.preventDefault();
+                      abonarCuota(prestamo);
+                    }}
+                    pagos={getCobrosPrestamo(prestamo.id)}
+                    Tooltip={Tooltip}
                   />
-                )}
-              </div>
-            );
-          })}
+
+                  {prestamo.tipoVenta === "cuotas" && (
+                    <CuadriculaCuotas
+                      fechaInicio={prestamo.fechaInicio}
+                      cobros={getCobrosPrestamo(prestamo.id)}
+                      valorCuota={valorCuota}
+                    />
+                  )}
+                </div>
+              );
+            })}
         </div>
       )}
     </div>
