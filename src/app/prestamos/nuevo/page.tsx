@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { clientesDB, Cliente } from "@/lib/firebase/database";
 import { inventarioDB, Producto } from "@/lib/firebase/database";
 import { prestamosDB } from "@/lib/firebase/database";
+import Modal from "@/components/Modal";
+import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
 
 export default function NuevoPrestamoPage() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function NuevoPrestamoPage() {
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] =
     useState<Cliente | null>(null);
+  const [modalNuevoCliente, setModalNuevoCliente] = useState(false);
 
   useEffect(() => {
     const unsubscribeClientes = clientesDB.suscribir((clientes) => {
@@ -139,24 +142,34 @@ export default function NuevoPrestamoPage() {
               <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
                 Cliente
               </span>
-              <input
-                type='text'
-                id='cliente-busqueda'
-                placeholder='Buscar cliente...'
-                value={busquedaCliente}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  setBusquedaCliente(e.target.value);
-                  if (
-                    clienteSeleccionado &&
-                    e.target.value !== clienteSeleccionado.nombre
-                  ) {
-                    setClienteSeleccionado(null);
-                  }
-                }}
-                className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                autoComplete='off'
-                required
-              />
+              <div className='flex gap-2'>
+                <input
+                  type='text'
+                  id='cliente-busqueda'
+                  placeholder='Buscar cliente...'
+                  value={busquedaCliente}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    setBusquedaCliente(e.target.value);
+                    if (
+                      clienteSeleccionado &&
+                      e.target.value !== clienteSeleccionado.nombre
+                    ) {
+                      setClienteSeleccionado(null);
+                    }
+                  }}
+                  className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
+                  autoComplete='off'
+                  required
+                />
+                <button
+                  type='button'
+                  className='px-4 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 transition text-sm shadow focus:outline-none focus:ring-2 focus:ring-green-500'
+                  onClick={() => setModalNuevoCliente(true)}
+                >
+                  Nuevo Cliente
+                </button>
+              </div>
+              {/* Restaurar lista de clientes filtrados */}
               {busquedaCliente && !clienteSeleccionado && (
                 <div
                   className='border border-gray-200 rounded-lg bg-white shadow-lg mt-1 max-h-48 overflow-y-auto z-30 absolute left-0 right-0 min-w-0'
@@ -227,6 +240,7 @@ export default function NuevoPrestamoPage() {
                 className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
                 autoComplete='off'
               />
+              {/* Restaurar lista de productos filtrados */}
               {busquedaProducto && !productoSeleccionado && (
                 <div
                   className='border border-gray-200 rounded-lg bg-white shadow-lg mt-1 max-h-48 overflow-y-auto z-30 absolute left-0 right-0 min-w-0'
@@ -426,6 +440,22 @@ export default function NuevoPrestamoPage() {
           </div>
         </form>
       </div>
+      {/* Modal de nuevo cliente fuera del form para evitar forms anidados */}
+      <Modal
+        isOpen={modalNuevoCliente}
+        onClose={() => setModalNuevoCliente(false)}
+        title='Nuevo Cliente'
+      >
+        <NuevoClienteForm
+          onClienteCreado={(cliente) => {
+            setModalNuevoCliente(false);
+            setClientes((prev) => [...prev, cliente]);
+            setClienteSeleccionado(cliente);
+            setBusquedaCliente(cliente.nombre);
+          }}
+          onCancel={() => setModalNuevoCliente(false)}
+        />
+      </Modal>
     </div>
   );
 }

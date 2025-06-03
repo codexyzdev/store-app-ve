@@ -1,4 +1,5 @@
 import React from "react";
+import type { ReactNode, FormEvent } from "react";
 import HistorialPagos from "@/components/prestamos/HistorialPagos";
 import AbonarCuotaForm from "@/components/prestamos/AbonarCuotaForm";
 
@@ -11,13 +12,13 @@ interface PrestamoCardProps {
   valorCuota: number;
   cuotasPendientes: number;
   cuotasAtrasadas: number;
-  estadoPrincipal: React.ReactNode;
+  estadoPrincipal: ReactNode;
   mostrarFormularioAbono: boolean;
   abonando: boolean;
   montoAbono: number;
   onMostrarFormularioAbono: () => void;
   onChangeMontoAbono: (valor: number) => void;
-  onAbonarCuota: (e: React.FormEvent<HTMLFormElement>) => void;
+  onAbonarCuota: (e: FormEvent<HTMLFormElement>) => void;
   pagos: any[];
   Tooltip: React.FC<{ text: string }>;
 }
@@ -93,31 +94,43 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
           </div>
         </>
       )}
-      {/* Botón de abonar cuota solo para cuotas activas */}
-      {prestamo.tipoVenta === "cuotas" && prestamo.estado === "activo" && (
-        <>
-          <button
-            className='mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-fit text-base'
-            onClick={onMostrarFormularioAbono}
-            disabled={abonando}
-          >
-            {mostrarFormularioAbono ? "Cancelar" : "Abonar cuota"}
-          </button>
-          {mostrarFormularioAbono && (
-            <AbonarCuotaForm
-              monto={montoAbono}
-              loading={abonando}
-              onChange={onChangeMontoAbono}
-              onSubmit={onAbonarCuota}
-              error={
-                montoAbono <= 0 || isNaN(montoAbono)
-                  ? "Ingresa un monto válido"
-                  : undefined
-              }
-            />
-          )}
-        </>
-      )}
+      {/* Botón de abonar cuota solo para cuotas activas y si hay monto pendiente */}
+      {prestamo.tipoVenta === "cuotas" &&
+        prestamo.estado === "activo" &&
+        montoPendiente > 0 &&
+        cuotasPendientes > 0 && (
+          <>
+            <button
+              className='mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-fit text-base'
+              onClick={onMostrarFormularioAbono}
+              disabled={abonando}
+            >
+              {mostrarFormularioAbono ? "Cancelar" : "Abonar cuota"}
+            </button>
+            {mostrarFormularioAbono && (
+              <AbonarCuotaForm
+                monto={montoAbono}
+                loading={abonando}
+                onChange={onChangeMontoAbono}
+                onSubmit={onAbonarCuota}
+                error={
+                  montoAbono <= 0 || isNaN(montoAbono)
+                    ? "Ingresa un monto válido"
+                    : undefined
+                }
+              />
+            )}
+          </>
+        )}
+      {/* Mostrar estado pagado si el préstamo está completado o no hay monto/cuotas pendientes */}
+      {prestamo.tipoVenta === "cuotas" &&
+        (prestamo.estado === "completado" ||
+          montoPendiente === 0 ||
+          cuotasPendientes === 0) && (
+          <div className='mt-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-center w-full sm:w-fit'>
+            ✅ Préstamo pagado
+          </div>
+        )}
       {/* Historial de pagos siempre visible para cuotas */}
       {prestamo.tipoVenta === "cuotas" && <HistorialPagos pagos={pagos} />}
     </div>

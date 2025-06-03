@@ -186,13 +186,13 @@ export default function NuevoClientePage() {
           </div>
           {previewUrl && (
             <div className='mt-4'>
-              <span className='block text-xs text-gray-500 mb-1'>
+              <span className='block  text-xs text-gray-500 mb-1'>
                 Vista previa:
               </span>
               <img
                 src={previewUrl}
                 alt='Preview cédula'
-                className='border rounded shadow max-w-xs max-h-60 object-contain bg-white'
+                className='border aspect-square w-20 h-20 shadow max-w-xs max-h-60 object-contain bg-white'
               />
             </div>
           )}

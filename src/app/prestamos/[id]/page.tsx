@@ -185,6 +185,7 @@ export default function PrestamosClientePage() {
           telefono={cliente.telefono}
           direccion={cliente.direccion}
           cedula={cliente.cedula}
+          fotoCedulaUrl={cliente.fotoCedulaUrl}
         />
       ) : (
         <div className='mb-6'>Cargando información del cliente...</div>

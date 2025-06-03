@@ -5,6 +5,7 @@ export interface ClienteCardProps {
   telefono: string;
   direccion: string;
   cedula?: string;
+  fotoCedulaUrl?: string;
 }
 
 const ClienteCard: React.FC<ClienteCardProps> = ({
@@ -12,14 +13,23 @@ const ClienteCard: React.FC<ClienteCardProps> = ({
   telefono,
   direccion,
   cedula,
+  fotoCedulaUrl,
 }) => {
   return (
     <div className='mb-8 p-6 bg-white rounded-xl shadow flex flex-col md:flex-row items-center gap-6'>
-      <div className='flex-shrink-0 w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-3xl'>
-        {nombre[0]?.toUpperCase()}
+      <div className='flex-shrink-0 w-20 h-20 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-3xl overflow-hidden'>
+        {fotoCedulaUrl ? (
+          <img
+            src={fotoCedulaUrl}
+            alt='Foto de cédula'
+            className='object-cover aspect-square w-full h-full'
+          />
+        ) : (
+          nombre[0]?.toUpperCase()
+        )}
       </div>
       <div className='flex-1 w-full'>
-        <div className='text-2xl font-bold text-indigo-800 mb-1'>{nombre}</div>
+        <div className='text-2xl font-bold text-indigo-800 mb-1 capitalize'>{nombre}</div>
         <div className='flex items-center text-gray-600 mt-1'>
           <span className='mr-2'>📞</span>{" "}
           <span className='font-medium'>Teléfono:</span> {telefono}

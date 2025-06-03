@@ -12,6 +12,8 @@ import {
   Cobro,
 } from "@/lib/firebase/database";
 import Link from "next/link";
+import Modal from "@/components/Modal";
+import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
 
 export default function PrestamosPage() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
@@ -19,6 +21,7 @@ export default function PrestamosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cobros, setCobros] = useState<Cobro[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalNuevoCliente, setModalNuevoCliente] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
@@ -124,7 +127,15 @@ export default function PrestamosPage() {
 
   return (
     <div className='p-4 max-w-5xl mx-auto'>
-      <h1 className='text-2xl font-bold mb-6'>Préstamos</h1>
+      <div className='flex items-center justify-between mb-6'>
+        <h1 className='text-2xl font-bold'>Préstamos</h1>
+        <Link
+          href='/prestamos/nuevo'
+          className='inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+        >
+          Nuevo Préstamo
+        </Link>
+      </div>
       <div className='mb-4'>
         <div className='relative rounded-md shadow-sm'>
           <input
@@ -136,6 +147,21 @@ export default function PrestamosPage() {
           />
         </div>
       </div>
+      <Modal
+        isOpen={modalNuevoCliente}
+        onClose={() => setModalNuevoCliente(false)}
+        title='Nuevo Cliente'
+      >
+        <NuevoClienteForm
+          onClienteCreado={(cliente) => {
+            setModalNuevoCliente(false);
+            setBusqueda(cliente.nombre);
+            // Recargar clientes
+            clientesDB.suscribir(setClientes);
+          }}
+          onCancel={() => setModalNuevoCliente(false)}
+        />
+      </Modal>
       {loading ? (
         <div className='flex justify-center items-center min-h-[200px]'>
           <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600'></div>
