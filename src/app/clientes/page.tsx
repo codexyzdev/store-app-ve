@@ -2,13 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { clientesDB, Cliente } from "@/lib/firebase/database";
-import {
-  MagnifyingGlassIcon,
-  PencilIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import Avatar from "@mui/material/Avatar";
+import ListItemText from "@mui/material/ListItemText";
+import IconButton from "@mui/material/IconButton";
+import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SearchIcon from "@mui/icons-material/Search";
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -22,7 +31,6 @@ export default function ClientesPage() {
       setClientes(clientes);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -30,12 +38,12 @@ export default function ClientesPage() {
     (cliente) =>
       cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       cliente.telefono.includes(busqueda) ||
-      cliente.direccion.toLowerCase().includes(busqueda.toLowerCase())
+      cliente.direccion.toLowerCase().includes(busqueda.toLowerCase()) ||
+      (cliente.cedula && cliente.cedula === busqueda)
   );
 
   const handleEliminar = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este cliente?")) return;
-
     try {
       await clientesDB.eliminar(id);
     } catch (err) {
@@ -47,117 +55,146 @@ export default function ClientesPage() {
 
   if (loading) {
     return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600'></div>
-      </div>
+      <Box
+        display='flex'
+        justifyContent='center'
+        alignItems='center'
+        minHeight='60vh'
+      >
+        <CircularProgress color='primary' />
+      </Box>
     );
   }
 
   return (
-    <div className='p-4 max-w-7xl mx-auto'>
-      <div className='sm:flex sm:items-center sm:justify-between mb-6'>
-        <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Clientes</h1>
-          <p className='mt-2 text-sm text-gray-700'>
+    <Box p={3} maxWidth='md' mx='auto'>
+      <Box
+        display='flex'
+        alignItems='center'
+        justifyContent='space-between'
+        mb={3}
+      >
+        <Box>
+          <h1 style={{ fontWeight: 700, fontSize: 28, marginBottom: 2 }}>
+            Clientes
+          </h1>
+          <p style={{ color: "#555", fontSize: 15 }}>
             Lista de todos los clientes registrados en el sistema
           </p>
-        </div>
-        <div className='mt-4 sm:mt-0'>
-          <Link
-            href='/clientes/nuevo'
-            className='inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-          >
-            Nuevo Cliente
-          </Link>
-        </div>
-      </div>
-
+        </Box>
+        <Button
+          variant='contained'
+          color='primary'
+          component={Link}
+          href='/clientes/nuevo'
+          sx={{ minWidth: 150 }}
+        >
+          Nuevo Cliente
+        </Button>
+      </Box>
       {error && (
-        <div className='mb-4 p-4 bg-red-50 text-red-700 rounded-md'>
+        <Alert severity='error' sx={{ mb: 2 }}>
           {error}
-        </div>
+        </Alert>
       )}
-
-      <div className='mb-4'>
-        <div className='relative rounded-md shadow-sm'>
-          <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-            <MagnifyingGlassIcon className='h-5 w-5 text-gray-400' />
-          </div>
-          <input
-            type='text'
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder='Buscar por nombre, teléfono o dirección...'
-            className='block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-          />
-        </div>
-      </div>
-
-      <div className='bg-white shadow overflow-hidden sm:rounded-md'>
-        <ul className='divide-y divide-gray-200'>
+      <Box mb={3}>
+        <TextField
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder='Buscar por nombre, teléfono, dirección o cédula...'
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: "action.active", mr: 1, my: 0.5 }} />
+            ),
+          }}
+        />
+      </Box>
+      <Box bgcolor='white' borderRadius={2} boxShadow={1}>
+        <List>
           {clientesFiltrados.map((cliente) => (
-            <li key={cliente.id}>
-              <Link
-                href={`/prestamos/${cliente.id}`}
-                className='block px-4 py-4 sm:px-6 hover:bg-indigo-50 transition-colors duration-150 rounded-lg flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500'
-              >
-                <div className='flex items-center gap-3 flex-1 min-w-0'>
-                  <div className='w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg'>
-                    {cliente.nombre[0]?.toUpperCase()}
-                  </div>
-                  <div>
-                    <div className='text-base font-bold text-gray-900'>
-                      {cliente.nombre}
-                    </div>
-                    <div className='text-sm text-gray-500'>
-                      {cliente.telefono}
-                    </div>
-                    <div className='text-sm text-gray-500'>
-                      {cliente.direccion}
-                    </div>
-                  </div>
-                </div>
-                <div className='ml-4 flex-shrink-0 flex space-x-2'>
-                  <button
-                    type='button'
+            <ListItem
+              key={cliente.id}
+              divider
+              secondaryAction={
+                <Box display='flex' gap={1}>
+                  <IconButton
+                    edge='end'
+                    color='primary'
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       router.push(`/clientes/${cliente.id}`);
                     }}
-                    className='inline-flex items-center p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
                     title='Editar'
                   >
-                    <PencilIcon className='h-5 w-5' />
-                  </button>
-                  <button
-                    type='button'
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    edge='end'
+                    color='error'
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleEliminar(cliente.id);
                     }}
-                    className='inline-flex items-center p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'
                     title='Eliminar'
                   >
-                    <TrashIcon className='h-5 w-5' />
-                  </button>
-                </div>
-              </Link>
-            </li>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              }
+              component={Link}
+              href={`/prestamos/${cliente.id}`}
+              sx={{
+                "&:hover": { backgroundColor: "#f5f7ff" },
+                borderRadius: 2,
+                px: 2,
+                py: 2.5,
+                mb: 0.5,
+                display: "flex",
+                alignItems: "center",
+                textDecoration: "none",
+              }}
+            >
+              <ListItemAvatar>
+                <Avatar
+                  sx={{ bgcolor: "#e0e7ff", color: "#6366f1", fontWeight: 700 }}
+                >
+                  {cliente.nombre[0]?.toUpperCase()}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <span style={{ fontWeight: 600, fontSize: 17 }}>
+                    {cliente.nombre}
+                  </span>
+                }
+                secondary={
+                  <>
+                    <span style={{ color: "#555", fontSize: 15 }}>
+                      {cliente.telefono}
+                    </span>
+                    <br />
+                    <span style={{ color: "#888", fontSize: 14 }}>
+                      {cliente.direccion}
+                    </span>
+                  </>
+                }
+              />
+            </ListItem>
           ))}
-        </ul>
-      </div>
-
+        </List>
+      </Box>
       {clientesFiltrados.length === 0 && (
-        <div className='text-center py-12'>
-          <p className='text-gray-500 text-sm'>
+        <Box textAlign='center' py={8}>
+          <p style={{ color: "#888", fontSize: 15 }}>
             {busqueda
               ? "No se encontraron clientes que coincidan con la búsqueda"
               : "No hay clientes registrados"}
           </p>
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

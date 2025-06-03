@@ -1,6 +1,9 @@
 import React, { useState, useRef } from "react";
 import { clientesDB } from "@/lib/firebase/database";
 import { subirImagenCliente } from "@/lib/firebase/storage";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 
 interface NuevoClienteFormProps {
   onClienteCreado: (cliente: any) => void;
@@ -36,14 +39,11 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
     }
 
     try {
-      // 1. Crear cliente sin fotoCedulaUrl para obtener el ID
       const nuevoCliente = await clientesDB.crear({
         ...formData,
         createdAt: Date.now(),
       });
-      // 2. Subir imagen a Storage
       const url = await subirImagenCliente(nuevoCliente.id, fotoCedula);
-      // 3. Actualizar cliente con la URL de la foto
       await clientesDB.actualizar(nuevoCliente.id, { fotoCedulaUrl: url });
       onClienteCreado({ ...nuevoCliente, fotoCedulaUrl: url });
     } catch (err) {
@@ -55,7 +55,6 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
     }
   };
 
-  // Mostrar preview al seleccionar archivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
     setFotoCedula(file);
@@ -69,96 +68,72 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className='space-y-6'
-      encType='multipart/form-data'
-    >
-      {error && (
-        <div className='mb-4 p-4 bg-red-50 text-red-700 rounded-md'>
-          {error}
-        </div>
-      )}
-      <div>
-        <label
-          htmlFor='nombre'
-          className='block text-sm font-medium text-gray-700 mb-1'
-        >
-          Nombre Completo
-        </label>
-        <input
-          type='text'
-          id='nombre'
+    <form onSubmit={handleSubmit} encType='multipart/form-data'>
+      <Box display='flex' flexDirection='column' gap={2}>
+        {error && (
+          <Box mb={2} p={2} bgcolor='#fdecea' color='#b71c1c' borderRadius={2}>
+            {error}
+          </Box>
+        )}
+        <TextField
+          label='Nombre Completo'
+          variant='outlined'
           required
           value={formData.nombre}
           onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-          className='mt-1 block w-full rounded-md border border-gray-400 px-3 py-2 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 sm:text-sm bg-white'
+          fullWidth
         />
-      </div>
-      <div>
-        <label
-          htmlFor='cedula'
-          className='block text-sm font-medium text-gray-700 mb-1'
-        >
-          Cédula de Identidad <span className='text-red-600'>*</span>
-        </label>
-        <input
-          type='text'
-          id='cedula'
+        <TextField
+          label='Cédula de Identidad'
+          variant='outlined'
           required
-          pattern='[0-9]{6,10}'
-          title='Solo números, mínimo 6 dígitos'
+          inputProps={{
+            pattern: "[0-9]{6,10}",
+            title: "Solo números, mínimo 6 dígitos",
+          }}
           value={formData.cedula}
           onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
-          className='mt-1 block w-full rounded-md border border-gray-400 px-3 py-2 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 sm:text-sm bg-white'
+          fullWidth
         />
-      </div>
-      <div>
-        <label
-          htmlFor='telefono'
-          className='block text-sm font-medium text-gray-700 mb-1'
-        >
-          Teléfono
-        </label>
-        <input
-          type='tel'
-          id='telefono'
+        <TextField
+          label='Teléfono'
+          variant='outlined'
           required
           value={formData.telefono}
           onChange={(e) =>
             setFormData({ ...formData, telefono: e.target.value })
           }
-          className='mt-1 block w-full rounded-md border border-gray-400 px-3 py-2 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 sm:text-sm bg-white'
+          fullWidth
         />
-      </div>
-      <div>
-        <label
-          htmlFor='direccion'
-          className='block text-sm font-medium text-gray-700 mb-1'
-        >
-          Dirección
-        </label>
-        <textarea
-          id='direccion'
+        <TextField
+          label='Dirección'
+          variant='outlined'
           required
           value={formData.direccion}
           onChange={(e) =>
             setFormData({ ...formData, direccion: e.target.value })
           }
+          fullWidth
+          multiline
           rows={2}
-          className='mt-1 block w-full rounded-md border border-gray-400 px-3 py-2 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 sm:text-sm bg-white'
         />
-      </div>
-      <div>
-        <label
-          htmlFor='fotoCedula'
-          className='block text-sm font-medium text-gray-700 mb-1'
-        >
-          Foto de la cédula de identidad <span className='text-red-600'>*</span>
-        </label>
-        <div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
-          <div className='flex flex-col items-center gap-2'>
-            <label className='cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded shadow hover:bg-indigo-700 transition font-medium w-full text-center'>
+        <Box>
+          <label className='block text-sm font-medium text-gray-700 mb-1'>
+            Foto de la cédula de identidad{" "}
+            <span className='text-red-600'>*</span>
+          </label>
+          <Box
+            display='flex'
+            flexDirection={{ xs: "column", sm: "row" }}
+            alignItems='flex-start'
+            gap={2}
+          >
+            <Button
+              variant='contained'
+              component='label'
+              color='primary'
+              sx={{ minWidth: 150 }}
+            >
               Seleccionar imagen
               <input
                 type='file'
@@ -167,45 +142,60 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
                 required
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                className='hidden'
+                hidden
               />
-            </label>
+            </Button>
             {fotoCedula && (
               <span className='text-xs text-gray-700 mt-1'>
                 {fotoCedula.name}
               </span>
             )}
-          </div>
-          {previewUrl && (
-            <div className='flex flex-col items-center gap-1'>
-              <span className='block text-xs text-gray-500 mb-1'>
-                Vista previa:
-              </span>
-              <img
-                src={previewUrl}
-                alt='Preview cédula'
-                className='border rounded shadow max-w-[120px] max-h-28 aspect-square object-contain bg-white'
-              />
-            </div>
-          )}
-        </div>
-      </div>
-      <div className='flex justify-end space-x-4 mt-6'>
-        <button
-          type='button'
-          onClick={onCancel}
-          className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-        >
-          Cancelar
-        </button>
-        <button
-          type='submit'
-          disabled={loading}
-          className='px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed'
-        >
-          {loading ? "Guardando..." : "Guardar Cliente"}
-        </button>
-      </div>
+            {previewUrl && (
+              <Box
+                display='flex'
+                flexDirection='column'
+                alignItems='center'
+                gap={1}
+              >
+                <span className='block text-xs text-gray-500 mb-1'>
+                  Vista previa:
+                </span>
+                <img
+                  src={previewUrl}
+                  alt='Preview cédula'
+                  style={{
+                    borderRadius: 8,
+                    border: "1px solid #eee",
+                    boxShadow: "0 2px 8px #0001",
+                    maxWidth: 120,
+                    maxHeight: 100,
+                    objectFit: "contain",
+                    background: "#fff",
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
+        </Box>
+        <Box display='flex' justifyContent='flex-end' gap={2} mt={2}>
+          <Button
+            type='button'
+            variant='outlined'
+            color='inherit'
+            onClick={onCancel}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type='submit'
+            variant='contained'
+            color='primary'
+            disabled={loading}
+          >
+            {loading ? "Guardando..." : "Guardar Cliente"}
+          </Button>
+        </Box>
+      </Box>
     </form>
   );
 };

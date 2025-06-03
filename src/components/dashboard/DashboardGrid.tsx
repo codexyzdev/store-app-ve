@@ -3,12 +3,11 @@ import { DashboardCard } from "./DashboardCard";
 import {
   CalendarDaysIcon,
   ExclamationCircleIcon,
-  PlusCircleIcon,
-  UserPlusIcon,
+  
   ListBulletIcon,
   UsersIcon,
   ChartBarIcon,
-  Cog6ToothIcon,
+
   ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 
@@ -33,11 +32,7 @@ export const DashboardGrid = () => {
         icon={<UsersIcon className='w-8 h-8' />}
         href='/clientes'
       />
-      <DashboardCard
-        title='Nuevo Cliente'
-        icon={<UserPlusIcon className='w-8 h-8' />}
-        href='/clientes/nuevo'
-      />
+      
 
       {/* Sección de Préstamos */}
       <DashboardCard
@@ -45,11 +40,7 @@ export const DashboardGrid = () => {
         icon={<ListBulletIcon className='w-8 h-8' />}
         href='/prestamos'
       />
-      <DashboardCard
-        title='Nuevo Préstamo'
-        icon={<PlusCircleIcon className='w-8 h-8' />}
-        href='/prestamos/nuevo'
-      />
+     
 
       {/* Sección de Inventario */}
       <DashboardCard
@@ -64,11 +55,7 @@ export const DashboardGrid = () => {
         icon={<ChartBarIcon className='w-8 h-8' />}
         href='/estadisticas'
       />
-      {/* <DashboardCard
-        title='Configuración'
-        icon={<Cog6ToothIcon className='w-8 h-8' />}
-        href='/configuracion'
-      /> */}
+     
     </div>
   );
 };
