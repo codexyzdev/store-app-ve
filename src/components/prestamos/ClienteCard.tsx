@@ -1,4 +1,12 @@
 import React from "react";
+import {
+  Card,
+  CardContent,
+  Avatar,
+  Typography,
+  Box,
+  Stack,
+} from "@mui/material";
 
 export interface ClienteCardProps {
   nombre: string;
@@ -16,36 +24,96 @@ const ClienteCard: React.FC<ClienteCardProps> = ({
   fotoCedulaUrl,
 }) => {
   return (
-    <div className='mb-8 p-6 bg-white rounded-xl shadow flex flex-col md:flex-row items-center gap-6'>
-      <div className='flex-shrink-0 w-20 h-20 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-3xl overflow-hidden'>
-        {fotoCedulaUrl ? (
-          <img
+    <Card sx={{ mb: 4, p: 3 }}>
+      <CardContent>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            alignItems: "center",
+            gap: 3,
+          }}
+        >
+          <Avatar
             src={fotoCedulaUrl}
             alt='Foto de cédula'
-            className='object-cover aspect-square w-full h-full'
-          />
-        ) : (
-          nombre[0]?.toUpperCase()
-        )}
-      </div>
-      <div className='flex-1 w-full'>
-        <div className='text-2xl font-bold text-indigo-800 mb-1 capitalize'>{nombre}</div>
-        <div className='flex items-center text-gray-600 mt-1'>
-          <span className='mr-2'>📞</span>{" "}
-          <span className='font-medium'>Teléfono:</span> {telefono}
-        </div>
-        <div className='flex items-center text-gray-600 mt-1'>
-          <span className='mr-2'>🏠</span>{" "}
-          <span className='font-medium'>Dirección:</span> {direccion}
-        </div>
-        {cedula && (
-          <div className='flex items-center text-gray-600 mt-1'>
-            <span className='mr-2'>🪪</span>{" "}
-            <span className='font-medium'>Cédula:</span> {cedula}
-          </div>
-        )}
-      </div>
-    </div>
+            sx={{
+              width: 80,
+              height: 80,
+              bgcolor: "primary.light",
+              color: "primary.main",
+              fontSize: "2rem",
+            }}
+          >
+            {!fotoCedulaUrl && nombre[0]?.toUpperCase()}
+          </Avatar>
+
+          <Stack spacing={1} sx={{ flex: 1 }}>
+            <Typography
+              variant='h5'
+              component='div'
+              color='primary.dark'
+              sx={{ fontWeight: "bold", textTransform: "capitalize" }}
+            >
+              {nombre}
+            </Typography>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: "text.secondary",
+              }}
+            >
+              <Typography component='span' sx={{ mr: 1 }}>
+                📞
+              </Typography>
+              <Typography component='span' sx={{ fontWeight: "medium", mr: 1 }}>
+                Teléfono:
+              </Typography>
+              <Typography>{telefono}</Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: "text.secondary",
+              }}
+            >
+              <Typography component='span' sx={{ mr: 1 }}>
+                🏠
+              </Typography>
+              <Typography component='span' sx={{ fontWeight: "medium", mr: 1 }}>
+                Dirección:
+              </Typography>
+              <Typography>{direccion}</Typography>
+            </Box>
+
+            {cedula && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "text.secondary",
+                }}
+              >
+                <Typography component='span' sx={{ mr: 1 }}>
+                  🪪
+                </Typography>
+                <Typography
+                  component='span'
+                  sx={{ fontWeight: "medium", mr: 1 }}
+                >
+                  Cédula:
+                </Typography>
+                <Typography>{cedula}</Typography>
+              </Box>
+            )}
+          </Stack>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
