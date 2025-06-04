@@ -91,9 +91,55 @@ export default function PrestamosPage() {
         fecha: Date.now(),
         tipo: "cuota",
       });
-      // Reducir cuotas pendientes
-      const nuevasCuotas = prestamo.cuotas - 1;
-      const nuevoEstado = nuevasCuotas <= 0 ? "completado" : prestamo.estado;
+      // Volver a obtener los cobros más recientes para este préstamo
+      const nuevosCobros = [
+        ...cobros.filter(
+          (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+        ),
+        {
+          monto,
+          tipo: "cuota",
+          fecha: Date.now(),
+          prestamoId: prestamo.id,
+          id: "temp",
+        },
+      ];
+      const producto = productos.find(
+        (prod) => prod.id === prestamo.productoId
+      );
+      const precioProducto =
+        producto &&
+        typeof producto.precio === "number" &&
+        !isNaN(producto.precio)
+          ? producto.precio
+          : 0;
+      const montoTotal = Number.isFinite(precioProducto * 1.5)
+        ? precioProducto * 1.5
+        : 0;
+      const abonos = nuevosCobros.reduce(
+        (acc2, cobro) =>
+          acc2 +
+          (typeof cobro.monto === "number" && !isNaN(cobro.monto)
+            ? cobro.monto
+            : 0),
+        0
+      );
+      const montoPendiente = Math.max(
+        0,
+        Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
+      );
+      const valorCuota =
+        Number.isFinite(montoTotal / 15) && montoTotal > 0
+          ? montoTotal / 15
+          : 0.01;
+      const cuotasPendientes =
+        valorCuota > 0 ? Math.ceil(montoPendiente / valorCuota) : 0;
+      const nuevasCuotas =
+        montoPendiente <= 0 || cuotasPendientes <= 0 ? 0 : prestamo.cuotas - 1;
+      const nuevoEstado =
+        montoPendiente <= 0 || cuotasPendientes <= 0 || nuevasCuotas <= 0
+          ? "completado"
+          : prestamo.estado;
       await prestamosDB.actualizar(prestamo.id, {
         cuotas: nuevasCuotas,
         estado: nuevoEstado,
@@ -228,15 +274,52 @@ export default function PrestamosPage() {
                   </tr>
                 ) : (
                   prestamosAgrupadosArray.map((grupo: GrupoPrestamos) => {
-                    const prestamosActivos = grupo.prestamos.filter(
-                      (p) => p.estado === "activo"
+                    // Calcular total pendiente correctamente: monto total - abonos
+                    const prestamosPendientes = grupo.prestamos.filter(
+                      (p) =>
+                        (p.estado === "activo" || p.estado === "atrasado") &&
+                        p.cuotas > 0
                     );
-                    const totalPendiente = prestamosActivos.reduce((sum, p) => {
-                      const cuotaMonto = p.monto / p.cuotas;
-                      const cuotasPendientes = p.cuotas;
-                      return sum + cuotaMonto * cuotasPendientes;
-                    }, 0);
-
+                    const prestamosActivos = prestamosPendientes;
+                    const totalPendiente = prestamosPendientes.reduce(
+                      (sum, p) => {
+                        // Buscar producto
+                        const producto = productos.find(
+                          (prod) => prod.id === p.productoId
+                        );
+                        const precioProducto =
+                          producto &&
+                          typeof producto.precio === "number" &&
+                          !isNaN(producto.precio)
+                            ? producto.precio
+                            : 0;
+                        const montoTotal = Number.isFinite(precioProducto * 1.5)
+                          ? precioProducto * 1.5
+                          : 0;
+                        // Sumar abonos/cobros
+                        const abonos = cobros
+                          .filter(
+                            (c) => c.prestamoId === p.id && c.tipo === "cuota"
+                          )
+                          .reduce(
+                            (acc2, cobro) =>
+                              acc2 +
+                              (typeof cobro.monto === "number" &&
+                              !isNaN(cobro.monto)
+                                ? cobro.monto
+                                : 0),
+                            0
+                          );
+                        const montoPendiente = Math.max(
+                          0,
+                          Number.isFinite(montoTotal - abonos)
+                            ? montoTotal - abonos
+                            : 0
+                        );
+                        return sum + montoPendiente;
+                      },
+                      0
+                    );
                     const ultimoPago = grupo.prestamos.reduce(
                       (ultimo, prestamo) => {
                         const ultimaCuota = getUltimaCuota(prestamo.id);
@@ -247,11 +330,8 @@ export default function PrestamosPage() {
                       },
                       null as Cobro | null
                     );
-
-                    const tieneAlerta = grupo.prestamos.some((p) =>
-                      getAlertaPago(p.id)
-                    );
-
+                    // Estado global: si tiene algún préstamo activo o atrasado, mostrar alerta, si no, mostrar 'Al día'
+                    const tieneAlerta = prestamosActivos.length > 0;
                     return (
                       <tr
                         key={grupo.clienteId}
