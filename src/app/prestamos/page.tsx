@@ -125,6 +125,33 @@ export default function PrestamosPage() {
     );
   });
 
+  type GrupoPrestamos = {
+    clienteId: string;
+    nombre: string;
+    cedula: string;
+    prestamos: Prestamo[];
+  };
+
+  const prestamosAgrupados = prestamosFiltrados.reduce(
+    (acc: Record<string, GrupoPrestamos>, prestamo: Prestamo) => {
+      const clienteId = prestamo.clienteId;
+      if (!acc[clienteId]) {
+        acc[clienteId] = {
+          clienteId,
+          nombre: getClienteNombre(clienteId),
+          cedula: getClienteCedula(clienteId),
+          prestamos: [],
+        };
+      }
+      acc[clienteId].prestamos.push(prestamo);
+      return acc;
+    },
+    {}
+  );
+
+  const prestamosAgrupadosArray: GrupoPrestamos[] =
+    Object.values(prestamosAgrupados);
+
   return (
     <div className='p-4 max-w-5xl mx-auto'>
       <div className='flex items-center justify-between mb-6'>
@@ -156,7 +183,6 @@ export default function PrestamosPage() {
           onClienteCreado={(cliente) => {
             setModalNuevoCliente(false);
             setBusqueda(cliente.nombre);
-            // Recargar clientes
             clientesDB.suscribir(setClientes);
           }}
           onCancel={() => setModalNuevoCliente(false)}
@@ -177,112 +203,196 @@ export default function PrestamosPage() {
                     Cliente
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Producto
+                    Total Préstamos
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Monto
+                    Préstamos Activos
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Tipo
+                    Total Pendiente
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Cuotas
-                  </th>
-                  <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Inicio
+                    Último Pago
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
                     Estado
                   </th>
-                  <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Última cuota pagada
-                  </th>
-                  <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Alerta
-                  </th>
-                  <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                    Acciones
-                  </th>
                 </tr>
               </thead>
               <tbody className='bg-white divide-y divide-gray-200'>
-                {prestamosFiltrados.length === 0 ? (
+                {prestamosAgrupadosArray.length === 0 ? (
                   <tr>
                     <td colSpan={6} className='text-center py-8 text-gray-400'>
                       No hay préstamos registrados
                     </td>
                   </tr>
                 ) : (
-                  prestamosFiltrados.map((prestamo) => (
-                    <tr
-                      key={prestamo.id}
-                      className='hover:bg-indigo-50 transition-colors duration-150'
-                    >
-                      <td className='px-4 py-3'>
-                        <div className='flex items-center gap-3'>
-                          <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base'>
-                            {getClienteNombre(
-                              prestamo.clienteId
-                            )[0]?.toUpperCase()}
-                          </div>
-                          <div>
-                            <Link
-                              href={`/prestamos/${prestamo.clienteId}`}
-                              className='text-indigo-700 font-semibold hover:underline'
-                            >
-                              {getClienteNombre(prestamo.clienteId)}
-                            </Link>
-                            <div className='text-xs text-gray-500'>
-                              C.I.: {getClienteCedula(prestamo.clienteId)}
+                  prestamosAgrupadosArray.map((grupo: GrupoPrestamos) => {
+                    const prestamosActivos = grupo.prestamos.filter(
+                      (p) => p.estado === "activo"
+                    );
+                    const totalPendiente = prestamosActivos.reduce((sum, p) => {
+                      const cuotaMonto = p.monto / p.cuotas;
+                      const cuotasPendientes = p.cuotas;
+                      return sum + cuotaMonto * cuotasPendientes;
+                    }, 0);
+
+                    const ultimoPago = grupo.prestamos.reduce(
+                      (ultimo, prestamo) => {
+                        const ultimaCuota = getUltimaCuota(prestamo.id);
+                        if (!ultimaCuota) return ultimo;
+                        return !ultimo || ultimaCuota.fecha > ultimo.fecha
+                          ? ultimaCuota
+                          : ultimo;
+                      },
+                      null as Cobro | null
+                    );
+
+                    const tieneAlerta = grupo.prestamos.some((p) =>
+                      getAlertaPago(p.id)
+                    );
+
+                    return (
+                      <tr
+                        key={grupo.clienteId}
+                        className='hover:bg-indigo-50 transition-colors duration-150 cursor-pointer'
+                        onClick={() =>
+                          (window.location.href = `/prestamos/${grupo.clienteId}`)
+                        }
+                      >
+                        <td className='px-4 py-3'>
+                          <div className='flex items-center gap-3'>
+                            <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base'>
+                              {grupo.nombre[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                              <div className='text-indigo-700 font-semibold'>
+                                {grupo.nombre}
+                              </div>
+                              <div className='text-xs text-gray-500'>
+                                C.I.: {grupo.cedula}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className='px-4 py-3'>
-                        {getProductoNombre(prestamo.productoId)}
-                      </td>
-                      <td className='px-4 py-3'>
-                        ${prestamo.monto.toFixed(2)}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {prestamo.tipoVenta === "contado"
-                          ? "Contado"
-                          : "Cuotas"}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {prestamo.tipoVenta === "contado"
-                          ? "-"
-                          : prestamo.cuotas}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {new Date(prestamo.fechaInicio).toLocaleDateString()}
-                      </td>
-                      <td className='px-4 py-3'>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${
-                            prestamo.estado === "activo"
-                              ? "bg-green-100 text-green-800"
-                              : prestamo.estado === "completado"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {prestamo.tipoVenta === "contado"
-                            ? "Pagado"
-                            : prestamo.estado}
+                        </td>
+                        <td className='px-4 py-3'>{grupo.prestamos.length}</td>
+                        <td className='px-4 py-3'>{prestamosActivos.length}</td>
+                        <td className='px-4 py-3'>
+                          ${totalPendiente.toFixed(2)}
+                        </td>
+                        <td className='px-4 py-3'>
+                          {ultimoPago
+                            ? new Date(ultimoPago.fecha).toLocaleDateString()
+                            : "Sin pagos"}
+                        </td>
+                        <td className='px-4 py-3'>
+                          {tieneAlerta ? (
+                            <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
+                              Pendiente por pagar
+                            </span>
+                          ) : (
+                            <span className='px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'>
+                              Al día
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Tarjetas para móvil */}
+          <div className='md:hidden space-y-4'>
+            {prestamosAgrupadosArray.length === 0 ? (
+              <div className='text-center py-8 text-gray-400'>
+                No hay préstamos registrados
+              </div>
+            ) : (
+              prestamosAgrupadosArray.map((grupo: GrupoPrestamos) => {
+                const prestamosActivos = grupo.prestamos.filter(
+                  (p) => p.estado === "activo"
+                );
+                const totalPendiente = prestamosActivos.reduce((sum, p) => {
+                  const cuotaMonto = p.monto / p.cuotas;
+                  const cuotasPendientes = p.cuotas;
+                  return sum + cuotaMonto * cuotasPendientes;
+                }, 0);
+
+                const ultimoPago = grupo.prestamos.reduce(
+                  (ultimo, prestamo) => {
+                    const ultimaCuota = getUltimaCuota(prestamo.id);
+                    if (!ultimaCuota) return ultimo;
+                    return !ultimo || ultimaCuota.fecha > ultimo.fecha
+                      ? ultimaCuota
+                      : ultimo;
+                  },
+                  null as Cobro | null
+                );
+
+                const tieneAlerta = grupo.prestamos.some((p) =>
+                  getAlertaPago(p.id)
+                );
+
+                return (
+                  <div
+                    key={grupo.clienteId}
+                    className='bg-white shadow rounded-xl p-4 flex flex-col gap-2 border border-gray-100 cursor-pointer'
+                    onClick={() =>
+                      (window.location.href = `/prestamos/${grupo.clienteId}`)
+                    }
+                  >
+                    <div className='flex items-center gap-3 mb-2'>
+                      <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base'>
+                        {grupo.nombre[0]?.toUpperCase()}
+                      </div>
+                      <div>
+                        <span className='text-indigo-700 font-semibold'>
+                          {grupo.nombre}
                         </span>
-                      </td>
-                      <td className='px-4 py-3'>
-                        {(() => {
-                          const ultima = getUltimaCuota(prestamo.id);
-                          return ultima
-                            ? new Date(ultima.fecha).toLocaleDateString()
-                            : "Sin pagos";
-                        })()}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {prestamo.tipoVenta ===
-                        "contado" ? null : getAlertaPago(prestamo.id) ? (
+                        <span className='ml-2 text-xs text-gray-500'>
+                          C.I.: {grupo.cedula}
+                        </span>
+                      </div>
+                    </div>
+                    <div className='flex flex-wrap gap-4 text-sm'>
+                      <div>
+                        <span className='font-semibold text-gray-700'>
+                          Total Préstamos:
+                        </span>{" "}
+                        {grupo.prestamos.length}
+                      </div>
+                      <div>
+                        <span className='font-semibold text-gray-700'>
+                          Préstamos Activos:
+                        </span>{" "}
+                        {prestamosActivos.length}
+                      </div>
+                    </div>
+                    <div className='flex flex-wrap gap-4 text-sm'>
+                      <div>
+                        <span className='font-semibold text-gray-700'>
+                          Total Pendiente:
+                        </span>{" "}
+                        ${totalPendiente.toFixed(2)}
+                      </div>
+                      <div>
+                        <span className='font-semibold text-gray-700'>
+                          Último Pago:
+                        </span>{" "}
+                        {ultimoPago
+                          ? new Date(ultimoPago.fecha).toLocaleDateString()
+                          : "Sin pagos"}
+                      </div>
+                    </div>
+                    <div className='flex flex-wrap gap-4 text-sm'>
+                      <div>
+                        <span className='font-semibold text-gray-700'>
+                          Estado:
+                        </span>{" "}
+                        {tieneAlerta ? (
                           <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
                             Pendiente por pagar
                           </span>
@@ -291,131 +401,11 @@ export default function PrestamosPage() {
                             Al día
                           </span>
                         )}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {prestamo.tipoVenta === "contado" ? null : (
-                          <button
-                            className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-                            onClick={() => handleAbonarCuota(prestamo)}
-                          >
-                            Abonar cuota
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Tarjetas para móvil */}
-          <div className='md:hidden space-y-4'>
-            {prestamosFiltrados.length === 0 ? (
-              <div className='text-center py-8 text-gray-400'>
-                No hay préstamos registrados
-              </div>
-            ) : (
-              prestamosFiltrados.map((prestamo) => (
-                <div
-                  key={prestamo.id}
-                  className='bg-white shadow rounded-xl p-4 flex flex-col gap-2 border border-gray-100'
-                >
-                  <div className='flex items-center gap-3 mb-2'>
-                    <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base'>
-                      {getClienteNombre(prestamo.clienteId)[0]?.toUpperCase()}
-                    </div>
-                    <div>
-                      <span className='text-indigo-700 font-semibold'>
-                        {getClienteNombre(prestamo.clienteId)}
-                      </span>
-                      <span className='ml-2 text-xs text-gray-500'>
-                        C.I.: {getClienteCedula(prestamo.clienteId)}
-                      </span>
+                      </div>
                     </div>
                   </div>
-                  <div className='flex flex-wrap gap-4 text-sm'>
-                    <div>
-                      <span className='font-semibold text-gray-700'>
-                        Producto:
-                      </span>{" "}
-                      {getProductoNombre(prestamo.productoId)}
-                    </div>
-                    <div>
-                      <span className='font-semibold text-gray-700'>
-                        Monto:
-                      </span>{" "}
-                      ${prestamo.monto.toFixed(2)}
-                    </div>
-                    <div>
-                      <span className='font-semibold text-gray-700'>Tipo:</span>{" "}
-                      {prestamo.tipoVenta === "contado" ? "Contado" : "Cuotas"}
-                    </div>
-                  </div>
-                  <div className='flex flex-wrap gap-4 text-sm'>
-                    <div>
-                      <span className='font-semibold text-gray-700'>
-                        Inicio:
-                      </span>{" "}
-                      {new Date(prestamo.fechaInicio).toLocaleDateString()}
-                    </div>
-                    <div>
-                      <span className='font-semibold text-gray-700'>
-                        Estado:
-                      </span>{" "}
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          prestamo.estado === "activo"
-                            ? "bg-green-100 text-green-800"
-                            : prestamo.estado === "completado"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {prestamo.tipoVenta === "contado"
-                          ? "Pagado"
-                          : prestamo.estado}
-                      </span>
-                    </div>
-                  </div>
-                  <div className='flex flex-wrap gap-4 text-sm'>
-                    <div>
-                      <span className='font-semibold text-gray-700'>
-                        Última cuota:
-                      </span>{" "}
-                      {(() => {
-                        const ultima = getUltimaCuota(prestamo.id);
-                        return ultima
-                          ? new Date(ultima.fecha).toLocaleDateString()
-                          : "Sin pagos";
-                      })()}
-                    </div>
-                    <div>
-                      {prestamo.tipoVenta === "contado" ? null : getAlertaPago(
-                          prestamo.id
-                        ) ? (
-                        <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
-                          Pendiente por pagar
-                        </span>
-                      ) : (
-                        <span className='px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'>
-                          Al día
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className='flex justify-end mt-2'>
-                    {prestamo.tipoVenta === "cuotas" && (
-                      <button
-                        className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-                        onClick={() => handleAbonarCuota(prestamo)}
-                      >
-                        Abonar cuota
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </>
