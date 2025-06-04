@@ -198,6 +198,25 @@ export default function PrestamosPage() {
   const prestamosAgrupadosArray: GrupoPrestamos[] =
     Object.values(prestamosAgrupados);
 
+  // Calcular cuotas vencidas (atrasadas) para un préstamo semanal
+  function calcularCuotasAtrasadas(prestamo: Prestamo) {
+    if (prestamo.estado !== "activo" && prestamo.estado !== "atrasado")
+      return 0;
+    const fechaInicio = new Date(prestamo.fechaInicio);
+    const hoy = new Date();
+    const semanasTranscurridas = Math.floor(
+      (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
+    const cuotasEsperadas = Math.min(
+      semanasTranscurridas + 1,
+      Math.min(prestamo.cuotas, 15)
+    );
+    const cuotasPagadas = cobros.filter(
+      (c: Cobro) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+    ).length;
+    return Math.max(0, cuotasEsperadas - cuotasPagadas);
+  }
+
   return (
     <div className='p-4 max-w-5xl mx-auto'>
       <div className='flex items-center justify-between mb-6'>
@@ -330,6 +349,11 @@ export default function PrestamosPage() {
                       },
                       null as Cobro | null
                     );
+                    // Calcular total de cuotas vencidas para el cliente
+                    const totalCuotasVencidas = prestamosPendientes.reduce(
+                      (sum, p) => sum + calcularCuotasAtrasadas(p),
+                      0
+                    );
                     // Estado global: si tiene algún préstamo activo o atrasado, mostrar alerta, si no, mostrar 'Al día'
                     const tieneAlerta = prestamosActivos.length > 0;
                     return (
@@ -367,9 +391,17 @@ export default function PrestamosPage() {
                         </td>
                         <td className='px-4 py-3'>
                           {tieneAlerta ? (
-                            <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
-                              Pendiente por pagar
-                            </span>
+                            totalCuotasVencidas > 0 ? (
+                              <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
+                                Pendiente por pagar ({totalCuotasVencidas} cuota
+                                {totalCuotasVencidas > 1 ? "s" : ""} vencida
+                                {totalCuotasVencidas > 1 ? "s" : ""})
+                              </span>
+                            ) : (
+                              <span className='px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'>
+                                Al día
+                              </span>
+                            )
                           ) : (
                             <span className='px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'>
                               Al día
@@ -392,30 +424,18 @@ export default function PrestamosPage() {
               </div>
             ) : (
               prestamosAgrupadosArray.map((grupo: GrupoPrestamos) => {
-                const prestamosActivos = grupo.prestamos.filter(
-                  (p) => p.estado === "activo"
+                // Solo préstamos activos o atrasados y con cuotas > 0
+                const prestamosPendientes = grupo.prestamos.filter(
+                  (p) =>
+                    (p.estado === "activo" || p.estado === "atrasado") &&
+                    p.cuotas > 0
                 );
-                const totalPendiente = prestamosActivos.reduce((sum, p) => {
-                  const cuotaMonto = p.monto / p.cuotas;
-                  const cuotasPendientes = p.cuotas;
-                  return sum + cuotaMonto * cuotasPendientes;
-                }, 0);
-
-                const ultimoPago = grupo.prestamos.reduce(
-                  (ultimo, prestamo) => {
-                    const ultimaCuota = getUltimaCuota(prestamo.id);
-                    if (!ultimaCuota) return ultimo;
-                    return !ultimo || ultimaCuota.fecha > ultimo.fecha
-                      ? ultimaCuota
-                      : ultimo;
-                  },
-                  null as Cobro | null
+                const prestamosActivos = prestamosPendientes;
+                // Calcular total de cuotas vencidas para el cliente
+                const totalCuotasVencidas = prestamosPendientes.reduce(
+                  (sum, p) => sum + calcularCuotasAtrasadas(p),
+                  0
                 );
-
-                const tieneAlerta = grupo.prestamos.some((p) =>
-                  getAlertaPago(p.id)
-                );
-
                 return (
                   <div
                     key={grupo.clienteId}
@@ -456,15 +476,66 @@ export default function PrestamosPage() {
                         <span className='font-semibold text-gray-700'>
                           Total Pendiente:
                         </span>{" "}
-                        ${totalPendiente.toFixed(2)}
+                        $
+                        {prestamosPendientes
+                          .reduce((sum, p) => {
+                            const producto = productos.find(
+                              (prod) => prod.id === p.productoId
+                            );
+                            const precioProducto =
+                              producto &&
+                              typeof producto.precio === "number" &&
+                              !isNaN(producto.precio)
+                                ? producto.precio
+                                : 0;
+                            const montoTotal = Number.isFinite(
+                              precioProducto * 1.5
+                            )
+                              ? precioProducto * 1.5
+                              : 0;
+                            const abonos = cobros
+                              .filter(
+                                (c) =>
+                                  c.prestamoId === p.id && c.tipo === "cuota"
+                              )
+                              .reduce(
+                                (acc2, cobro) =>
+                                  acc2 +
+                                  (typeof cobro.monto === "number" &&
+                                  !isNaN(cobro.monto)
+                                    ? cobro.monto
+                                    : 0),
+                                0
+                              );
+                            const montoPendiente = Math.max(
+                              0,
+                              Number.isFinite(montoTotal - abonos)
+                                ? montoTotal - abonos
+                                : 0
+                            );
+                            return sum + montoPendiente;
+                          }, 0)
+                          .toFixed(2)}
                       </div>
                       <div>
                         <span className='font-semibold text-gray-700'>
                           Último Pago:
                         </span>{" "}
-                        {ultimoPago
-                          ? new Date(ultimoPago.fecha).toLocaleDateString()
-                          : "Sin pagos"}
+                        {(() => {
+                          const ultimoPago = grupo.prestamos.reduce(
+                            (ultimo, prestamo) => {
+                              const ultimaCuota = getUltimaCuota(prestamo.id);
+                              if (!ultimaCuota) return ultimo;
+                              return !ultimo || ultimaCuota.fecha > ultimo.fecha
+                                ? ultimaCuota
+                                : ultimo;
+                            },
+                            null as Cobro | null
+                          );
+                          return ultimoPago
+                            ? new Date(ultimoPago.fecha).toLocaleDateString()
+                            : "Sin pagos";
+                        })()}
                       </div>
                     </div>
                     <div className='flex flex-wrap gap-4 text-sm'>
@@ -472,10 +543,18 @@ export default function PrestamosPage() {
                         <span className='font-semibold text-gray-700'>
                           Estado:
                         </span>{" "}
-                        {tieneAlerta ? (
-                          <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
-                            Pendiente por pagar
-                          </span>
+                        {prestamosActivos.length > 0 ? (
+                          totalCuotasVencidas > 0 ? (
+                            <span className='px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'>
+                              Pendiente por pagar ({totalCuotasVencidas} cuota
+                              {totalCuotasVencidas > 1 ? "s" : ""} vencida
+                              {totalCuotasVencidas > 1 ? "s" : ""})
+                            </span>
+                          ) : (
+                            <span className='px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'>
+                              Al día
+                            </span>
+                          )
                         ) : (
                           <span className='px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'>
                             Al día
