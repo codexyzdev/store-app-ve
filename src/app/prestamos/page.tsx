@@ -280,6 +280,9 @@ export default function PrestamosPage() {
                     Último Pago
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                    Próximo Pago
+                  </th>
+                  <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
                     Estado
                   </th>
                 </tr>
@@ -388,6 +391,39 @@ export default function PrestamosPage() {
                           {ultimoPago
                             ? new Date(ultimoPago.fecha).toLocaleDateString()
                             : "Sin pagos"}
+                        </td>
+                        <td className='px-4 py-3'>
+                          {(() => {
+                            // Buscar el préstamo activo/atrasado con la fecha de inicio más reciente y cuotas > 0
+                            const prestamosPendientesOrdenados = [
+                              ...prestamosPendientes,
+                            ].sort((a, b) => b.fechaInicio - a.fechaInicio);
+                            const prestamo = prestamosPendientesOrdenados[0];
+                            if (!prestamo) return "-";
+                            const cuotasAtrasadas =
+                              calcularCuotasAtrasadas(prestamo);
+                            if (cuotasAtrasadas > 0) {
+                              return "¡Ya vencido!";
+                            }
+                            // Calcular la fecha del próximo pago
+                            const fechaInicio = new Date(prestamo.fechaInicio);
+                            const cobrosPrestamo = cobros
+                              .filter(
+                                (c) =>
+                                  c.prestamoId === prestamo.id &&
+                                  c.tipo === "cuota"
+                              )
+                              .sort((a, b) => b.fecha - a.fecha);
+                            let semanasPagadas = cobrosPrestamo.length;
+                            // Si no hay pagos, el próximo pago es la fecha de inicio
+                            let proximaFecha = new Date(fechaInicio);
+                            proximaFecha.setDate(
+                              proximaFecha.getDate() + semanasPagadas * 7
+                            );
+                            // Si ya pagó todas las cuotas
+                            if (semanasPagadas >= prestamo.cuotas) return "-";
+                            return proximaFecha.toLocaleDateString();
+                          })()}
                         </td>
                         <td className='px-4 py-3'>
                           {tieneAlerta ? (
@@ -535,6 +571,44 @@ export default function PrestamosPage() {
                           return ultimoPago
                             ? new Date(ultimoPago.fecha).toLocaleDateString()
                             : "Sin pagos";
+                        })()}
+                      </div>
+                    </div>
+                    <div className='flex flex-wrap gap-4 text-sm'>
+                      <div>
+                        <span className='font-semibold text-gray-700'>
+                          Próximo Pago:
+                        </span>{" "}
+                        {(() => {
+                          // Buscar el préstamo activo/atrasado con la fecha de inicio más reciente y cuotas > 0
+                          const prestamosPendientesOrdenados = [
+                            ...prestamosPendientes,
+                          ].sort((a, b) => b.fechaInicio - a.fechaInicio);
+                          const prestamo = prestamosPendientesOrdenados[0];
+                          if (!prestamo) return "-";
+                          const cuotasAtrasadas =
+                            calcularCuotasAtrasadas(prestamo);
+                          if (cuotasAtrasadas > 0) {
+                            return "¡Ya vencido!";
+                          }
+                          // Calcular la fecha del próximo pago
+                          const fechaInicio = new Date(prestamo.fechaInicio);
+                          const cobrosPrestamo = cobros
+                            .filter(
+                              (c) =>
+                                c.prestamoId === prestamo.id &&
+                                c.tipo === "cuota"
+                            )
+                            .sort((a, b) => b.fecha - a.fecha);
+                          let semanasPagadas = cobrosPrestamo.length;
+                          // Si no hay pagos, el próximo pago es la fecha de inicio
+                          let proximaFecha = new Date(fechaInicio);
+                          proximaFecha.setDate(
+                            proximaFecha.getDate() + semanasPagadas * 7
+                          );
+                          // Si ya pagó todas las cuotas
+                          if (semanasPagadas >= prestamo.cuotas) return "-";
+                          return proximaFecha.toLocaleDateString();
                         })()}
                       </div>
                     </div>
