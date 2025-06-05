@@ -67,7 +67,7 @@ export default function Header() {
               <span className='font-medium text-sm'>Inicio</span>
             </button>
             <button
-              onClick={() => navigateTo("/cobros-dia")}
+              onClick={() => navigateTo("/cobranza/cobros-del-dia")}
               className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
             >
               <CalendarDaysIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
