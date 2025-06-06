@@ -39,10 +39,23 @@ const AbonarCuotaForm = ({
     fecha: new Date().toISOString().split("T")[0],
   });
   const [imagenComprobante, setImagenComprobante] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [montoInput, setMontoInput] = useState(monto);
   const [montoTouched, setMontoTouched] = useState(false);
+
+  const limpiarFormulario = () => {
+    setFormData({
+      tipoPago: "efectivo",
+      comprobante: "",
+      fecha: new Date().toISOString().split("T")[0],
+    });
+    setImagenComprobante(null);
+    setMontoInput(monto);
+    setMontoTouched(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (isOpen) setMontoInput(monto);
@@ -75,19 +88,13 @@ const AbonarCuotaForm = ({
       ...formData,
       imagenComprobante: imagenUrl,
     });
+    limpiarFormulario();
     onClose();
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
     setImagenComprobante(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPreviewUrl(null);
-    }
   };
 
   return (
@@ -201,18 +208,6 @@ const AbonarCuotaForm = ({
               <span className='text-xs text-gray-700'>
                 {imagenComprobante.name}
               </span>
-            )}
-            {previewUrl && (
-              <div className='mt-2'>
-                <span className='block text-xs text-gray-500 mb-1'>
-                  Vista previa:
-                </span>
-                <img
-                  src={previewUrl}
-                  alt='Preview comprobante'
-                  className='max-w-[200px] rounded-lg border border-gray-200'
-                />
-              </div>
             )}
           </div>
         </div>
