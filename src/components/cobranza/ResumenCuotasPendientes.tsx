@@ -1,16 +1,19 @@
 import React from "react";
 import { Prestamo, Producto, Cliente } from "@/lib/firebase/database";
+import Link from "next/link";
 
 interface ResumenCuotasPendientesProps {
   prestamos: Prestamo[];
   productos: Producto[];
   clientes: Cliente[];
+  cobros: import("@/lib/firebase/database").Cobro[];
 }
 
 export default function ResumenCuotasPendientes({
   prestamos,
   productos,
   clientes,
+  cobros,
 }: ResumenCuotasPendientesProps) {
   // Filtrar préstamos activos
   const prestamosActivos = prestamos.filter(
@@ -52,24 +55,26 @@ export default function ResumenCuotasPendientes({
       </h2>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
         {prestamosConCuotasPendientes.map((prestamo) => {
-          const fechaInicio = new Date(prestamo.fechaInicio);
-          const semanasTranscurridas = Math.floor(
-            (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
+          const cobrosPrestamo = cobros.filter(
+            (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
           );
+          const cuotaActual = cobrosPrestamo.length + 1;
+          const montoCuota = prestamo.monto / 15;
+          const fechaInicio = new Date(prestamo.fechaInicio);
           const proximaCuota = new Date(fechaInicio);
           proximaCuota.setDate(
-            proximaCuota.getDate() + (semanasTranscurridas + 1) * 7
+            fechaInicio.getDate() + cobrosPrestamo.length * 7
           );
-          const montoCuota = prestamo.monto / prestamo.cuotas;
 
           return (
-            <div
+            <Link
               key={prestamo.id}
-              className='bg-white p-4 rounded-lg shadow border border-gray-200'
+              href={`/prestamos/${prestamo.clienteId}`}
+              className='bg-white p-4 rounded-lg shadow border border-gray-200 block hover:shadow-lg hover:border-indigo-400 transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400'
             >
               <div className='flex justify-between items-start mb-2'>
                 <div>
-                  <h3 className='font-semibold text-gray-900'>
+                  <h3 className='font-semibold text-gray-900 text-indigo-700 hover:underline'>
                     {getClienteNombre(prestamo.clienteId)}
                   </h3>
                   <p className='text-sm text-gray-600'>
@@ -82,11 +87,9 @@ export default function ResumenCuotasPendientes({
               </div>
               <div className='text-sm text-gray-600'>
                 <p>Fecha de pago: {proximaCuota.toLocaleDateString()}</p>
-                <p>
-                  Cuota {semanasTranscurridas + 1} de {prestamo.cuotas}
-                </p>
+                <p>Cuota {cuotaActual} de 15</p>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

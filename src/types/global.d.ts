@@ -24,6 +24,12 @@ declare module 'react' {
   export interface FunctionComponent<P = {}> {
     (props: P): React.ReactElement | null;
   }
+
+  export function useState<T>(initialState: T | (() => T)): [T, (newState: T | ((prevState: T) => T)) => void];
+  export function useRef<T>(initialValue: T): { current: T };
+  export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
+  export type FormEvent<T = Element> = React.FormEvent<T>;
+  export type ChangeEvent<T = Element> = React.ChangeEvent<T>;
 }
 
 declare namespace JSX {

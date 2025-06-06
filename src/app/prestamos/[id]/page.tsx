@@ -261,7 +261,7 @@ export default function PrestamosClientePage() {
     if (actualizando) {
       setActualizando(false);
     }
-  }, [prestamos]);
+  }, [prestamos, cobros]);
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -440,9 +440,74 @@ export default function PrestamosClientePage() {
                             [prestamo.id]: valor,
                           }))
                         }
-                        onAbonarCuota={(e) => {
-                          e.preventDefault();
-                          abonarCuota(prestamo);
+                        onAbonarCuota={async (data) => {
+                          setAbonando((prev) => ({
+                            ...prev,
+                            [prestamo.id]: true,
+                          }));
+                          setActualizando(true);
+                          try {
+                            if (
+                              !data.monto ||
+                              isNaN(data.monto) ||
+                              data.monto <= 0
+                            ) {
+                              alert("Por favor ingresa un monto válido");
+                              setAbonando((prev) => ({
+                                ...prev,
+                                [prestamo.id]: false,
+                              }));
+                              setActualizando(false);
+                              return;
+                            }
+                            if (data.tipoPago !== "efectivo") {
+                              if (!data.imagenComprobante) {
+                                alert("Debes adjuntar el comprobante de pago.");
+                                setAbonando((prev) => ({
+                                  ...prev,
+                                  [prestamo.id]: false,
+                                }));
+                                setActualizando(false);
+                                return;
+                              }
+                              if (
+                                !data.comprobante ||
+                                data.comprobante.trim() === ""
+                              ) {
+                                alert(
+                                  "Debes ingresar el número de comprobante."
+                                );
+                                setAbonando((prev) => ({
+                                  ...prev,
+                                  [prestamo.id]: false,
+                                }));
+                                setActualizando(false);
+                                return;
+                              }
+                            }
+                            await cobrosDB.crear({
+                              prestamoId: prestamo.id,
+                              monto: data.monto,
+                              fecha: new Date(data.fecha).getTime(),
+                              tipo: "cuota",
+                              comprobante: data.comprobante || "",
+                              tipoPago: data.tipoPago,
+                              imagenComprobante: data.imagenComprobante || "",
+                            });
+                            // ...el resto de tu lógica para actualizar cuotas, etc...
+                            setMostrarFormularioAbono((prev) => ({
+                              ...prev,
+                              [prestamo.id]: false,
+                            }));
+                          } catch (e) {
+                            alert("Error al abonar cuota");
+                            setActualizando(false);
+                          } finally {
+                            setAbonando((prev) => ({
+                              ...prev,
+                              [prestamo.id]: false,
+                            }));
+                          }
                         }}
                         pagos={getCobrosPrestamo(prestamo.id)}
                         Tooltip={Tooltip}

@@ -17,7 +17,7 @@ interface PrestamoCardProps {
   montoAbono: number;
   onMostrarFormularioAbono: () => void;
   onChangeMontoAbono: (valor: number) => void;
-  onAbonarCuota: (e: any) => void; // FormEvent fallback
+  onAbonarCuota: (data: any) => void;
   pagos: any[];
   Tooltip: React.FC<{ text: string }>;
 }
@@ -32,16 +32,15 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
   cuotasPendientes,
   cuotasAtrasadas,
   estadoPrincipal,
-  mostrarFormularioAbono,
   abonando,
   montoAbono,
-  onMostrarFormularioAbono,
   onChangeMontoAbono,
   onAbonarCuota,
   pagos,
   Tooltip,
 }) => {
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [mostrarModalAbono, setMostrarModalAbono] = useState(false);
 
   return (
     <div className='p-6 bg-white rounded-2xl shadow border border-gray-200 flex flex-col gap-4 min-h-[220px]'>
@@ -103,24 +102,23 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
           <>
             <button
               className='mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-fit text-base'
-              onClick={onMostrarFormularioAbono}
+              onClick={() => setMostrarModalAbono(true)}
               disabled={abonando}
             >
-              {mostrarFormularioAbono ? "Cancelar" : "Abonar cuota"}
+              Abonar cuota
             </button>
-            {mostrarFormularioAbono && (
-              <AbonarCuotaForm
-                monto={montoAbono}
-                loading={abonando}
-                onChange={onChangeMontoAbono}
-                onSubmit={onAbonarCuota}
-                error={
-                  montoAbono <= 0 || isNaN(montoAbono)
-                    ? "Ingresa un monto válido"
-                    : undefined
-                }
-              />
-            )}
+            <AbonarCuotaForm
+              isOpen={mostrarModalAbono}
+              onClose={() => setMostrarModalAbono(false)}
+              monto={montoAbono}
+              loading={abonando}
+              onSubmit={onAbonarCuota}
+              error={
+                montoAbono <= 0 || isNaN(montoAbono)
+                  ? "Ingresa un monto válido"
+                  : undefined
+              }
+            />
           </>
         )}
       {/* Mostrar estado pagado si el préstamo está completado o no hay monto/cuotas pendientes */}

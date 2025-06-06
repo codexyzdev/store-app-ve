@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   cobrosDB,
   Cobro,
@@ -11,9 +11,16 @@ import {
   inventarioDB,
   Producto,
 } from "@/lib/firebase/database";
-import ResumenCobros from "@/components/cobranza/ResumenCobros";
-import TablaCobros from "@/components/cobranza/TablaCobros";
 import ResumenCuotasPendientes from "@/components/cobranza/ResumenCuotasPendientes";
+import ResumenCobrosPendientes from "@/components/cobranza/ResumenCobrosPendientes";
+import Modal from "@/components/Modal";
+import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
+import BusquedaCobros from "@/components/cobranza/BusquedaCobros";
+import TablaCobros from "@/components/cobranza/TablaCobros";
+import ListaCobros from "@/components/cobranza/ListaCobros";
+import ResumenDelDiaCobros from "@/components/cobranza/ResumenDelDiaCobros";
+import ListaCobrosRealizados from "@/components/cobranza/ListaCobrosRealizados";
+import ListaCobrosPendientes from "@/components/cobranza/ListaCobrosPendientes";
 
 interface GrupoCobros {
   clienteId: string;
@@ -28,15 +35,19 @@ export default function CobrosDelDiaPage() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalNuevoCliente, setModalNuevoCliente] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     const unsubCobros = cobrosDB.suscribir((data) => {
       // Filtrar solo los cobros de hoy
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
+      const manana = new Date(hoy);
+      manana.setDate(hoy.getDate() + 1);
       const cobrosHoy = data.filter((cobro) => {
         const fechaCobro = new Date(cobro.fecha);
-        return fechaCobro >= hoy;
+        return fechaCobro >= hoy && fechaCobro < manana;
       });
       setCobros(cobrosHoy);
       setLoading(false);
@@ -88,12 +99,55 @@ export default function CobrosDelDiaPage() {
 
   const cobrosAgrupadosArray: GrupoCobros[] = Object.values(cobrosAgrupados);
 
+  // Filtrar cobros por cliente o cédula
+  const cobrosFiltrados = cobrosAgrupadosArray.filter((grupo) => {
+    const nombre = grupo.nombre.toLowerCase();
+    const cedula = grupo.cedula.toLowerCase();
+    return (
+      nombre.includes(busqueda.toLowerCase()) ||
+      cedula.includes(busqueda.toLowerCase())
+    );
+  });
+
   // Calcular totales
   const totalCobros = cobros.length;
   const montoTotal = cobros.reduce(
     (sum: number, cobro: Cobro) => sum + cobro.monto,
     0
   );
+
+  // Calcular cobros pendientes para hoy
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const pendientesHoy: any[] = [];
+
+  prestamos.forEach((prestamo) => {
+    if (prestamo.estado !== "activo" && prestamo.estado !== "atrasado") return;
+    const cliente = clientes.find((c) => c.id === prestamo.clienteId);
+    const producto = productos.find((p) => p.id === prestamo.productoId);
+    const fechaInicio = new Date(prestamo.fechaInicio);
+    for (let i = 0; i < prestamo.cuotas; i++) {
+      const fechaCuota = new Date(fechaInicio);
+      fechaCuota.setDate(fechaInicio.getDate() + i * 7);
+      // Solo cuotas que caen hoy
+      if (fechaCuota.getTime() === hoy.getTime()) {
+        // ¿Ya fue pagada esta cuota?
+        const cobrosPrestamo = cobros.filter(
+          (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+        );
+        if (cobrosPrestamo.length > i) continue; // Ya pagada
+        pendientesHoy.push({
+          clienteId: prestamo.clienteId,
+          nombre: cliente ? cliente.nombre : "-",
+          cedula: cliente ? cliente.cedula : "",
+          telefono: cliente ? cliente.telefono : undefined,
+          producto: producto ? producto.nombre : "",
+          monto: prestamo.monto / prestamo.cuotas,
+          cuota: i + 1,
+        });
+      }
+    }
+  });
 
   return (
     <div className='p-4 max-w-7xl mx-auto'>
@@ -105,14 +159,45 @@ export default function CobrosDelDiaPage() {
         </div>
       ) : (
         <>
-          <ResumenCobros totalCobros={totalCobros} montoTotal={montoTotal} />
+          <ResumenDelDiaCobros cobros={cobros} prestamos={prestamos} />
+          <ListaCobrosRealizados
+            cobrosAgrupados={cobrosFiltrados}
+            onVerHistorial={(clienteId) => {}}
+            onImprimirRecibo={(cobro) => {}}
+          />
+          <ListaCobrosPendientes
+            pendientes={pendientesHoy}
+            onRegistrarCobro={(pendiente) => {}}
+            onContactarCliente={(pendiente) => {}}
+          />
+          <ResumenCobrosPendientes prestamos={prestamos} cobros={cobros} />
           <ResumenCuotasPendientes
             prestamos={prestamos}
             productos={productos}
             clientes={clientes}
+            cobros={cobros}
           />
+          <BusquedaCobros busqueda={busqueda} onBusquedaChange={setBusqueda} />
+          <Modal
+            isOpen={modalNuevoCliente}
+            onClose={() => setModalNuevoCliente(false)}
+            title='Nuevo Cliente'
+          >
+            <NuevoClienteForm
+              onClienteCreado={(cliente) => {
+                setModalNuevoCliente(false);
+                setBusqueda(cliente.nombre);
+                clientesDB.suscribir(setClientes);
+              }}
+              onCancel={() => setModalNuevoCliente(false)}
+            />
+          </Modal>
           <TablaCobros
-            cobrosAgrupados={cobrosAgrupadosArray}
+            cobrosAgrupados={cobrosFiltrados}
+            prestamos={prestamos}
+          />
+          <ListaCobros
+            cobrosAgrupados={cobrosFiltrados}
             prestamos={prestamos}
           />
         </>
