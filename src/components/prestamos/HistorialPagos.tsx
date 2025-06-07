@@ -9,6 +9,7 @@ interface HistorialPagosProps {
     comprobante?: string;
     imagenComprobante?: string;
     tipo?: string;
+    numeroCuota?: number;
   }[];
 }
 
@@ -112,6 +113,11 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({ pagos }) => {
                       month: "2-digit",
                       year: "numeric",
                     })}
+                    {cobro.numeroCuota && (
+                      <span className='ml-2 text-xs text-indigo-600 font-semibold'>
+                        (Cuota {cobro.numeroCuota})
+                      </span>
+                    )}
                   </span>
                 </div>
                 <span className='px-3 py-1 rounded bg-green-50 text-green-700 font-bold text-base whitespace-nowrap ml-2 border border-green-100'>

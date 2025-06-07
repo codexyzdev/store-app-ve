@@ -44,6 +44,10 @@ export interface Cobro {
   monto: number;
   fecha: number;
   tipo: 'cuota' | 'abono';
+  tipoPago?: string;
+  comprobante?: string;
+  imagenComprobante?: string;
+  numeroCuota?: number;
 }
 
 export interface Producto {

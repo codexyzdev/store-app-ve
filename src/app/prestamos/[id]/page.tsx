@@ -191,31 +191,12 @@ export default function PrestamosClientePage() {
         tipo: "cuota",
       });
       // Volver a obtener los cobros más recientes para este préstamo
-      const nuevosCobros = [
-        ...getCobrosPrestamo(prestamo.id),
-        {
-          monto,
-          tipo: "cuota",
-          fecha: Date.now(),
-          prestamoId: prestamo.id,
-          id: "temp",
-        },
-      ];
-      const producto = productos.find(
-        (prod: Producto) => prod.id === prestamo.productoId
+      const cobrosValidos: Cobro[] = getCobrosPrestamo(prestamo.id).filter(
+        (c: Cobro) => c.tipo === "cuota" && !!c.id && c.id !== "temp"
       );
-      const precioProducto =
-        producto &&
-        typeof producto.precio === "number" &&
-        !isNaN(producto.precio)
-          ? producto.precio
-          : 0;
-      const montoTotal = Number.isFinite(precioProducto * 1.5)
-        ? precioProducto * 1.5
-        : 0;
-      const abonos = nuevosCobros.reduce(
-        (acc2: number, cobro: Cobro) =>
-          acc2 +
+      const abonos = cobrosValidos.reduce(
+        (acc: number, cobro: Cobro) =>
+          acc +
           (typeof cobro.monto === "number" && !isNaN(cobro.monto)
             ? cobro.monto
             : 0),
@@ -223,12 +204,10 @@ export default function PrestamosClientePage() {
       );
       const montoPendiente = Math.max(
         0,
-        Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
+        Number.isFinite(monto - abonos) ? monto - abonos : 0
       );
       const valorCuota =
-        Number.isFinite(montoTotal / 15) && montoTotal > 0
-          ? montoTotal / 15
-          : 0.01;
+        Number.isFinite(monto / 15) && monto > 0 ? monto / 15 : 0.01;
       const cuotasPendientes =
         valorCuota > 0 ? Math.ceil(montoPendiente / valorCuota) : 0;
       const nuevasCuotas =
@@ -339,7 +318,13 @@ export default function PrestamosClientePage() {
                     : Number.isFinite(precioProducto * 1.5)
                     ? precioProducto * 1.5
                     : 0;
-                const abonos = getCobrosPrestamo(prestamo.id).reduce(
+                // Solo cobros válidos para abonos y pagos
+                const cobrosValidos: Cobro[] = getCobrosPrestamo(
+                  prestamo.id
+                ).filter(
+                  (c: Cobro) => c.tipo === "cuota" && !!c.id && c.id !== "temp"
+                );
+                const abonos = cobrosValidos.reduce(
                   (acc: number, cobro: Cobro) =>
                     acc +
                     (typeof cobro.monto === "number" && !isNaN(cobro.monto)
@@ -485,6 +470,8 @@ export default function PrestamosClientePage() {
                                 return;
                               }
                             }
+                            // Obtener pagos válidos antes de crear el nuevo cobro
+                            const pagos: Cobro[] = cobrosValidos;
                             await cobrosDB.crear({
                               prestamoId: prestamo.id,
                               monto: data.monto,
@@ -493,6 +480,7 @@ export default function PrestamosClientePage() {
                               comprobante: data.comprobante || "",
                               tipoPago: data.tipoPago,
                               imagenComprobante: data.imagenComprobante || "",
+                              numeroCuota: pagos.length + 1,
                             });
                             // ...el resto de tu lógica para actualizar cuotas, etc...
                             setMostrarFormularioAbono((prev) => ({

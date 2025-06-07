@@ -118,6 +118,8 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
                   ? "Ingresa un monto válido"
                   : undefined
               }
+              numeroCuota={pagos.length + 1}
+              totalCuotas={prestamo.cuotas}
             />
           </>
         )}
