@@ -110,7 +110,8 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
             <AbonarCuotaForm
               isOpen={mostrarModalAbono}
               onClose={() => setMostrarModalAbono(false)}
-              monto={montoAbono}
+              montoPrestamo={prestamo.monto}
+              cuotasTotales={prestamo.cuotas}
               loading={abonando}
               onSubmit={onAbonarCuota}
               error={

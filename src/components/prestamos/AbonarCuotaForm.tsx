@@ -13,7 +13,8 @@ import Modal from "@/components/Modal";
 interface AbonarCuotaFormProps {
   isOpen: boolean;
   onClose: () => void;
-  monto: number;
+  montoPrestamo: number;
+  cuotasTotales: number;
   loading: boolean;
   onSubmit: (data: {
     monto: number;
@@ -30,13 +31,15 @@ interface AbonarCuotaFormProps {
 const AbonarCuotaForm = ({
   isOpen,
   onClose,
-  monto,
+  montoPrestamo,
+  cuotasTotales,
   loading,
   onSubmit,
   error,
   numeroCuota,
   totalCuotas,
 }: AbonarCuotaFormProps) => {
+  const cuota = cuotasTotales > 0 ? montoPrestamo / cuotasTotales : 0;
   const [formData, setFormData] = useState({
     tipoPago: "efectivo",
     comprobante: "",
@@ -44,7 +47,7 @@ const AbonarCuotaForm = ({
   });
   const [imagenComprobante, setImagenComprobante] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [montoInput, setMontoInput] = useState(monto);
+  const [montoInput, setMontoInput] = useState(cuota);
   const [montoTouched, setMontoTouched] = useState(false);
 
   const limpiarFormulario = () => {
@@ -54,7 +57,7 @@ const AbonarCuotaForm = ({
       fecha: new Date().toISOString().split("T")[0],
     });
     setImagenComprobante(null);
-    setMontoInput(monto);
+    setMontoInput(cuota);
     setMontoTouched(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -62,10 +65,14 @@ const AbonarCuotaForm = ({
   };
 
   useEffect(() => {
-    if (isOpen) setMontoInput(monto);
-  }, [isOpen, monto]);
+    if (isOpen) setMontoInput(cuota);
+  }, [isOpen, cuota]);
 
-  const montoInvalido = !montoInput || isNaN(montoInput) || montoInput <= 0;
+  const montoInvalido =
+    !montoInput ||
+    isNaN(montoInput) ||
+    montoInput < cuota ||
+    montoInput % cuota !== 0;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -125,6 +132,8 @@ const AbonarCuotaForm = ({
             </div>
             <input
               type='number'
+              min={cuota}
+              step={cuota}
               className='pl-7 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border'
               value={montoInput}
               onChange={(e) => {
