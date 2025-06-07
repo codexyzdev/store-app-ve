@@ -65,6 +65,9 @@ export default function PrestamosPage() {
 
   // Filtrar préstamos por cliente, producto, monto o cédula
   const prestamosFiltrados = prestamos.filter((prestamo) => {
+    // Solo mostrar préstamos a cuotas
+    if (prestamo.tipoVenta !== "cuotas") return false;
+
     const clienteNombre = (
       getClienteNombre(prestamo.clienteId) || ""
     ).toLowerCase();
