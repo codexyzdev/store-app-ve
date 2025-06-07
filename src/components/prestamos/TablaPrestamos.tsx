@@ -13,7 +13,7 @@ interface TablaPrestamosProps {
   prestamosAgrupados: GrupoPrestamos[];
   productos: Producto[];
   cobros: Cobro[];
-  calcularCuotasAtrasadas: (prestamo: Prestamo) => number;
+  calcularCuotasAtrasadas: (prestamo: Prestamo, cobros: Cobro[]) => number;
   getUltimaCuota: (prestamoId: string) => Cobro | null;
 }
 
@@ -106,7 +106,7 @@ export default function TablaPrestamos({
               }, null as Cobro | null);
 
               const totalCuotasVencidas = prestamosPendientes.reduce(
-                (sum, p) => sum + calcularCuotasAtrasadas(p),
+                (sum, p) => sum + calcularCuotasAtrasadas(p, cobros),
                 0
               );
 
@@ -139,7 +139,10 @@ export default function TablaPrestamos({
                       ].sort((a, b) => b.fechaInicio - a.fechaInicio);
                       const prestamo = prestamosPendientesOrdenados[0];
                       if (!prestamo) return "-";
-                      const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo);
+                      const cuotasAtrasadas = calcularCuotasAtrasadas(
+                        prestamo,
+                        cobros
+                      );
                       if (cuotasAtrasadas > 0) return "¡Ya vencido!";
                       const fechaInicio = new Date(prestamo.fechaInicio);
                       const cobrosPrestamo = cobros

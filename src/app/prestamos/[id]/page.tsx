@@ -172,6 +172,7 @@ export default function PrestamosClientePage() {
         monto: monto,
         fecha: Date.now(),
         tipo: "cuota",
+        numeroCuota: getCobrosPrestamo(prestamo.id).length + 1,
       });
       // Volver a obtener los cobros más recientes para este préstamo
       const cobrosValidos: Cobro[] = getCobrosPrestamo(prestamo.id).filter(
@@ -534,9 +535,7 @@ export default function PrestamosClientePage() {
                         {mostrarPlanPago[prestamo.id] && (
                           <div className='bg-gray-50 rounded-xl p-4 shadow-sm transform transition-all duration-300'>
                             <CuadriculaCuotas
-                              fechaInicio={new Date(
-                                prestamo.fechaInicio
-                              ).toLocaleDateString()}
+                              fechaInicio={prestamo.fechaInicio}
                               cobros={getCobrosPrestamo(prestamo.id)}
                               valorCuota={valorCuota}
                             />
