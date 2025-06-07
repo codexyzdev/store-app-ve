@@ -18,6 +18,7 @@ import ClienteCard from "@/components/prestamos/ClienteCard";
 import ResumenGlobal from "@/components/prestamos/ResumenGlobal";
 import PrestamoCard from "@/components/prestamos/PrestamoCard";
 import CuadriculaCuotas from "@/components/prestamos/CuadriculaCuotas";
+import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 // Componente para mostrar tooltips simples
 type TooltipProps = { text: string };
@@ -124,7 +125,7 @@ export default function PrestamosClientePage() {
           Number.isFinite(montoTotal / 15) && montoTotal > 0
             ? montoTotal / 15
             : 0.01;
-        const atrasadas = calcularCuotasAtrasadas(p);
+        const atrasadas = calcularCuotasAtrasadas(p, cobros);
         return acc + atrasadas * valorCuota;
       },
       0
@@ -143,24 +144,6 @@ export default function PrestamosClientePage() {
     cobros
       .filter((c: Cobro) => c.prestamoId === prestamoId && c.tipo === "cuota")
       .sort((a: Cobro, b: Cobro) => b.fecha - a.fecha);
-
-  // Lógica para cuotas atrasadas semanales (máximo 15 cuotas)
-  function calcularCuotasAtrasadas(prestamo: Prestamo) {
-    if (prestamo.estado !== "activo") return 0;
-    const fechaInicio = new Date(prestamo.fechaInicio);
-    const hoy = new Date();
-    const semanasTranscurridas = Math.floor(
-      (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    const cuotasEsperadas = Math.min(
-      semanasTranscurridas + 1,
-      Math.min(prestamo.cuotas, 15)
-    );
-    const cuotasPagadas = cobros.filter(
-      (c: Cobro) => c.prestamoId === prestamo.id && c.tipo === "cuota"
-    ).length;
-    return Math.max(0, cuotasEsperadas - cuotasPagadas);
-  }
 
   // Función para abonar cuota
   const abonarCuota = async (prestamo: Prestamo) => {
@@ -348,10 +331,10 @@ export default function PrestamosClientePage() {
                     : valorCuota > 0
                     ? Math.ceil(montoPendiente / valorCuota)
                     : 0;
-                const cuotasAtrasadas =
-                  prestamo.tipoVenta === "contado"
-                    ? 0
-                    : calcularCuotasAtrasadas(prestamo);
+                const cuotasAtrasadas = calcularCuotasAtrasadas(
+                  prestamo,
+                  getCobrosPrestamo(prestamo.id)
+                );
                 const estadoPrincipal =
                   prestamo.tipoVenta === "contado" ? (
                     <span className='text-blue-700 font-bold text-lg flex items-center'>
@@ -475,7 +458,21 @@ export default function PrestamosClientePage() {
                             await cobrosDB.crear({
                               prestamoId: prestamo.id,
                               monto: data.monto,
-                              fecha: new Date(data.fecha).getTime(),
+                              fecha: (() => {
+                                if (data.fecha) {
+                                  const [yyyy, mm, dd] = data.fecha.split("-");
+                                  return new Date(
+                                    Number(yyyy),
+                                    Number(mm) - 1,
+                                    Number(dd),
+                                    0,
+                                    0,
+                                    0,
+                                    0
+                                  ).getTime();
+                                }
+                                return Date.now();
+                              })(),
                               tipo: "cuota",
                               comprobante: data.comprobante || "",
                               tipoPago: data.tipoPago,
@@ -537,7 +534,9 @@ export default function PrestamosClientePage() {
                         {mostrarPlanPago[prestamo.id] && (
                           <div className='bg-gray-50 rounded-xl p-4 shadow-sm transform transition-all duration-300'>
                             <CuadriculaCuotas
-                              fechaInicio={prestamo.fechaInicio}
+                              fechaInicio={new Date(
+                                prestamo.fechaInicio
+                              ).toLocaleDateString()}
                               cobros={getCobrosPrestamo(prestamo.id)}
                               valorCuota={valorCuota}
                             />

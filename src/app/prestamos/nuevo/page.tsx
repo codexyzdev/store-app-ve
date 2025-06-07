@@ -15,12 +15,17 @@ export default function NuevoPrestamoPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [productoSeleccionado, setProductoSeleccionado] =
     useState<Producto | null>(null);
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${yyyy}-${mm}-${dd}`;
   const [formData, setFormData] = useState({
     cliente: "",
     producto: "",
     monto: "",
     cuotas: "",
-    fechaInicio: "",
+    fechaInicio: todayStr,
     descripcion: "",
     tipoVenta: "cuotas", // por defecto cuotas
   });
@@ -89,13 +94,25 @@ export default function NuevoPrestamoPage() {
       // Descontar stock del producto
       await inventarioDB.actualizarStock(productoSeleccionado.id, -1);
 
+      // Parsear fecha de inicio como local (no UTC)
+      const [yyyy, mm, dd] = formData.fechaInicio.split("-");
+      const fechaInicio = new Date(
+        Number(yyyy),
+        Number(mm) - 1,
+        Number(dd),
+        0,
+        0,
+        0,
+        0
+      ).getTime();
+
       // Crear el préstamo
       await prestamosDB.crear({
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
         cuotas:
           formData.tipoVenta === "contado" ? 0 : parseInt(formData.cuotas, 10),
-        fechaInicio: new Date(formData.fechaInicio).getTime(),
+        fechaInicio: fechaInicio,
         estado: formData.tipoVenta === "contado" ? "completado" : "activo",
         productoId: productoSeleccionado.id,
         tipoVenta: formData.tipoVenta,
@@ -435,7 +452,11 @@ export default function NuevoPrestamoPage() {
                   d='M5 13l4 4L19 7'
                 />
               </svg>
-              {loading ? "Guardando..." : "Crear Préstamo"}
+              {loading
+                ? "Guardando..."
+                : formData.tipoVenta === "contado"
+                ? "Venta al contado"
+                : "Crear Préstamo"}
             </button>
           </div>
         </form>

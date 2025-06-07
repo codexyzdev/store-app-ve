@@ -21,6 +21,7 @@ import ListaCobros from "@/components/cobranza/ListaCobros";
 import ResumenDelDiaCobros from "@/components/cobranza/ResumenDelDiaCobros";
 import ListaCobrosRealizados from "@/components/cobranza/ListaCobrosRealizados";
 import ListaCobrosPendientes from "@/components/cobranza/ListaCobrosPendientes";
+import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 interface GrupoCobros {
   clienteId: string;
@@ -126,15 +127,13 @@ export default function CobrosDelDiaPage() {
     const cliente = clientes.find((c) => c.id === prestamo.clienteId);
     const producto = productos.find((p) => p.id === prestamo.productoId);
     const fechaInicio = new Date(prestamo.fechaInicio);
+    const cobrosPrestamo = cobros.filter(
+      (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+    );
     for (let i = 0; i < prestamo.cuotas; i++) {
       const fechaCuota = new Date(fechaInicio);
       fechaCuota.setDate(fechaInicio.getDate() + i * 7);
-      // Solo cuotas que caen hoy
       if (fechaCuota.getTime() === hoy.getTime()) {
-        // ¿Ya fue pagada esta cuota?
-        const cobrosPrestamo = cobros.filter(
-          (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
-        );
         if (cobrosPrestamo.length > i) continue; // Ya pagada
         pendientesHoy.push({
           clienteId: prestamo.clienteId,

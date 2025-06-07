@@ -33,7 +33,7 @@ export default function ResumenCuotasPendientes({
     );
     const proximaCuota = new Date(fechaInicio);
     proximaCuota.setDate(
-      proximaCuota.getDate() + (semanasTranscurridas + 1) * 7
+      fechaInicio.getDate() + (semanasTranscurridas + 1) * 7
     );
     return proximaCuota >= hoy && proximaCuota <= sieteDiasDespues;
   });
@@ -59,7 +59,7 @@ export default function ResumenCuotasPendientes({
             (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
           );
           const cuotaActual = cobrosPrestamo.length + 1;
-          const montoCuota = prestamo.monto / 15;
+          const montoCuota = prestamo.monto / prestamo.cuotas;
           const fechaInicio = new Date(prestamo.fechaInicio);
           const proximaCuota = new Date(fechaInicio);
           proximaCuota.setDate(
@@ -87,7 +87,9 @@ export default function ResumenCuotasPendientes({
               </div>
               <div className='text-sm text-gray-600'>
                 <p>Fecha de pago: {proximaCuota.toLocaleDateString()}</p>
-                <p>Cuota {cuotaActual} de 15</p>
+                <p>
+                  Cuota {cuotaActual} de {prestamo.cuotas}
+                </p>
               </div>
             </Link>
           );

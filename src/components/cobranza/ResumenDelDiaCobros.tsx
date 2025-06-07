@@ -1,5 +1,6 @@
 import React from "react";
 import { Cobro, Prestamo } from "@/lib/firebase/database";
+import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 interface ResumenDelDiaCobrosProps {
   cobros: Cobro[];
@@ -22,21 +23,11 @@ export default function ResumenDelDiaCobros({
   let montoPendiente = 0;
 
   prestamos.forEach((prestamo) => {
-    if (prestamo.estado !== "activo" && prestamo.estado !== "atrasado") return;
-    const fechaInicio = new Date(prestamo.fechaInicio);
-    const semanasTranscurridas = Math.floor(
-      (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    const cuotasEsperadas = Math.min(
-      semanasTranscurridas + 1,
-      Math.min(prestamo.cuotas, 15)
-    );
-    const cuotasPagadas = cobros.filter(
-      (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
-    ).length;
-    const atrasadas = Math.max(0, cuotasEsperadas - cuotasPagadas);
+    const atrasadas = calcularCuotasAtrasadas(prestamo, cobros);
     cuotasAtrasadas += atrasadas;
-    montoPendiente += atrasadas * (prestamo.monto / prestamo.cuotas);
+    if (prestamo.estado === "activo" || prestamo.estado === "atrasado") {
+      montoPendiente += atrasadas * (prestamo.monto / prestamo.cuotas);
+    }
   });
 
   return (

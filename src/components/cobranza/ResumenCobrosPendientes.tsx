@@ -1,5 +1,6 @@
 import React from "react";
 import { Prestamo, Cobro } from "@/lib/firebase/database";
+import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 interface ResumenCobrosPendientesProps {
   prestamos: Prestamo[];
@@ -22,17 +23,7 @@ export default function ResumenCobrosPendientes({
   // Calcular cuotas pendientes y atrasadas
   const cuotasPendientes = prestamosActivos.map((prestamo) => {
     const fechaInicio = new Date(prestamo.fechaInicio);
-    const semanasTranscurridas = Math.floor(
-      (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    const cuotasEsperadas = Math.min(
-      semanasTranscurridas + 1,
-      Math.min(prestamo.cuotas, 15)
-    );
-    const cuotasPagadas = cobros.filter(
-      (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
-    ).length;
-    const cuotasAtrasadas = Math.max(0, cuotasEsperadas - cuotasPagadas);
+    const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo, cobros);
 
     return {
       prestamoId: prestamo.id,

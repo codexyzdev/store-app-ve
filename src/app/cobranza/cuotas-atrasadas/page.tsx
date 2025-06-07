@@ -13,6 +13,7 @@ import {
 } from "@/lib/firebase/database";
 import Link from "next/link";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 export default function CuotasAtrasadasPage() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
@@ -22,16 +23,16 @@ export default function CuotasAtrasadasPage() {
   const [loading, setLoading] = useState(true);
   // Calcular resumen global
   const prestamosAtrasados = prestamos.filter(
-    (p) => calcularCuotasAtrasadas(p) > 0
+    (p) => calcularCuotasAtrasadas(p, cobros) > 0
   );
   const totalCuotasAtrasadas = prestamosAtrasados.reduce(
-    (acc, p) => acc + calcularCuotasAtrasadas(p),
+    (acc, p) => acc + calcularCuotasAtrasadas(p, cobros),
     0
   );
   const totalMontoAtrasado = prestamosAtrasados.reduce((acc, p) => {
     // Suma el monto de las cuotas atrasadas (asume monto/cuotas)
     const montoPorCuota = p.monto / p.cuotas;
-    return acc + montoPorCuota * calcularCuotasAtrasadas(p);
+    return acc + montoPorCuota * calcularCuotasAtrasadas(p, cobros);
   }, 0);
 
   useEffect(() => {
@@ -64,25 +65,6 @@ export default function CuotasAtrasadasPage() {
       .sort((a, b) => b.fecha - a.fecha);
     return cobrosPrestamo[0] || null;
   };
-  // Lógica para cuotas atrasadas semanales (máximo 15 cuotas)
-  function calcularCuotasAtrasadas(prestamo: Prestamo) {
-    if (prestamo.estado !== "activo") return 0;
-    const fechaInicio = new Date(prestamo.fechaInicio);
-    const hoy = new Date();
-    // Cuotas que deberían haberse pagado hasta hoy (semanales)
-    const semanasTranscurridas = Math.floor(
-      (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    const cuotasEsperadas = Math.min(
-      semanasTranscurridas + 1,
-      Math.min(prestamo.cuotas, 15)
-    );
-    // Cuotas realmente pagadas
-    const cuotasPagadas = cobros.filter(
-      (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
-    ).length;
-    return Math.max(0, cuotasEsperadas - cuotasPagadas);
-  }
 
   return (
     <div className='p-4 max-w-5xl mx-auto'>
@@ -177,7 +159,10 @@ export default function CuotasAtrasadasPage() {
                   </tr>
                 ) : (
                   prestamosAtrasados.map((prestamo) => {
-                    const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo);
+                    const cuotasAtrasadas = calcularCuotasAtrasadas(
+                      prestamo,
+                      cobros
+                    );
                     const montoPorCuota = prestamo.monto / prestamo.cuotas;
                     const montoAtrasado = montoPorCuota * cuotasAtrasadas;
                     return (
@@ -245,7 +230,10 @@ export default function CuotasAtrasadasPage() {
               </div>
             ) : (
               prestamosAtrasados.map((prestamo) => {
-                const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo);
+                const cuotasAtrasadas = calcularCuotasAtrasadas(
+                  prestamo,
+                  cobros
+                );
                 const montoPorCuota = prestamo.monto / prestamo.cuotas;
                 const montoAtrasado = montoPorCuota * cuotasAtrasadas;
                 return (

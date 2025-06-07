@@ -17,6 +17,7 @@ import PrestamosHeader from "@/components/prestamos/PrestamosHeader";
 import BusquedaPrestamos from "@/components/prestamos/BusquedaPrestamos";
 import TablaPrestamos from "@/components/prestamos/TablaPrestamos";
 import ListaPrestamos from "@/components/prestamos/ListaPrestamos";
+import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 export default function PrestamosPage() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
@@ -104,25 +105,6 @@ export default function PrestamosPage() {
 
   const prestamosAgrupadosArray: GrupoPrestamos[] =
     Object.values(prestamosAgrupados);
-
-  // Calcular cuotas vencidas (atrasadas) para un préstamo semanal
-  function calcularCuotasAtrasadas(prestamo: Prestamo) {
-    if (prestamo.estado !== "activo" && prestamo.estado !== "atrasado")
-      return 0;
-    const fechaInicio = new Date(prestamo.fechaInicio);
-    const hoy = new Date();
-    const semanasTranscurridas = Math.floor(
-      (hoy.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    const cuotasEsperadas = Math.min(
-      semanasTranscurridas + 1,
-      Math.min(prestamo.cuotas, 15)
-    );
-    const cuotasPagadas = cobros.filter(
-      (c: Cobro) => c.prestamoId === prestamo.id && c.tipo === "cuota"
-    ).length;
-    return Math.max(0, cuotasEsperadas - cuotasPagadas);
-  }
 
   return (
     <div className='p-4 max-w-5xl mx-auto'>
