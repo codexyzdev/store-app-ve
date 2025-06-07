@@ -18,7 +18,7 @@ export const DashboardGrid = () => {
       <DashboardCard
         title='Cobros del día'
         icon={<CalendarDaysIcon className='w-8 h-8' />}
-        href='/cobranza'
+        href='/cobranza/cobros-del-dia'
       />
       <DashboardCard
         title='Cuotas atrasadas'

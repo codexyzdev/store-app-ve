@@ -11,17 +11,11 @@ import {
   inventarioDB,
   Producto,
 } from "@/lib/firebase/database";
-import ResumenCuotasPendientes from "@/components/cobranza/ResumenCuotasPendientes";
-import ResumenCobrosPendientes from "@/components/cobranza/ResumenCobrosPendientes";
-import Modal from "@/components/Modal";
-import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
 import BusquedaCobros from "@/components/cobranza/BusquedaCobros";
 import TablaCobros from "@/components/cobranza/TablaCobros";
-import ListaCobros from "@/components/cobranza/ListaCobros";
 import ResumenDelDiaCobros from "@/components/cobranza/ResumenDelDiaCobros";
 import ListaCobrosRealizados from "@/components/cobranza/ListaCobrosRealizados";
 import ListaCobrosPendientes from "@/components/cobranza/ListaCobrosPendientes";
-import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 interface GrupoCobros {
   clienteId: string;
@@ -36,7 +30,6 @@ export default function CobrosDelDiaPage() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalNuevoCliente, setModalNuevoCliente] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
@@ -110,13 +103,6 @@ export default function CobrosDelDiaPage() {
     );
   });
 
-  // Calcular totales
-  const totalCobros = cobros.length;
-  const montoTotal = cobros.reduce(
-    (sum: number, cobro: Cobro) => sum + cobro.monto,
-    0
-  );
-
   // Calcular cobros pendientes para hoy
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
@@ -158,44 +144,24 @@ export default function CobrosDelDiaPage() {
         </div>
       ) : (
         <>
+          {/* Resumen solo de cobros del día */}
           <ResumenDelDiaCobros cobros={cobros} prestamos={prestamos} />
-          <ListaCobrosRealizados
-            cobrosAgrupados={cobrosFiltrados}
-            onVerHistorial={(clienteId) => {}}
-            onImprimirRecibo={(cobro) => {}}
-          />
+          {/* Lista de cobros pendientes para hoy */}
           <ListaCobrosPendientes
             pendientes={pendientesHoy}
             onRegistrarCobro={(pendiente) => {}}
             onContactarCliente={(pendiente) => {}}
           />
-          <ResumenCobrosPendientes prestamos={prestamos} cobros={cobros} />
-          <ResumenCuotasPendientes
-            prestamos={prestamos}
-            productos={productos}
-            clientes={clientes}
-            cobros={cobros}
-          />
-          <BusquedaCobros busqueda={busqueda} onBusquedaChange={setBusqueda} />
-          <Modal
-            isOpen={modalNuevoCliente}
-            onClose={() => setModalNuevoCliente(false)}
-            title='Nuevo Cliente'
-          >
-            <NuevoClienteForm
-              onClienteCreado={(cliente) => {
-                setModalNuevoCliente(false);
-                setBusqueda(cliente.nombre);
-                clientesDB.suscribir(setClientes);
-              }}
-              onCancel={() => setModalNuevoCliente(false)}
-            />
-          </Modal>
-          <TablaCobros
+          {/* Lista de cobros realizados */}
+          <ListaCobrosRealizados
             cobrosAgrupados={cobrosFiltrados}
-            prestamos={prestamos}
+            onVerHistorial={(clienteId) => {}}
+            onImprimirRecibo={(cobro) => {}}
           />
-          <ListaCobros
+          {/* Buscador de cobros */}
+          <BusquedaCobros busqueda={busqueda} onBusquedaChange={setBusqueda} />
+          {/* Tabla de cobros agrupados */}
+          <TablaCobros
             cobrosAgrupados={cobrosFiltrados}
             prestamos={prestamos}
           />

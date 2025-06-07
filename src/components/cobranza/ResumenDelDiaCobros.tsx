@@ -1,6 +1,5 @@
 import React from "react";
 import { Cobro, Prestamo } from "@/lib/firebase/database";
-import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 interface ResumenDelDiaCobrosProps {
   cobros: Cobro[];
@@ -16,47 +15,56 @@ export default function ResumenDelDiaCobros({
   // Cantidad de cobros realizados hoy
   const cantidadCobros = cobros.length;
 
-  // Calcular cuotas atrasadas y monto pendiente
+  // Calcular monto pendiente hoy (solo prestamos activos o atrasados)
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
-  let cuotasAtrasadas = 0;
   let montoPendiente = 0;
 
   prestamos.forEach((prestamo) => {
-    const atrasadas = calcularCuotasAtrasadas(prestamo, cobros);
-    cuotasAtrasadas += atrasadas;
     if (prestamo.estado === "activo" || prestamo.estado === "atrasado") {
-      montoPendiente += atrasadas * (prestamo.monto / prestamo.cuotas);
+      // Suponiendo que cada cuota es semanal y la fecha de inicio es fecha base
+      const fechaInicio = new Date(prestamo.fechaInicio);
+      for (let i = 0; i < prestamo.cuotas; i++) {
+        const fechaCuota = new Date(fechaInicio);
+        fechaCuota.setDate(fechaInicio.getDate() + i * 7);
+        if (fechaCuota.getTime() === hoy.getTime()) {
+          // ¿Ya se pagó esta cuota?
+          const cobrosPrestamo = cobros.filter(
+            (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+          );
+          if (cobrosPrestamo.length <= i) {
+            montoPendiente += prestamo.monto / prestamo.cuotas;
+          }
+        }
+      }
     }
   });
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-6'>
-      <div className='bg-green-50 p-4 rounded-lg text-center'>
-        <div className='text-sm text-green-800 font-medium'>
+    <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
+      <div className='bg-green-50 p-6 rounded-xl text-center shadow-sm flex flex-col items-center'>
+        <span className='text-sm text-green-800 font-medium mb-1'>
           Total cobrado hoy
-        </div>
-        <div className='text-2xl font-bold text-green-600'>
+        </span>
+        <span className='text-3xl font-extrabold text-green-600'>
           ${totalCobrado.toFixed(2)}
-        </div>
+        </span>
       </div>
-      <div className='bg-blue-50 p-4 rounded-lg text-center'>
-        <div className='text-sm text-blue-800 font-medium'>
+      <div className='bg-blue-50 p-6 rounded-xl text-center shadow-sm flex flex-col items-center'>
+        <span className='text-sm text-blue-800 font-medium mb-1'>
           Cobros realizados
-        </div>
-        <div className='text-2xl font-bold text-blue-600'>{cantidadCobros}</div>
+        </span>
+        <span className='text-3xl font-extrabold text-blue-600'>
+          {cantidadCobros}
+        </span>
       </div>
-      <div className='bg-yellow-50 p-4 rounded-lg text-center'>
-        <div className='text-sm text-yellow-800 font-medium'>
+      <div className='bg-yellow-50 p-6 rounded-xl text-center shadow-sm flex flex-col items-center'>
+        <span className='text-sm text-yellow-800 font-medium mb-1'>
           Monto pendiente hoy
-        </div>
-        <div className='text-2xl font-bold text-yellow-600'>
+        </span>
+        <span className='text-3xl font-extrabold text-yellow-600'>
           ${montoPendiente.toFixed(2)}
-        </div>
-      </div>
-      <div className='bg-red-50 p-4 rounded-lg text-center'>
-        <div className='text-sm text-red-800 font-medium'>Cuotas atrasadas</div>
-        <div className='text-2xl font-bold text-red-600'>{cuotasAtrasadas}</div>
+        </span>
       </div>
     </div>
   );
