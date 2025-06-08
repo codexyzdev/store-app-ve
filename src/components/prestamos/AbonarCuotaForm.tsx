@@ -178,13 +178,19 @@ const AbonarCuotaForm = ({
             <div>
               <h3 className='text-base font-semibold text-indigo-900'>
                 {numeroCuota && totalCuotas
-                  ? `Cuota ${numeroCuota} de ${totalCuotas}`
+                  ? `Próxima cuota: ${numeroCuota} de ${totalCuotas}`
                   : "Abono de Préstamo"}
               </h3>
               <p className='text-sm text-indigo-600'>
                 Valor por cuota:{" "}
                 <span className='font-bold'>${cuota.toFixed(2)}</span>
               </p>
+              {montoInput > 0 && getCuotasAPagar() > 1 && numeroCuota && (
+                <p className='text-xs text-indigo-500 mt-1'>
+                  💡 Pagará cuotas {numeroCuota} a{" "}
+                  {numeroCuota + getCuotasAPagar() - 1}
+                </p>
+              )}
             </div>
             <div className='text-right'>
               <div className='text-xl'>📊</div>

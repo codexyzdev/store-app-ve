@@ -116,80 +116,6 @@ export default function PrestamosClientePage() {
       .filter((c: Cobro) => c.prestamoId === prestamoId && c.tipo === "cuota")
       .sort((a: Cobro, b: Cobro) => b.fecha - a.fecha);
 
-  // Función para abonar cuota
-  const abonarCuota = async (prestamo: Prestamo) => {
-    if (prestamo.tipoVenta === "contado") {
-      alert("No se pueden abonar cuotas en una venta al contado.");
-      return;
-    }
-    setAbonando((prev: { [key: string]: boolean }) => ({
-      ...prev,
-      [prestamo.id]: true,
-    }));
-    setActualizando(true);
-    try {
-      const monto = montoAbono[prestamo.id];
-      if (!monto || isNaN(monto) || monto <= 0) {
-        alert("Por favor ingresa un monto válido");
-        setAbonando((prev: { [key: string]: boolean }) => ({
-          ...prev,
-          [prestamo.id]: false,
-        }));
-        setActualizando(false);
-        return;
-      }
-      await cobrosDB.crear({
-        prestamoId: prestamo.id,
-        monto: monto,
-        fecha: Date.now(),
-        tipo: "cuota",
-        numeroCuota: getCobrosPrestamo(prestamo.id).length + 1,
-      });
-      // Volver a obtener los cobros más recientes para este préstamo
-      const cobrosValidos: Cobro[] = getCobrosPrestamo(prestamo.id).filter(
-        (c: Cobro) => c.tipo === "cuota" && !!c.id && c.id !== "temp"
-      );
-      const abonos = cobrosValidos.reduce(
-        (acc: number, cobro: Cobro) =>
-          acc +
-          (typeof cobro.monto === "number" && !isNaN(cobro.monto)
-            ? cobro.monto
-            : 0),
-        0
-      );
-      const montoPendiente = Math.max(
-        0,
-        Number.isFinite(monto - abonos) ? monto - abonos : 0
-      );
-      const valorCuota =
-        Number.isFinite(monto / 15) && monto > 0 ? monto / 15 : 0.01;
-      const cuotasPendientes =
-        valorCuota > 0 ? Math.ceil(montoPendiente / valorCuota) : 0;
-      const nuevasCuotas =
-        montoPendiente <= 0 || cuotasPendientes <= 0 ? 0 : prestamo.cuotas - 1;
-      if (montoPendiente <= 0 || cuotasPendientes <= 0) {
-        await prestamosDB.actualizar(prestamo.id, {
-          estado: "completado",
-          cuotas: 0,
-        });
-      } else {
-        await prestamosDB.actualizar(prestamo.id, { cuotas: nuevasCuotas });
-      }
-      setMostrarFormularioAbono((prev: { [key: string]: boolean }) => ({
-        ...prev,
-        [prestamo.id]: false,
-      }));
-    } catch (e) {
-      alert("Error al abonar cuota");
-      setActualizando(false);
-    } finally {
-      setAbonando((prev: { [key: string]: boolean }) => ({
-        ...prev,
-        [prestamo.id]: false,
-      }));
-    }
-  };
-
   // Desactivar el loader cuando los préstamos cambian (la suscripción se actualiza)
   useEffect(() => {
     if (actualizando) {
@@ -292,12 +218,25 @@ export default function PrestamosClientePage() {
                   prestamo.tipoVenta === "contado"
                     ? 0
                     : valorCuota > 0
-                    ? Math.ceil(montoPendiente / valorCuota)
-                    : 0;
+                    ? Math.max(0, Math.ceil(montoPendiente / valorCuota))
+                    : prestamo.cuotas - cobrosValidos.length;
                 const cuotasAtrasadas = calcularCuotasAtrasadas(
                   prestamo,
                   getCobrosPrestamo(prestamo.id)
                 );
+
+                // Debug temporal
+                if (prestamo.tipoVenta === "cuotas") {
+                  console.log(`Préstamo ${prestamo.id}:`, {
+                    estado: prestamo.estado,
+                    montoPendiente,
+                    cuotasPendientes,
+                    valorCuota,
+                    cobrosCount: cobrosValidos.length,
+                    totalCuotas: prestamo.cuotas,
+                  });
+                }
+
                 const estadoPrincipal =
                   prestamo.tipoVenta === "contado" ? (
                     <span className='text-blue-700 font-bold text-lg flex items-center'>
@@ -404,38 +343,112 @@ export default function PrestamosClientePage() {
                                 return;
                               }
                             }
-                            // Obtener pagos válidos antes de crear el nuevo cobro
-                            const pagos: Cobro[] = cobrosValidos;
-                            await cobrosDB.crear({
-                              prestamoId: prestamo.id,
-                              monto: data.monto,
-                              fecha: (() => {
-                                if (data.fecha) {
-                                  const [yyyy, mm, dd] = data.fecha.split("-");
-                                  return new Date(
-                                    Number(yyyy),
-                                    Number(mm) - 1,
-                                    Number(dd),
-                                    0,
-                                    0,
-                                    0,
-                                    0
-                                  ).getTime();
-                                }
-                                return Date.now();
-                              })(),
-                              tipo: "cuota",
-                              comprobante: data.comprobante || "",
-                              tipoPago: data.tipoPago,
-                              imagenComprobante: data.imagenComprobante || "",
-                              numeroCuota: pagos.length + 1,
-                            });
-                            // ...el resto de tu lógica para actualizar cuotas, etc...
+
+                            // Calcular cuántas cuotas se están pagando
+                            const valorCuota = prestamo.monto / prestamo.cuotas;
+                            const cuotasAPagar = Math.floor(
+                              data.monto / valorCuota
+                            );
+
+                            // Obtener cobros existentes para saber el número de la próxima cuota
+                            const cobrosExistentes = getCobrosPrestamo(
+                              prestamo.id
+                            ).filter(
+                              (c: Cobro) =>
+                                c.tipo === "cuota" && !!c.id && c.id !== "temp"
+                            );
+
+                            // Crear un cobro por cada cuota pagada
+                            for (let i = 0; i < cuotasAPagar; i++) {
+                              await cobrosDB.crear({
+                                prestamoId: prestamo.id,
+                                monto: valorCuota,
+                                fecha: (() => {
+                                  if (data.fecha) {
+                                    const [yyyy, mm, dd] =
+                                      data.fecha.split("-");
+                                    return new Date(
+                                      Number(yyyy),
+                                      Number(mm) - 1,
+                                      Number(dd),
+                                      0,
+                                      0,
+                                      0,
+                                      0
+                                    ).getTime();
+                                  }
+                                  return Date.now();
+                                })(),
+                                tipo: "cuota",
+                                comprobante: data.comprobante || "",
+                                tipoPago: data.tipoPago,
+                                imagenComprobante: data.imagenComprobante || "",
+                                numeroCuota: cobrosExistentes.length + i + 1,
+                              });
+                            }
+
+                            // Recalcular el estado del préstamo
+                            const todosCobros = [...cobrosExistentes];
+                            // Simular los nuevos cobros para el cálculo
+                            for (let i = 0; i < cuotasAPagar; i++) {
+                              todosCobros.push({
+                                id: `temp-${i}`,
+                                prestamoId: prestamo.id,
+                                monto: valorCuota,
+                                fecha: Date.now(),
+                                tipo: "cuota",
+                                numeroCuota: cobrosExistentes.length + i + 1,
+                              } as Cobro);
+                            }
+
+                            const totalAbonado = todosCobros.reduce(
+                              (acc: number, cobro: Cobro) => acc + cobro.monto,
+                              0
+                            );
+                            const montoPendiente = Math.max(
+                              0,
+                              prestamo.monto - totalAbonado
+                            );
+                            const cuotasPendientes = Math.ceil(
+                              montoPendiente / valorCuota
+                            );
+
+                            // Actualizar el estado del préstamo
+                            if (montoPendiente <= 0 || cuotasPendientes <= 0) {
+                              await prestamosDB.actualizar(prestamo.id, {
+                                estado: "completado",
+                              });
+                            } else {
+                              // Mantener el estado actual si aún hay cuotas pendientes
+                              // Solo cambiar si es necesario actualizar las cuotas atrasadas
+                              const cuotasAtrasadas = calcularCuotasAtrasadas(
+                                prestamo,
+                                todosCobros
+                              );
+                              if (
+                                cuotasAtrasadas > 0 &&
+                                prestamo.estado !== "atrasado"
+                              ) {
+                                await prestamosDB.actualizar(prestamo.id, {
+                                  estado: "atrasado",
+                                });
+                              } else if (
+                                cuotasAtrasadas === 0 &&
+                                prestamo.estado === "atrasado"
+                              ) {
+                                await prestamosDB.actualizar(prestamo.id, {
+                                  estado: "activo",
+                                });
+                              }
+                              // Si no hay cambios necesarios en el estado, no actualizar nada
+                            }
+
                             setMostrarFormularioAbono((prev) => ({
                               ...prev,
                               [prestamo.id]: false,
                             }));
                           } catch (e) {
+                            console.error("Error al abonar cuota:", e);
                             alert("Error al abonar cuota");
                             setActualizando(false);
                           } finally {

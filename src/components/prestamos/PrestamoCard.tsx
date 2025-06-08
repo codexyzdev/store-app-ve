@@ -108,7 +108,7 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
 
       {/* Botón de abonar cuota solo para cuotas activas y si hay monto pendiente */}
       {prestamo.tipoVenta === "cuotas" &&
-        prestamo.estado === "activo" &&
+        (prestamo.estado === "activo" || prestamo.estado === "atrasado") &&
         montoPendiente > 0 &&
         cuotasPendientes > 0 && (
           <div className='mt-2'>
