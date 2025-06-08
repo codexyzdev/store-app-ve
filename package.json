@@ -1,13 +1,35 @@
 {
   "name": "store-app-ve",
   "version": "0.1.0",
+  "description": "Sistema de Gestión Financiera y Comercial - Aplicación para el manejo de préstamos, inventario, clientes y cobranza",
   "private": true,
+  "license": "PROPRIETARY",
+  "author": {
+    "name": "Alejandro Baez",
+    "email": "alejandrobaez938@gmail.com"
+  },
+  "homepage": "https://storeappve.com",
+  "repository": {
+    "type": "git",
+    "url": "private"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
+  "keywords": [
+    "gestión financiera",
+    "préstamos",
+    "inventario",
+    "cobranza",
+    "clientes",
+    "next.js",
+    "react",
+    "typescript",
+    "firebase"
+  ],
   "dependencies": {
     "@clerk/localizations": "^3.16.1",
     "@clerk/types": "^4.59.3",

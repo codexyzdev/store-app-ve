@@ -42,3 +42,37 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Archivos adicionales de seguridad para aplicación privada
+*.key
+*.keystore
+*.p12
+*.cert
+*.crt
+*.csr
+*.pem
+*.der
+
+# Backups y archivos temporales
+*.backup
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Archivos de configuración sensibles
+config/production.json
+config/secrets.json
+firebase-adminsdk-*.json
+service-account-*.json
+
+# Logs detallados
+logs/
+*.log
+
+# Archivos de IDE que pueden contener configuración
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
