@@ -4,21 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 import {
-  clientesDB,
-  Cliente,
   prestamosDB,
   Prestamo,
-  cobrosDB,
-  Cobro,
+  clientesDB,
+  Cliente,
   inventarioDB,
   Producto,
+  cobrosDB,
+  Cobro,
 } from "@/lib/firebase/database";
-
-import ClienteCard from "@/components/prestamos/ClienteCard";
-import ResumenGlobal from "@/components/prestamos/ResumenGlobal";
+import Modal from "@/components/Modal";
 import PrestamoCard from "@/components/prestamos/PrestamoCard";
 import CuadriculaCuotas from "@/components/prestamos/CuadriculaCuotas";
+import PlanPagosPrint from "@/components/prestamos/PlanPagosPrint";
 import { calcularCuotasAtrasadas } from "@/utils/prestamos";
+import ClienteCard from "@/components/prestamos/ClienteCard";
+import ResumenGlobal from "@/components/prestamos/ResumenGlobal";
 
 // Componente para mostrar tooltips simples
 type TooltipProps = { text: string };
@@ -45,6 +46,9 @@ export default function PrestamosClientePage() {
   }>({});
   const [montoAbono, setMontoAbono] = useState<{ [key: string]: number }>({});
   const [mostrarPlanPago, setMostrarPlanPago] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [mostrarImpresion, setMostrarImpresion] = useState<{
     [key: string]: boolean;
   }>({});
   const [totalPendiente, setTotalPendiente] = useState(0);
@@ -138,6 +142,17 @@ export default function PrestamosClientePage() {
     }
   };
 
+  const getProductosNombres = (prestamo: Prestamo) => {
+    const productosDelPrestamo = getProductosPrestamo(prestamo);
+    if (productosDelPrestamo.length === 1) {
+      return productosDelPrestamo[0].nombre;
+    } else {
+      return `${productosDelPrestamo.length} productos: ${productosDelPrestamo
+        .map((p) => p.nombre)
+        .join(", ")}`;
+    }
+  };
+
   const getCobrosPrestamo = (prestamoId: string) =>
     cobros
       .filter((c: Cobro) => c.prestamoId === prestamoId && c.tipo === "cuota")
@@ -149,6 +164,33 @@ export default function PrestamosClientePage() {
       setActualizando(false);
     }
   }, [prestamos, cobros]);
+
+  const imprimirPlanPagos = (prestamoId: string) => {
+    setMostrarImpresion((prev) => ({
+      ...prev,
+      [prestamoId]: true,
+    }));
+
+    // Esperar un poco para que se renderice la modal y luego imprimir
+    setTimeout(() => {
+      // Configurar la página para impresión
+      const originalTitle = document.title;
+      document.title = `Plan de Pagos - ${cliente?.nombre || "Cliente"}`;
+
+      // Imprimir
+      window.print();
+
+      // Restaurar el título original
+      document.title = originalTitle;
+    }, 500);
+  };
+
+  const cerrarImpresion = (prestamoId: string) => {
+    setMostrarImpresion((prev) => ({
+      ...prev,
+      [prestamoId]: false,
+    }));
+  };
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -493,37 +535,60 @@ export default function PrestamosClientePage() {
                     </div>
                     {prestamo.tipoVenta === "cuotas" && (
                       <div className='flex-1 flex flex-col'>
-                        <button
-                          onClick={() =>
-                            setMostrarPlanPago((prev) => ({
-                              ...prev,
-                              [prestamo.id]: !prev[prestamo.id],
-                            }))
-                          }
-                          className='w-full flex items-center justify-between px-4 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors duration-200 mb-2'
-                        >
-                          <span className='font-medium text-indigo-700'>
-                            {mostrarPlanPago[prestamo.id]
-                              ? "Ocultar"
-                              : "Mostrar"}{" "}
-                            Plan de Pago
-                          </span>
-                          <svg
-                            className={`w-5 h-5 text-indigo-600 transform transition-transform duration-200 ${
-                              mostrarPlanPago[prestamo.id] ? "rotate-180" : ""
-                            }`}
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
+                        <div className='flex gap-2 mb-2'>
+                          <button
+                            onClick={() =>
+                              setMostrarPlanPago((prev) => ({
+                                ...prev,
+                                [prestamo.id]: !prev[prestamo.id],
+                              }))
+                            }
+                            className='flex-1 flex items-center justify-between px-4 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors duration-200'
                           >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth={2}
-                              d='M19 9l-7 7-7-7'
-                            />
-                          </svg>
-                        </button>
+                            <span className='font-medium text-indigo-700'>
+                              {mostrarPlanPago[prestamo.id]
+                                ? "Ocultar"
+                                : "Mostrar"}{" "}
+                              Plan de Pago
+                            </span>
+                            <svg
+                              className={`w-5 h-5 text-indigo-600 transform transition-transform duration-200 ${
+                                mostrarPlanPago[prestamo.id] ? "rotate-180" : ""
+                              }`}
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M19 9l-7 7-7-7'
+                              />
+                            </svg>
+                          </button>
+
+                          <button
+                            onClick={() => imprimirPlanPagos(prestamo.id)}
+                            className='px-4 py-2 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200 text-green-700 font-medium flex items-center gap-2'
+                            title='Imprimir Plan de Pagos'
+                          >
+                            <svg
+                              className='w-5 h-5'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z'
+                              />
+                            </svg>
+                            <span className='hidden sm:inline'>Imprimir</span>
+                          </button>
+                        </div>
                         {mostrarPlanPago[prestamo.id] && (
                           <div className='bg-gray-50 rounded-xl p-4 shadow-sm transform transition-all duration-300'>
                             <CuadriculaCuotas
@@ -542,6 +607,93 @@ export default function PrestamosClientePage() {
           )}
         </div>
       </div>
+
+      {/* Modales de impresión para cada préstamo */}
+      {prestamos.map((prestamo: Prestamo) => (
+        <Modal
+          key={`print-${prestamo.id}`}
+          isOpen={!!mostrarImpresion[prestamo.id]}
+          onClose={() => cerrarImpresion(prestamo.id)}
+          title={`Imprimir Plan de Pagos - ${cliente?.nombre || "Cliente"}`}
+        >
+          <div className='print-container'>
+            <div className='no-print mb-4 text-center'>
+              <p className='text-gray-600 mb-3'>
+                Haz clic en "Imprimir" o usa Ctrl+P para imprimir este plan de
+                pagos.
+              </p>
+              <div className='flex gap-2 justify-center'>
+                <button
+                  onClick={() => window.print()}
+                  className='px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2'
+                >
+                  <svg
+                    className='w-4 h-4'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z'
+                    />
+                  </svg>
+                  Imprimir
+                </button>
+                <button
+                  onClick={() => cerrarImpresion(prestamo.id)}
+                  className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+
+            {cliente && (
+              <PlanPagosPrint
+                prestamo={prestamo}
+                cliente={cliente}
+                cobros={getCobrosPrestamo(prestamo.id)}
+                valorCuota={prestamo.monto / prestamo.cuotas}
+                productosNombres={getProductosNombres(prestamo)}
+              />
+            )}
+          </div>
+        </Modal>
+      ))}
+
+      {/* Estilos globales para impresión */}
+      <style jsx global>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+
+          .print-container {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* Ocultar elementos del modal en impresión */
+          .fixed.inset-0 > div:first-child {
+            display: none !important;
+          }
+
+          /* Mostrar solo el contenido del plan */
+          .fixed.inset-0 .plan-pagos-print {
+            position: static !important;
+            transform: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            padding: 20px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
