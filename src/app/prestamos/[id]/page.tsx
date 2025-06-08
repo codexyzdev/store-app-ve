@@ -285,8 +285,10 @@ export default function PrestamosClientePage(props: {
                 const valorCuota =
                   prestamo.tipoVenta === "contado"
                     ? 0
-                    : Number.isFinite(montoTotal / 15) && montoTotal > 0
-                    ? montoTotal / 15
+                    : Number.isFinite(montoTotal / prestamo.cuotas) &&
+                      montoTotal > 0 &&
+                      prestamo.cuotas > 0
+                    ? montoTotal / prestamo.cuotas
                     : 0.01;
                 const cuotasPendientes =
                   prestamo.tipoVenta === "contado"

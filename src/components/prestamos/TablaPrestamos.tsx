@@ -25,29 +25,29 @@ export default function TablaPrestamos({
   getUltimaCuota,
 }: TablaPrestamosProps) {
   return (
-    <div className='bg-white shadow rounded-lg overflow-x-auto hidden md:block'>
+    <div className='bg-white shadow rounded-lg overflow-x-auto hidden lg:block'>
       <table className='min-w-full divide-y divide-gray-200'>
         <thead className='bg-gray-50'>
           <tr>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Cliente
             </th>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Total Préstamos
             </th>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Préstamos Activos
             </th>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Total Pendiente
             </th>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Último Pago
             </th>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Próximo Pago
             </th>
-            <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+            <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Estado
             </th>
           </tr>
@@ -106,21 +106,27 @@ export default function TablaPrestamos({
                     (window.location.href = `/prestamos/${grupo.clienteId}`)
                   }
                 >
-                  <td className='px-4 py-3'>
+                  <td className='px-4 py-4'>
                     <ResumenCliente
                       nombre={grupo.nombre}
                       cedula={grupo.cedula}
                     />
                   </td>
-                  <td className='px-4 py-3'>{grupo.prestamos.length}</td>
-                  <td className='px-4 py-3'>{prestamosActivos.length}</td>
-                  <td className='px-4 py-3'>${totalPendiente.toFixed(2)}</td>
-                  <td className='px-4 py-3'>
+                  <td className='px-4 py-4 text-sm text-gray-900'>
+                    {grupo.prestamos.length}
+                  </td>
+                  <td className='px-4 py-4 text-sm text-gray-900'>
+                    {prestamosActivos.length}
+                  </td>
+                  <td className='px-4 py-4 text-sm font-semibold text-blue-600'>
+                    ${totalPendiente.toFixed(2)}
+                  </td>
+                  <td className='px-4 py-4 text-sm text-gray-900'>
                     {ultimoPago
                       ? new Date(ultimoPago.fecha).toLocaleDateString()
                       : "Sin pagos"}
                   </td>
-                  <td className='px-4 py-3'>
+                  <td className='px-4 py-4 text-sm text-gray-900'>
                     {(() => {
                       const prestamosPendientesOrdenados = [
                         ...prestamosPendientes,
@@ -148,7 +154,7 @@ export default function TablaPrestamos({
                       return proximaFecha.toLocaleDateString();
                     })()}
                   </td>
-                  <td className='px-4 py-3'>
+                  <td className='px-4 py-4 text-sm'>
                     <EstadoPrestamo
                       totalCuotasVencidas={totalCuotasVencidas}
                       tienePrestamosActivos={prestamosActivos.length > 0}

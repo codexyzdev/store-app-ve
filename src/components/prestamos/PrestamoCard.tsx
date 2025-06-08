@@ -43,7 +43,7 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
   const [mostrarModalAbono, setMostrarModalAbono] = useState(false);
 
   return (
-    <div className='p-6 bg-white rounded-2xl shadow border border-gray-200 flex flex-col gap-4 min-h-[220px]'>
+    <div className='p-4 sm:p-6 bg-white rounded-2xl shadow-md border border-gray-200 flex flex-col gap-4 min-h-[220px]'>
       <div className='flex flex-wrap gap-2 items-center mb-2'>
         {estadoPrincipal}
         <span
@@ -61,25 +61,34 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
           Tipo: {prestamo.tipoVenta === "contado" ? "Contado" : "Cuotas"}
         </span>
       </div>
-      <div className='flex items-center gap-2 text-gray-700'>
-        <span className='font-semibold'>📦 Producto:</span>
-        <span className='text-gray-900'>{producto?.nombre || "-"}</span>
+
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
+        <div className='flex items-center gap-2 text-gray-700'>
+          <span className='font-semibold'>📦 Producto:</span>
+          <span className='text-gray-900'>{producto?.nombre || "-"}</span>
+        </div>
+        <div className='flex items-center gap-2 text-gray-700'>
+          <span className='font-semibold'>💵 Monto total:</span>
+          <span className='text-gray-900 font-semibold'>
+            ${montoTotal.toFixed(2)}
+          </span>
+        </div>
       </div>
-      <div className='flex items-center gap-2 text-gray-700'>
-        <span className='font-semibold'>💵 Monto total:</span>
-        <span className='text-gray-900'>${montoTotal.toFixed(2)}</span>
-      </div>
+
       <div className='flex items-center gap-2 text-gray-700'>
         <span className='font-semibold'>📅 Inicio:</span>
         <span className='text-gray-900'>
           {new Date(prestamo.fechaInicio).toLocaleDateString()}
         </span>
       </div>
+
       {prestamo.tipoVenta === "cuotas" && (
-        <>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-3'>
           <div className='flex items-center gap-2 text-gray-700'>
             <span className='font-semibold'>⏳ Monto pendiente:</span>
-            <span className='text-gray-900'>${montoPendiente.toFixed(2)}</span>
+            <span className='text-blue-600 font-bold'>
+              ${montoPendiente.toFixed(2)}
+            </span>
             <Tooltip text='Lo que falta por pagar de este préstamo.' />
           </div>
           <div className='flex items-center gap-2 text-gray-700'>
@@ -87,25 +96,28 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
             <span className='text-red-700 font-bold'>{cuotasAtrasadas}</span>
             <Tooltip text='Cuotas vencidas y no pagadas de este préstamo.' />
           </div>
-          <div className='flex items-center gap-2 text-gray-700'>
+          <div className='flex items-center gap-2 text-gray-700 sm:col-span-2'>
             <span className='font-semibold'>📋 Cuotas pendientes:</span>
-            <span className='text-gray-900'>{cuotasPendientes}</span>
+            <span className='text-gray-900 font-semibold'>
+              {cuotasPendientes}
+            </span>
             <Tooltip text='Cuotas que faltan por pagar para completar el préstamo.' />
           </div>
-        </>
+        </div>
       )}
+
       {/* Botón de abonar cuota solo para cuotas activas y si hay monto pendiente */}
       {prestamo.tipoVenta === "cuotas" &&
         prestamo.estado === "activo" &&
         montoPendiente > 0 &&
         cuotasPendientes > 0 && (
-          <>
+          <div className='mt-2'>
             <button
-              className='mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-fit text-base'
+              className='w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed text-base font-semibold'
               onClick={() => setMostrarModalAbono(true)}
               disabled={abonando}
             >
-              Abonar cuota
+              {abonando ? "Procesando..." : "Abonar cuota"}
             </button>
             <AbonarCuotaForm
               isOpen={mostrarModalAbono}
@@ -122,23 +134,25 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
               numeroCuota={pagos.length + 1}
               totalCuotas={prestamo.cuotas}
             />
-          </>
+          </div>
         )}
+
       {/* Mostrar estado pagado si el préstamo está completado o no hay monto/cuotas pendientes */}
       {prestamo.tipoVenta === "cuotas" &&
         (prestamo.estado === "completado" ||
           montoPendiente === 0 ||
           cuotasPendientes === 0) && (
-          <div className='mt-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-center w-full sm:w-fit'>
+          <div className='mt-2 w-full sm:w-auto px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-center'>
             ✅ Préstamo pagado
           </div>
         )}
+
       {/* Botón para mostrar/ocultar historial de pagos */}
       {prestamo.tipoVenta === "cuotas" && (
-        <div className='mt-2'>
+        <div className='mt-2 border-t border-gray-100 pt-3'>
           <button
             type='button'
-            className='text-indigo-600 font-semibold hover:underline focus:outline-none mb-2'
+            className='text-indigo-600 font-semibold hover:underline focus:outline-none mb-2 text-sm'
             onClick={() => setMostrarHistorial((v: boolean) => !v)}
           >
             {mostrarHistorial
