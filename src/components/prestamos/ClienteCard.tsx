@@ -7,6 +7,9 @@ import {
   Box,
   Stack,
 } from "@mui/material";
+import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
+import Minimapa from "@/components/maps/Minimapa";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 export interface ClienteCardProps {
   nombre: string;
@@ -23,95 +26,177 @@ const ClienteCard: React.FC<ClienteCardProps> = ({
   cedula,
   fotoCedulaUrl,
 }) => {
+  const esEnlaceMaps = esEnlaceGoogleMaps(direccion);
+  const coordenadas = esEnlaceMaps ? extraerCoordenadas(direccion) : null;
+
+  const abrirEnGoogleMaps = () => {
+    if (esEnlaceMaps) {
+      window.open(direccion, "_blank");
+    }
+  };
+
   return (
     <Card sx={{ mb: 4, p: 3 }}>
       <CardContent>
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: "center",
-            gap: 3,
+            flexDirection: { xs: "column", lg: "row" },
+            alignItems: { xs: "center", lg: "flex-start" },
+            gap: 4,
           }}
         >
-          <Avatar
-            src={fotoCedulaUrl}
-            alt='Foto de cédula'
+          {/* Sección izquierda - Información del cliente */}
+          <Box
             sx={{
-              width: 80,
-              height: 80,
-              bgcolor: "primary.light",
-              color: "primary.main",
-              fontSize: "2rem",
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              alignItems: "center",
+              gap: 3,
+              flex: 1,
+              width: { xs: "100%", lg: "auto" },
             }}
           >
-            {!fotoCedulaUrl && nombre[0]?.toUpperCase()}
-          </Avatar>
-
-          <Stack spacing={1} sx={{ flex: 1 }}>
-            <Typography
-              variant='h5'
-              component='div'
-              color='primary.dark'
-              sx={{ fontWeight: "bold", textTransform: "capitalize" }}
-            >
-              {nombre}
-            </Typography>
-
-            <Box
+            <Avatar
+              src={fotoCedulaUrl}
+              alt='Foto de cédula'
               sx={{
-                display: "flex",
-                alignItems: "center",
-                color: "text.secondary",
+                width: { xs: 80, md: 100 },
+                height: { xs: 80, md: 100 },
+                bgcolor: "primary.light",
+                color: "primary.main",
+                fontSize: "2rem",
               }}
             >
-              <Typography component='span' sx={{ mr: 1 }}>
-                📞
-              </Typography>
-              <Typography component='span' sx={{ fontWeight: "medium", mr: 1 }}>
-                Teléfono:
-              </Typography>
-              <Typography>{telefono}</Typography>
-            </Box>
+              {!fotoCedulaUrl && nombre[0]?.toUpperCase()}
+            </Avatar>
 
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                color: "text.secondary",
-              }}
-            >
-              <Typography component='span' sx={{ mr: 1 }}>
-                🏠
+            <Stack spacing={2} sx={{ flex: 1, width: "100%" }}>
+              <Typography
+                variant='h5'
+                component='div'
+                color='primary.dark'
+                sx={{
+                  fontWeight: "bold",
+                  textTransform: "capitalize",
+                  textAlign: { xs: "center", md: "left" },
+                }}
+              >
+                {nombre}
               </Typography>
-              <Typography component='span' sx={{ fontWeight: "medium", mr: 1 }}>
-                Dirección:
-              </Typography>
-              <Typography>{direccion}</Typography>
-            </Box>
 
-            {cedula && (
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   color: "text.secondary",
+                  justifyContent: { xs: "center", md: "flex-start" },
                 }}
               >
                 <Typography component='span' sx={{ mr: 1 }}>
-                  🪪
+                  📞
                 </Typography>
                 <Typography
                   component='span'
                   sx={{ fontWeight: "medium", mr: 1 }}
                 >
-                  Cédula:
+                  Teléfono:
                 </Typography>
-                <Typography>{cedula}</Typography>
+                <Typography>{telefono}</Typography>
               </Box>
-            )}
-          </Stack>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "text.secondary",
+                  justifyContent: { xs: "center", md: "flex-start" },
+                }}
+              >
+                <Typography component='span' sx={{ mr: 1 }}>
+                  🏠
+                </Typography>
+                <Typography
+                  component='span'
+                  sx={{ fontWeight: "medium", mr: 1 }}
+                >
+                  Dirección:
+                </Typography>
+                {esEnlaceMaps ? (
+                  <button
+                    onClick={abrirEnGoogleMaps}
+                    className='flex items-center gap-1 text-blue-600 hover:text-blue-700 underline transition-colors'
+                  >
+                    <span>Ver ubicación</span>
+                    <ArrowTopRightOnSquareIcon className='w-4 h-4' />
+                  </button>
+                ) : (
+                  <Typography sx={{ wordBreak: "break-word" }}>
+                    {direccion}
+                  </Typography>
+                )}
+              </Box>
+
+              {cedula && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "text.secondary",
+                    justifyContent: { xs: "center", md: "flex-start" },
+                  }}
+                >
+                  <Typography component='span' sx={{ mr: 1 }}>
+                    🪪
+                  </Typography>
+                  <Typography
+                    component='span'
+                    sx={{ fontWeight: "medium", mr: 1 }}
+                  >
+                    Cédula:
+                  </Typography>
+                  <Typography>{cedula}</Typography>
+                </Box>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Sección derecha - Minimapa (solo en desktop y si hay coordenadas) */}
+          {coordenadas && (
+            <Box
+              sx={{
+                display: { xs: "none", lg: "block" },
+                width: "350px",
+                height: "250px",
+                flexShrink: 0,
+              }}
+            >
+              <Minimapa
+                coordenadas={coordenadas}
+                direccionOriginal={direccion}
+                className='w-full h-full'
+              />
+            </Box>
+          )}
         </Box>
+
+        {/* Minimapa para móvil (solo si hay coordenadas y está en móvil) */}
+        {coordenadas && (
+          <Box
+            sx={{
+              display: { xs: "block", lg: "none" },
+              mt: 3,
+              width: "100%",
+              height: "200px",
+            }}
+          >
+            <Minimapa
+              coordenadas={coordenadas}
+              direccionOriginal={direccion}
+              className='w-full h-full'
+            />
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 
 import {
   clientesDB,
@@ -28,12 +28,10 @@ const Tooltip: React.FC<TooltipProps> = ({ text }: TooltipProps) => (
   </span>
 );
 
-export default function PrestamosClientePage(props: {
-  params: Promise<{ id: string }>;
-}) {
+export default function PrestamosClientePage() {
   const router = useRouter();
-  const params = use(props.params);
-  const clienteId = params.id;
+  const params = useParams();
+  const clienteId = params.id as string;
 
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
