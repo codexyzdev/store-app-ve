@@ -6,15 +6,14 @@ import {
   CalendarDaysIcon,
   ExclamationCircleIcon,
   UsersIcon,
-  UserPlusIcon,
   ListBulletIcon,
-  PlusCircleIcon,
   ArchiveBoxIcon,
   ChartBarIcon,
   Bars3Icon,
   FolderIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -26,24 +25,50 @@ export default function Header() {
     setIsSidebarOpen(false);
   };
 
+  // Cerrar sidebar al presionar Escape
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    if (isSidebarOpen) {
+      document.addEventListener("keydown", handleEscape);
+      // Prevenir scroll del body cuando el sidebar está abierto
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isSidebarOpen]);
+
   return (
     <>
-      <header className='flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md'>
+      <header className='sticky top-0 z-40 flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-lg'>
         <div className='flex items-center gap-4'>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className='p-2 hover:bg-white/10 rounded-lg transition-colors'
+            className='p-2 hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/20'
+            aria-label='Abrir menú de navegación'
           >
             <Bars3Icon className='w-6 h-6' />
           </button>
-          <h1 className='text-2xl font-bold tracking-tight'>Store App Ve</h1>
+          <h1 className='text-lg sm:text-2xl font-bold tracking-tight truncate'>
+            Store App Ve
+          </h1>
           <HeaderBackButton />
         </div>
         <SignedIn>
           <UserButton
             appearance={{
               elements: {
-                userButtonAvatarBox: "w-10 h-10 border-2 border-white",
+                userButtonAvatarBox:
+                  "w-10 h-10 border-2 border-white shadow-md",
               },
             }}
           />
@@ -54,56 +79,89 @@ export default function Header() {
       <div
         className={`fixed inset-y-0 left-0 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-80 bg-white border-r shadow-xl transition-transform duration-300 ease-in-out z-50`}
+        } w-80 max-w-[85vw] bg-white border-r shadow-2xl transition-transform duration-300 ease-in-out z-50`}
       >
-        <div className='p-6'>
-          <h2 className='text-xl font-bold mb-8 text-gray-800'>Navegación</h2>
+        {/* Header del Sidebar */}
+        <div className='flex items-center justify-between p-6 border-b bg-gray-50'>
+          <h2 className='text-xl font-bold text-gray-800'>Navegación</h2>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className='p-2 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            aria-label='Cerrar menú'
+          >
+            <XMarkIcon className='w-5 h-5 text-gray-600' />
+          </button>
+        </div>
+
+        {/* Contenido del Sidebar */}
+        <div className='p-6 h-full overflow-y-auto'>
           <nav className='flex flex-col gap-3'>
             <button
               onClick={() => navigateTo("/dashboard")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <FolderIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Inicio</span>
             </button>
+
+            {/* Separador */}
+            <div className='border-t border-gray-200 my-2'></div>
+            <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
+              Cobranza
+            </div>
+
             <button
               onClick={() => navigateTo("/cobranza/cobros-del-dia")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <CalendarDaysIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Cobros del día</span>
             </button>
             <button
               onClick={() => navigateTo("/cobranza/cuotas-atrasadas")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <ExclamationCircleIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Cuotas atrasadas</span>
             </button>
+
+            {/* Separador */}
+            <div className='border-t border-gray-200 my-2'></div>
+            <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
+              Gestión
+            </div>
+
             <button
               onClick={() => navigateTo("/clientes")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <UsersIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Clientes</span>
             </button>
             <button
               onClick={() => navigateTo("/prestamos")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <ListBulletIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Préstamos</span>
             </button>
+
+            {/* Separador */}
+            <div className='border-t border-gray-200 my-2'></div>
+            <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
+              Inventario y Análisis
+            </div>
+
             <button
               onClick={() => navigateTo("/inventario")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <ArchiveBoxIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Inventario</span>
             </button>
             <button
               onClick={() => navigateTo("/estadisticas")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
             >
               <ChartBarIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
               <span className='font-medium text-sm'>Estadísticas</span>
@@ -115,8 +173,9 @@ export default function Header() {
       {/* Overlay */}
       {isSidebarOpen && (
         <div
-          className='fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300'
+          className='fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300'
           onClick={() => setIsSidebarOpen(false)}
+          aria-hidden='true'
         />
       )}
     </>

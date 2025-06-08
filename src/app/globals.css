@@ -4,3 +4,35 @@ body {
   min-height: 100vh;
   font-family: "Roboto Variable", sans-serif;
 }
+
+/* Prevenir scroll horizontal no deseado */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Mejorar el comportamiento de truncate en navegadores webkit */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mejorar el comportamiento de elementos que pueden desbordar */
+* {
+  box-sizing: border-box;
+}
+
+/* Asegurar que los elementos flex no crezcan más allá del contenedor padre */
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* Mejorar la experiencia táctil en dispositivos móviles */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
