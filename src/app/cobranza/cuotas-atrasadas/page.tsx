@@ -12,7 +12,7 @@ import {
   Cobro,
 } from "@/lib/firebase/database";
 import Link from "next/link";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { calcularCuotasAtrasadas } from "@/utils/prestamos";
 
 export default function CuotasAtrasadasPage() {
@@ -55,10 +55,17 @@ export default function CuotasAtrasadasPage() {
     const cliente = clientes.find((c) => c.id === id);
     return cliente ? cliente.nombre : "-";
   };
+
+  const getClienteTelefono = (id: string) => {
+    const cliente = clientes.find((c) => c.id === id);
+    return cliente ? cliente.telefono : "";
+  };
+
   const getProductoNombre = (id: string) => {
     const producto = productos.find((p) => p.id === id);
     return producto ? producto.nombre : "-";
   };
+
   const getUltimaCuota = (prestamoId: string) => {
     const cobrosPrestamo = cobros
       .filter((c) => c.prestamoId === prestamoId && c.tipo === "cuota")
@@ -66,8 +73,34 @@ export default function CuotasAtrasadasPage() {
     return cobrosPrestamo[0] || null;
   };
 
+  const formatearTelefono = (telefono: string) => {
+    // Limpiar el número y formatear para WhatsApp
+    const numeroLimpio = telefono.replace(/\D/g, "");
+    return numeroLimpio.startsWith("58") ? numeroLimpio : `58${numeroLimpio}`;
+  };
+
+  const generarMensajeWhatsApp = (
+    nombreCliente: string,
+    cuotasAtrasadas: number,
+    montoAtrasado: number
+  ) => {
+    return encodeURIComponent(
+      `Hola ${nombreCliente}, espero que te encuentres bien. 
+
+Te escribo desde Store App Ve para recordarte que tienes ${cuotasAtrasadas} cuota${
+        cuotasAtrasadas > 1 ? "s" : ""
+      } atrasada${
+        cuotasAtrasadas > 1 ? "s" : ""
+      } por un monto de $${montoAtrasado.toFixed(2)}.
+
+¿Podrías ponerte al día con los pagos? Estoy aquí para ayudarte con cualquier duda.
+
+Gracias por tu atención.`
+    );
+  };
+
   return (
-    <div className='p-4 max-w-5xl mx-auto'>
+    <div className='p-4 max-w-7xl mx-auto'>
       <h1 className='text-2xl font-bold mb-6'>Cuotas Atrasadas</h1>
 
       {/* Resumen global */}
@@ -75,10 +108,9 @@ export default function CuotasAtrasadasPage() {
         <div className='flex-1 min-w-[220px] bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col items-center shadow'>
           <span className='text-xs text-blue-700 font-semibold flex items-center gap-1'>
             Monto atrasado total
-            <InformationCircleIcon
-              className='w-4 h-4'
-              title='Suma de todas las cuotas atrasadas'
-            />
+            <span title='Suma de todas las cuotas atrasadas'>
+              <ExclamationCircleIcon className='w-4 h-4' />
+            </span>
           </span>
           <span className='text-2xl font-bold text-blue-700 mt-1'>
             ${totalMontoAtrasado.toFixed(2)}
@@ -87,10 +119,9 @@ export default function CuotasAtrasadasPage() {
         <div className='flex-1 min-w-[220px] bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col items-center shadow'>
           <span className='text-xs text-red-700 font-semibold flex items-center gap-1'>
             Cuotas atrasadas totales
-            <InformationCircleIcon
-              className='w-4 h-4'
-              title='Cantidad total de cuotas atrasadas'
-            />
+            <span title='Cantidad total de cuotas atrasadas'>
+              <ExclamationCircleIcon className='w-4 h-4' />
+            </span>
           </span>
           <span className='text-2xl font-bold text-red-700 mt-1'>
             {totalCuotasAtrasadas}
@@ -105,7 +136,7 @@ export default function CuotasAtrasadasPage() {
       ) : (
         <>
           {/* Tabla para escritorio */}
-          <div className='bg-white shadow rounded-lg overflow-x-auto hidden md:block'>
+          <div className='bg-white shadow rounded-lg overflow-x-auto hidden lg:block'>
             <table className='min-w-full divide-y divide-gray-200'>
               <thead className='bg-gray-50'>
                 <tr>
@@ -127,7 +158,7 @@ export default function CuotasAtrasadasPage() {
                   >
                     Cuotas atrasadas
                     <span title='Cantidad de cuotas vencidas'>
-                      <InformationCircleIcon className='inline w-4 h-4 ml-1 text-gray-400' />
+                      <ExclamationCircleIcon className='inline w-4 h-4 ml-1 text-gray-400' />
                     </span>
                   </th>
                   <th
@@ -165,6 +196,11 @@ export default function CuotasAtrasadasPage() {
                     );
                     const montoPorCuota = prestamo.monto / prestamo.cuotas;
                     const montoAtrasado = montoPorCuota * cuotasAtrasadas;
+                    const nombreCliente = getClienteNombre(prestamo.clienteId);
+                    const telefonoCliente = getClienteTelefono(
+                      prestamo.clienteId
+                    );
+
                     return (
                       <tr
                         key={prestamo.id}
@@ -177,7 +213,7 @@ export default function CuotasAtrasadasPage() {
                             href={`/prestamos/${prestamo.clienteId}`}
                             className='text-indigo-600 hover:underline font-semibold'
                           >
-                            {getClienteNombre(prestamo.clienteId)}
+                            {nombreCliente}
                           </Link>
                         </td>
                         <td className='px-4 py-2'>
@@ -206,13 +242,32 @@ export default function CuotasAtrasadasPage() {
                           })()}
                         </td>
                         <td className='px-4 py-2 text-center'>
-                          <Link
-                            href={`/prestamos/${prestamo.clienteId}`}
-                            className='px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs font-semibold transition-colors'
-                            aria-label='Ver cliente'
-                          >
-                            Ver cliente
-                          </Link>
+                          <div className='flex flex-col gap-2'>
+                            <Link
+                              href={`/prestamos/${prestamo.clienteId}`}
+                              className='px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs font-semibold transition-colors'
+                              aria-label='Ver cliente'
+                            >
+                              Ver cliente
+                            </Link>
+                            {telefonoCliente && (
+                              <a
+                                href={`https://wa.me/${formatearTelefono(
+                                  telefonoCliente
+                                )}?text=${generarMensajeWhatsApp(
+                                  nombreCliente,
+                                  cuotasAtrasadas,
+                                  montoAtrasado
+                                )}`}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1'
+                                aria-label='Contactar por WhatsApp'
+                              >
+                                📱 WhatsApp
+                              </a>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -223,7 +278,7 @@ export default function CuotasAtrasadasPage() {
           </div>
 
           {/* Tarjetas para móvil */}
-          <div className='md:hidden space-y-4'>
+          <div className='lg:hidden space-y-4'>
             {prestamosAtrasados.length === 0 ? (
               <div className='text-center py-8 text-gray-400'>
                 No hay cuotas atrasadas
@@ -236,22 +291,25 @@ export default function CuotasAtrasadasPage() {
                 );
                 const montoPorCuota = prestamo.monto / prestamo.cuotas;
                 const montoAtrasado = montoPorCuota * cuotasAtrasadas;
+                const nombreCliente = getClienteNombre(prestamo.clienteId);
+                const telefonoCliente = getClienteTelefono(prestamo.clienteId);
+
                 return (
                   <div
                     key={prestamo.id}
-                    className={`bg-white shadow rounded-xl p-4 flex flex-col gap-2 border border-gray-100 ${
+                    className={`bg-white shadow rounded-xl p-4 flex flex-col gap-3 border border-gray-100 ${
                       cuotasAtrasadas >= 3 ? "bg-red-50" : ""
                     }`}
                   >
                     <div className='flex items-center gap-3 mb-2'>
                       <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base'>
-                        {getClienteNombre(prestamo.clienteId)[0]?.toUpperCase()}
+                        {nombreCliente[0]?.toUpperCase()}
                       </div>
-                      <div>
-                        <span className='text-indigo-700 font-semibold'>
-                          {getClienteNombre(prestamo.clienteId)}
-                        </span>
-                        <span className='ml-2 text-xs text-gray-500'>
+                      <div className='flex-1'>
+                        <div className='text-indigo-700 font-semibold'>
+                          {nombreCliente}
+                        </div>
+                        <div className='text-xs text-gray-500'>
                           C.I.:{" "}
                           {(() => {
                             const cliente = clientes.find(
@@ -259,10 +317,16 @@ export default function CuotasAtrasadasPage() {
                             );
                             return cliente ? cliente.cedula : "";
                           })()}
-                        </span>
+                        </div>
+                        {telefonoCliente && (
+                          <div className='text-xs text-gray-600 mt-1'>
+                            📞 {telefonoCliente}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className='flex flex-wrap gap-4 text-sm'>
+
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
                       <div>
                         <span className='font-semibold text-gray-700'>
                           Producto:
@@ -277,8 +341,6 @@ export default function CuotasAtrasadasPage() {
                           {cuotasAtrasadas}
                         </span>
                       </div>
-                    </div>
-                    <div className='flex flex-wrap gap-4 text-sm'>
                       <div>
                         <span className='font-semibold text-gray-700'>
                           Monto atrasado:
@@ -302,14 +364,32 @@ export default function CuotasAtrasadasPage() {
                         })()}
                       </div>
                     </div>
-                    <div className='flex justify-end mt-2'>
+
+                    <div className='flex flex-col sm:flex-row gap-2 mt-3'>
                       <Link
                         href={`/prestamos/${prestamo.clienteId}`}
-                        className='px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-xs shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                        className='flex-1 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-center text-sm'
                         aria-label='Ver cliente'
                       >
                         Ver cliente
                       </Link>
+                      {telefonoCliente && (
+                        <a
+                          href={`https://wa.me/${formatearTelefono(
+                            telefonoCliente
+                          )}?text=${generarMensajeWhatsApp(
+                            nombreCliente,
+                            cuotasAtrasadas,
+                            montoAtrasado
+                          )}`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='flex-1 px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition text-center text-sm flex items-center justify-center gap-2'
+                          aria-label='Contactar por WhatsApp'
+                        >
+                          📱 WhatsApp
+                        </a>
+                      )}
                     </div>
                   </div>
                 );

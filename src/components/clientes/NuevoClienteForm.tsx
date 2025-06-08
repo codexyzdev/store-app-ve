@@ -1,9 +1,6 @@
 import React, { useState, useRef } from "react";
 import { clientesDB } from "@/lib/firebase/database";
 import { subirImagenCliente } from "@/lib/firebase/storage";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
 
 interface NuevoClienteFormProps {
   onClienteCreado: (cliente: any) => void;
@@ -67,136 +64,231 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
     }
   };
 
+  const acortarNombreArchivo = (
+    nombreArchivo: string,
+    maxLength: number = 25
+  ) => {
+    if (nombreArchivo.length <= maxLength) return nombreArchivo;
+    const extension = nombreArchivo.split(".").pop();
+    const nombreSinExtension = nombreArchivo.substring(
+      0,
+      nombreArchivo.lastIndexOf(".")
+    );
+    const longitudPermitida =
+      maxLength - (extension ? extension.length + 4 : 3); // 4 = "..." + "."
+    return `${nombreSinExtension.substring(0, longitudPermitida)}...${
+      extension ? `.${extension}` : ""
+    }`;
+  };
+
+  const removerImagen = () => {
+    setFotoCedula(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} encType='multipart/form-data'>
-      <Box display='flex' flexDirection='column' gap={2}>
+    <div className='max-w-2xl mx-auto'>
+      <form onSubmit={handleSubmit} className='space-y-6'>
         {error && (
-          <Box mb={2} p={2} bgcolor='#fdecea' color='#b71c1c' borderRadius={2}>
-            {error}
-          </Box>
+          <div className='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm'>
+            <div className='flex items-center gap-2'>
+              <span className='text-red-500'>⚠️</span>
+              {error}
+            </div>
+          </div>
         )}
-        <TextField
-          label='Nombre Completo'
-          variant='outlined'
-          required
-          value={formData.nombre}
-          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-          fullWidth
-        />
-        <TextField
-          label='Cédula de Identidad'
-          variant='outlined'
-          required
-          inputProps={{
-            pattern: "[0-9]{6,10}",
-            title: "Solo números, mínimo 6 dígitos",
-          }}
-          value={formData.cedula}
-          onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
-          fullWidth
-        />
-        <TextField
-          label='Teléfono'
-          variant='outlined'
-          required
-          value={formData.telefono}
-          onChange={(e) =>
-            setFormData({ ...formData, telefono: e.target.value })
-          }
-          fullWidth
-        />
-        <TextField
-          label='Dirección'
-          variant='outlined'
-          required
-          value={formData.direccion}
-          onChange={(e) =>
-            setFormData({ ...formData, direccion: e.target.value })
-          }
-          fullWidth
-          multiline
-          rows={2}
-        />
-        <Box>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Foto de la cédula de identidad{" "}
-            <span className='text-red-600'>*</span>
+
+        {/* Campos del formulario */}
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+          <div className='sm:col-span-2'>
+            <label className='block text-sm font-semibold text-gray-700 mb-2'>
+              Nombre Completo <span className='text-red-500'>*</span>
+            </label>
+            <input
+              type='text'
+              required
+              value={formData.nombre}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors'
+              placeholder='Ingresa el nombre completo'
+            />
+          </div>
+
+          <div>
+            <label className='block text-sm font-semibold text-gray-700 mb-2'>
+              Cédula de Identidad <span className='text-red-500'>*</span>
+            </label>
+            <input
+              type='text'
+              required
+              pattern='[0-9]{6,10}'
+              title='Solo números, mínimo 6 dígitos'
+              value={formData.cedula}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, cedula: e.target.value })
+              }
+              className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors'
+              placeholder='Ej: 12345678'
+            />
+          </div>
+
+          <div>
+            <label className='block text-sm font-semibold text-gray-700 mb-2'>
+              Teléfono <span className='text-red-500'>*</span>
+            </label>
+            <input
+              type='tel'
+              required
+              value={formData.telefono}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, telefono: e.target.value })
+              }
+              className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors'
+              placeholder='Ej: 04241234567'
+            />
+          </div>
+
+          <div className='sm:col-span-2'>
+            <label className='block text-sm font-semibold text-gray-700 mb-2'>
+              Dirección <span className='text-red-500'>*</span>
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={formData.direccion}
+              onChange={(e) =>
+                setFormData({ ...formData, direccion: e.target.value })
+              }
+              className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none'
+              placeholder='Ingresa la dirección completa o enlace de Google Maps'
+            />
+          </div>
+        </div>
+
+        {/* Sección de imagen mejorada */}
+        <div className='space-y-4'>
+          <label className='block text-sm font-semibold text-gray-700'>
+            Foto de la Cédula <span className='text-red-500'>*</span>
           </label>
-          <Box
-            display='flex'
-            flexDirection={{ xs: "column", sm: "row" }}
-            alignItems='flex-start'
-            gap={2}
-          >
-            <Button
-              variant='contained'
-              component='label'
-              color='primary'
-              sx={{ minWidth: 150 }}
+
+          {!fotoCedula ? (
+            // Estado inicial - sin imagen
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className='w-full border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer group'
             >
-              Seleccionar imagen
-              <input
-                type='file'
-                id='fotoCedula'
-                accept='image/*'
-                required
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                hidden
-              />
-            </Button>
-            {fotoCedula && (
-              <span className='text-xs text-gray-700 mt-1'>
-                {fotoCedula.name}
-              </span>
-            )}
-            {previewUrl && (
-              <Box
-                display='flex'
-                flexDirection='column'
-                alignItems='center'
-                gap={1}
-              >
-                <span className='block text-xs text-gray-500 mb-1'>
-                  Vista previa:
-                </span>
-                <img
-                  src={previewUrl}
-                  alt='Preview cédula'
-                  style={{
-                    borderRadius: 8,
-                    border: "1px solid #eee",
-                    boxShadow: "0 2px 8px #0001",
-                    maxWidth: 120,
-                    maxHeight: 100,
-                    objectFit: "contain",
-                    background: "#fff",
-                  }}
-                />
-              </Box>
-            )}
-          </Box>
-        </Box>
-        <Box display='flex' justifyContent='flex-end' gap={2} mt={2}>
-          <Button
+              <div className='flex flex-col items-center gap-3'>
+                <div className='w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors'>
+                  <span className='text-2xl'>📷</span>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-gray-700 group-hover:text-indigo-700'>
+                    Seleccionar imagen de la cédula
+                  </p>
+                  <p className='text-xs text-gray-500'>PNG, JPG hasta 10MB</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Estado con imagen seleccionada
+            <div className='border border-gray-200 rounded-lg p-4 bg-gray-50'>
+              <div className='flex items-center gap-4'>
+                {/* Preview de la imagen */}
+                {previewUrl && (
+                  <div className='flex-shrink-0'>
+                    <img
+                      src={previewUrl}
+                      alt='Preview de cédula'
+                      className='w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm'
+                    />
+                  </div>
+                )}
+
+                {/* Información del archivo */}
+                <div className='flex-1 min-w-0'>
+                  <div className='flex items-center gap-2 mb-1'>
+                    <span className='text-green-500 text-lg'>✅</span>
+                    <span className='text-sm font-medium text-gray-900'>
+                      Imagen seleccionada
+                    </span>
+                  </div>
+                  <p
+                    className='text-xs text-gray-600 truncate'
+                    title={fotoCedula.name}
+                  >
+                    {acortarNombreArchivo(fotoCedula.name)}
+                  </p>
+                  <p className='text-xs text-gray-500 mt-1'>
+                    {(fotoCedula.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+
+                {/* Botones de acción */}
+                <div className='flex gap-2'>
+                  <button
+                    type='button'
+                    onClick={() => fileInputRef.current?.click()}
+                    className='px-3 py-2 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 transition-colors'
+                  >
+                    Cambiar
+                  </button>
+                  <button
+                    type='button'
+                    onClick={removerImagen}
+                    className='px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors'
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <input
+            type='file'
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept='image/*'
+            required
+            className='hidden'
+          />
+        </div>
+
+        {/* Botones de acción */}
+        <div className='flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-200'>
+          <button
             type='button'
-            variant='outlined'
-            color='inherit'
             onClick={onCancel}
+            disabled={loading}
+            className='flex-1 sm:flex-none px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
           >
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button
             type='submit'
-            variant='contained'
-            color='primary'
             disabled={loading}
+            className='flex-1 sm:flex-none px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
           >
-            {loading ? "Guardando..." : "Guardar Cliente"}
-          </Button>
-        </Box>
-      </Box>
-    </form>
+            {loading ? (
+              <>
+                <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                Guardando...
+              </>
+            ) : (
+              <>
+                <span>💾</span>
+                Guardar Cliente
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
