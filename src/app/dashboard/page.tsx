@@ -19,15 +19,21 @@ export default async function Dashboard() {
     );
   }
 
+  // Obtener el nombre para mostrar
+  const nombreUsuario = user.firstName
+    ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+    : user.username ||
+      user.emailAddresses[0]?.emailAddress?.split("@")[0] ||
+      "Usuario";
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
       {/* Header del Dashboard */}
       <div className='bg-white shadow-sm border-b'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
           <div className='text-center sm:text-left'>
-            <h1 className='text-3xl font-bold text-gray-900 mb-2'>
-              Bienvenido,{" "}
-              {user.firstName || user.emailAddresses[0]?.emailAddress}
+            <h1 className='text-3xl font-bold capitalize text-gray-900 mb-2'>
+              Bienvenido, {nombreUsuario}
             </h1>
             <p className='text-gray-600'>
               Gestiona tu sistema de préstamos desde aquí
