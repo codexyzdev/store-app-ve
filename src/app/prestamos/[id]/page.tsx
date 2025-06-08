@@ -72,18 +72,6 @@ export default function PrestamosClientePage(props: {
         (p.estado !== "activo" && p.estado !== "atrasado")
       )
         return acc;
-      const producto = productos.find(
-        (prod: Producto) => prod.id === p.productoId
-      );
-      const precioProducto =
-        producto &&
-        typeof producto.precio === "number" &&
-        !isNaN(producto.precio)
-          ? producto.precio
-          : 0;
-      const montoTotal = Number.isFinite(precioProducto * 1.5)
-        ? precioProducto * 1.5
-        : 0;
       const abonos = getCobrosPrestamo(p.id).reduce(
         (acc2: number, cobro: Cobro) =>
           acc2 +
@@ -94,7 +82,7 @@ export default function PrestamosClientePage(props: {
       );
       const montoPendiente = Math.max(
         0,
-        Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
+        Number.isFinite(p.monto - abonos) ? p.monto - abonos : 0
       );
       return acc + montoPendiente;
     }, 0);
@@ -106,21 +94,9 @@ export default function PrestamosClientePage(props: {
           (p.estado !== "activo" && p.estado !== "atrasado")
         )
           return acc;
-        const producto = productos.find(
-          (prod: Producto) => prod.id === p.productoId
-        );
-        const precioProducto =
-          producto &&
-          typeof producto.precio === "number" &&
-          !isNaN(producto.precio)
-            ? producto.precio
-            : 0;
-        const montoTotal = Number.isFinite(precioProducto * 1.5)
-          ? precioProducto * 1.5
-          : 0;
         const valorCuota =
-          Number.isFinite(montoTotal / 15) && montoTotal > 0
-            ? montoTotal / 15
+          Number.isFinite(p.monto / p.cuotas) && p.monto > 0 && p.cuotas > 0
+            ? p.monto / p.cuotas
             : 0.01;
         const atrasadas = calcularCuotasAtrasadas(p, cobros);
         return acc + atrasadas * valorCuota;
@@ -287,18 +263,7 @@ export default function PrestamosClientePage(props: {
                 const producto = productos.find(
                   (p: Producto) => p.id === prestamo.productoId
                 );
-                const precioProducto =
-                  producto &&
-                  typeof producto.precio === "number" &&
-                  !isNaN(producto.precio)
-                    ? producto.precio
-                    : 0;
-                const montoTotal =
-                  prestamo.tipoVenta === "contado"
-                    ? precioProducto
-                    : Number.isFinite(precioProducto * 1.5)
-                    ? precioProducto * 1.5
-                    : 0;
+                const montoTotal = prestamo.monto;
                 // Solo cobros válidos para abonos y pagos
                 const cobrosValidos: Cobro[] = getCobrosPrestamo(
                   prestamo.id
@@ -371,23 +336,11 @@ export default function PrestamosClientePage(props: {
                         abonando={!!abonando[prestamo.id]}
                         montoAbono={montoAbono[prestamo.id] || 0}
                         onMostrarFormularioAbono={() => {
-                          const producto = productos.find(
-                            (p: Producto) => p.id === prestamo.productoId
-                          );
-                          const precioProducto =
-                            producto &&
-                            typeof producto.precio === "number" &&
-                            !isNaN(producto.precio)
-                              ? producto.precio
-                              : 0;
-                          const montoTotal = Number.isFinite(
-                            precioProducto * 1.5
-                          )
-                            ? precioProducto * 1.5
-                            : 0;
                           const valorCuota =
-                            Number.isFinite(montoTotal / 15) && montoTotal > 0
-                              ? montoTotal / 15
+                            Number.isFinite(prestamo.monto / prestamo.cuotas) &&
+                            prestamo.monto > 0 &&
+                            prestamo.cuotas > 0
+                              ? prestamo.monto / prestamo.cuotas
                               : 0.01;
                           setMontoAbono((prev: { [key: string]: number }) => ({
                             ...prev,

@@ -28,7 +28,7 @@ export interface Cliente {
 export interface Prestamo {
   id: string;
   clienteId: string;
-  monto: number;
+  monto: number; // Monto fijo al momento de crear el préstamo. No se modifica si el precio del producto cambia.
   cuotas: number; // 0 si es contado
   fechaInicio: number;
   estado: 'activo' | 'completado' | 'atrasado';

@@ -68,18 +68,6 @@ export default function TablaPrestamos({
               );
               const prestamosActivos = prestamosPendientes;
               const totalPendiente = prestamosPendientes.reduce((sum, p) => {
-                const producto = productos.find(
-                  (prod) => prod.id === p.productoId
-                );
-                const precioProducto =
-                  producto &&
-                  typeof producto.precio === "number" &&
-                  !isNaN(producto.precio)
-                    ? producto.precio
-                    : 0;
-                const montoTotal = Number.isFinite(precioProducto * 1.5)
-                  ? precioProducto * 1.5
-                  : 0;
                 const abonos = cobros
                   .filter((c) => c.prestamoId === p.id && c.tipo === "cuota")
                   .reduce(
@@ -92,7 +80,7 @@ export default function TablaPrestamos({
                   );
                 const montoPendiente = Math.max(
                   0,
-                  Number.isFinite(montoTotal - abonos) ? montoTotal - abonos : 0
+                  Number.isFinite(p.monto - abonos) ? p.monto - abonos : 0
                 );
                 return sum + montoPendiente;
               }, 0);
