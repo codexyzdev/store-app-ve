@@ -32,10 +32,18 @@ export interface Prestamo {
   cuotas: number; // 0 si es contado
   fechaInicio: number;
   estado: 'activo' | 'completado' | 'atrasado';
-  productoId: string;
+  productoId: string; // Mantener para compatibilidad con préstamos existentes
+  productos?: ProductoPrestamo[]; // Array de productos para préstamos agrupados
   tipoVenta: 'contado' | 'cuotas';
   pagado?: boolean; // solo para contado
   descripcion?: string;
+}
+
+export interface ProductoPrestamo {
+  productoId: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
 }
 
 export interface Cobro {

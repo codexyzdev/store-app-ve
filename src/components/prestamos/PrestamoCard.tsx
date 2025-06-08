@@ -5,6 +5,7 @@ import AbonarCuotaForm from "@/components/prestamos/AbonarCuotaForm";
 interface PrestamoCardProps {
   prestamo: any;
   producto: any;
+  productosDelPrestamo?: any[];
   abonos: number;
   montoTotal: number;
   montoPendiente: number;
@@ -17,7 +18,7 @@ interface PrestamoCardProps {
   montoAbono: number;
   onMostrarFormularioAbono: () => void;
   onChangeMontoAbono: (valor: number) => void;
-  onAbonarCuota: (data: any) => void;
+  onAbonarCuota: (data: any) => Promise<void>;
   pagos: any[];
   Tooltip: React.FC<{ text: string }>;
 }
@@ -25,6 +26,7 @@ interface PrestamoCardProps {
 const PrestamoCard: React.FC<PrestamoCardProps> = ({
   prestamo,
   producto,
+  productosDelPrestamo,
   abonos,
   montoTotal,
   montoPendiente,
@@ -64,8 +66,32 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
 
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
         <div className='flex items-center gap-2 text-gray-700'>
-          <span className='font-semibold'>📦 Producto:</span>
-          <span className='text-gray-900'>{producto?.nombre || "-"}</span>
+          <span className='font-semibold'>
+            📦 Producto
+            {productosDelPrestamo && productosDelPrestamo.length > 1 ? "s" : ""}
+            :
+          </span>
+          {productosDelPrestamo && productosDelPrestamo.length > 0 ? (
+            <div className='flex-1'>
+              <span className='text-gray-900'>
+                {productosDelPrestamo.length === 1
+                  ? productosDelPrestamo[0].nombre
+                  : `${productosDelPrestamo.length} productos`}
+              </span>
+              {productosDelPrestamo.length > 1 && (
+                <div className='text-xs text-gray-500 mt-1'>
+                  {productosDelPrestamo
+                    .slice(0, 2)
+                    .map((p: any, index: number) => p.nombre)
+                    .join(", ")}
+                  {productosDelPrestamo.length > 2 &&
+                    ` y ${productosDelPrestamo.length - 2} más`}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className='text-gray-900'>{producto?.nombre || "-"}</span>
+          )}
         </div>
         <div className='flex items-center gap-2 text-gray-700'>
           <span className='font-semibold'>💵 Monto total:</span>
@@ -162,6 +188,38 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
           {mostrarHistorial && <HistorialPagos pagos={pagos} />}
         </div>
       )}
+
+      {/* Detalle de productos múltiples */}
+      {productosDelPrestamo && productosDelPrestamo.length > 1 && (
+        <div className='mt-4 p-4 bg-gray-50 rounded-lg border'>
+          <h4 className='font-semibold text-gray-800 mb-3 flex items-center gap-2'>
+            📋 Detalle de Productos ({productosDelPrestamo.length})
+          </h4>
+          <div className='space-y-2'>
+            {productosDelPrestamo.map((item: any, index: number) => (
+              <div
+                key={index}
+                className='flex justify-between items-center text-sm bg-white p-3 rounded border'
+              >
+                <div className='flex-1'>
+                  <div className='font-medium text-gray-900'>{item.nombre}</div>
+                  <div className='text-gray-600'>
+                    ${item.precioUnitario.toFixed(2)} c/u
+                  </div>
+                </div>
+                <div className='text-right'>
+                  <div className='font-medium'>Cant: {item.cantidad}</div>
+                  <div className='font-semibold text-indigo-600'>
+                    ${item.subtotal.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Progreso de pagos */}
     </div>
   );
 };

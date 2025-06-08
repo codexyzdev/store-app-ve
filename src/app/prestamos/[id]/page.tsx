@@ -108,7 +108,34 @@ export default function PrestamosClientePage() {
 
   const getProductoNombre = (id: string) => {
     const producto = productos.find((p: Producto) => p.id === id);
-    return producto ? producto.nombre : "-";
+    return producto ? producto.nombre : "Producto no encontrado";
+  };
+
+  const getProductosPrestamo = (prestamo: Prestamo) => {
+    if (prestamo.productos && prestamo.productos.length > 0) {
+      // Préstamo con múltiples productos
+      return prestamo.productos.map((p) => {
+        const producto = productos.find((prod) => prod.id === p.productoId);
+        return {
+          ...p,
+          nombre: producto?.nombre || "Producto no encontrado",
+          producto: producto,
+        };
+      });
+    } else {
+      // Préstamo con un solo producto (compatibilidad)
+      const producto = productos.find((p) => p.id === prestamo.productoId);
+      return [
+        {
+          productoId: prestamo.productoId,
+          cantidad: 1,
+          precioUnitario: producto?.precio || 0,
+          subtotal: producto?.precio || 0,
+          nombre: producto?.nombre || "Producto no encontrado",
+          producto: producto,
+        },
+      ];
+    }
   };
 
   const getCobrosPrestamo = (prestamoId: string) =>
@@ -187,6 +214,7 @@ export default function PrestamosClientePage() {
                 const producto = productos.find(
                   (p: Producto) => p.id === prestamo.productoId
                 );
+                const productosDelPrestamo = getProductosPrestamo(prestamo);
                 const montoTotal = prestamo.monto;
                 // Solo cobros válidos para abonos y pagos
                 const cobrosValidos: Cobro[] = getCobrosPrestamo(
@@ -262,6 +290,7 @@ export default function PrestamosClientePage() {
                       <PrestamoCard
                         prestamo={prestamo}
                         producto={producto}
+                        productosDelPrestamo={productosDelPrestamo}
                         abonos={abonos}
                         montoTotal={montoTotal}
                         montoPendiente={montoPendiente}
