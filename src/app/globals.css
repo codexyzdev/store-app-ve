@@ -28,6 +28,21 @@ body {
   flex-shrink: 0;
 }
 
+/* Clases para limitar líneas de texto */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Mejorar la experiencia táctil en dispositivos móviles */
 @media (hover: none) and (pointer: coarse) {
   button,

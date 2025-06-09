@@ -61,9 +61,10 @@ export interface Cobro {
 export interface Producto {
   id: string;
   nombre: string;
-  descripcion: string;
+  descripcion?: string;
   precio: number;
   stock: number;
+  stockMinimo?: number;
   categoria: string;
   createdAt: number;
   updatedAt: number;
