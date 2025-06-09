@@ -1,204 +1,199 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { clientesDB } from "@/lib/firebase/database";
-import { subirImagenCliente } from "@/lib/firebase/storage";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
+import Link from "next/link";
+import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
 
 export default function NuevoClientePage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    nombre: "",
-    cedula: "",
-    telefono: "",
-    direccion: "",
-  });
-  const [fotoCedula, setFotoCedula] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    if (!fotoCedula) {
-      setError("La foto de la cédula es obligatoria");
-      setLoading(false);
-      if (fileInputRef.current) fileInputRef.current.focus();
-      return;
-    }
-
-    try {
-      const nuevoCliente = await clientesDB.crear({
-        ...formData,
-        createdAt: Date.now(),
-      });
-      const url = await subirImagenCliente(nuevoCliente.id, fotoCedula);
-      await clientesDB.actualizar(nuevoCliente.id, { fotoCedulaUrl: url });
+  const handleClienteCreado = (cliente: any) => {
+    setShowSuccess(true);
+    setTimeout(() => {
       router.push("/clientes");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al crear el cliente"
-      );
-    } finally {
-      setLoading(false);
-    }
+    }, 2000);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-    setFotoCedula(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPreviewUrl(null);
-    }
+  const handleCancel = () => {
+    router.push("/clientes");
   };
+
+  if (showSuccess) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 flex items-center justify-center'>
+        <div className='bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto text-center'>
+          <div className='mb-6'>
+            <div className='w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse'>
+              <span className='text-3xl text-white'>✅</span>
+            </div>
+            <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+              ¡Cliente Creado!
+            </h2>
+            <p className='text-gray-600'>
+              El cliente ha sido registrado exitosamente en el sistema.
+            </p>
+          </div>
+
+          <div className='flex items-center justify-center gap-2 text-sm text-gray-500'>
+            <div className='w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
+            Redirigiendo a la lista de clientes...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Box maxWidth='sm' mx='auto' p={4}>
-      <h1 className='text-2xl font-bold mb-6'>Nuevo Cliente</h1>
-      {error && (
-        <Box mb={2} p={2} bgcolor='#fdecea' color='#b71c1c' borderRadius={2}>
-          {error}
-        </Box>
-      )}
-      <form onSubmit={handleSubmit} encType='multipart/form-data'>
-        <Box display='flex' flexDirection='column' gap={2}>
-          <TextField
-            label='Nombre Completo'
-            variant='outlined'
-            required
-            value={formData.nombre}
-            onChange={(e) =>
-              setFormData({ ...formData, nombre: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label='Cédula de Identidad'
-            variant='outlined'
-            required
-            inputProps={{
-              pattern: "[0-9]{6,10}",
-              title: "Solo números, mínimo 6 dígitos",
-            }}
-            value={formData.cedula}
-            onChange={(e) =>
-              setFormData({ ...formData, cedula: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label='Teléfono'
-            variant='outlined'
-            required
-            value={formData.telefono}
-            onChange={(e) =>
-              setFormData({ ...formData, telefono: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label='Dirección'
-            variant='outlined'
-            required
-            value={formData.direccion}
-            onChange={(e) =>
-              setFormData({ ...formData, direccion: e.target.value })
-            }
-            fullWidth
-            multiline
-            rows={2}
-          />
-          <Box>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Foto de la cédula de identidad{" "}
-              <span className='text-red-600'>*</span>
-            </label>
-            <Box
-              display='flex'
-              flexDirection={{ xs: "column", sm: "row" }}
-              alignItems='flex-start'
-              gap={2}
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+      <div className='container mx-auto px-4 py-8'>
+        {/* Header */}
+        <div className='mb-8'>
+          <div className='flex items-center gap-4 mb-6'>
+            <Link
+              href='/clientes'
+              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors'
             >
-              <Button
-                variant='contained'
-                component='label'
-                color='primary'
-                sx={{ minWidth: 150 }}
-              >
-                Seleccionar imagen
-                <input
-                  type='file'
-                  id='fotoCedula'
-                  accept='image/*'
-                  required
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  hidden
-                />
-              </Button>
-              {fotoCedula && (
-                <span className='text-xs text-gray-700 mt-1'>
-                  {fotoCedula.name}
-                </span>
-              )}
-              {previewUrl && (
-                <Box
-                  display='flex'
-                  flexDirection='column'
-                  alignItems='center'
-                  gap={1}
-                >
-                  <span className='block text-xs text-gray-500 mb-1'>
-                    Vista previa:
-                  </span>
-                  <img
-                    src={previewUrl}
-                    alt='Preview cédula'
-                    style={{
-                      borderRadius: 8,
-                      border: "1px solid #eee",
-                      boxShadow: "0 2px 8px #0001",
-                      maxWidth: 120,
-                      maxHeight: 100,
-                      objectFit: "contain",
-                      background: "#fff",
-                    }}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Box>
-          <Box display='flex' justifyContent='flex-end' gap={2} mt={2}>
-            <Button
-              type='button'
-              variant='outlined'
-              color='inherit'
-              onClick={() => router.back()}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type='submit'
-              variant='contained'
-              color='primary'
-              disabled={loading}
-            >
-              {loading ? "Guardando..." : "Guardar Cliente"}
-            </Button>
-          </Box>
-        </Box>
-      </form>
-    </Box>
+              <span className='text-xl'>←</span>
+              <span className='font-medium'>Volver a Clientes</span>
+            </Link>
+          </div>
+
+          <div className='text-center mb-8'>
+            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-sm border border-blue-100 mb-4'>
+              <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center'>
+                <span className='text-xl text-white'>👤</span>
+              </div>
+              <div className='text-left'>
+                <h1 className='text-2xl font-bold text-gray-900'>
+                  Nuevo Cliente
+                </h1>
+                <p className='text-sm text-gray-600'>
+                  Registra un nuevo cliente en el sistema
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pasos del proceso */}
+        <div className='max-w-4xl mx-auto mb-8'>
+          <div className='flex items-center justify-center gap-4 mb-8'>
+            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                1
+              </span>
+              Información Básica
+            </div>
+            <div className='w-8 h-px bg-gray-300'></div>
+            <div className='flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                2
+              </span>
+              Documentación
+            </div>
+            <div className='w-8 h-px bg-gray-300'></div>
+            <div className='flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                3
+              </span>
+              Confirmación
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido principal */}
+        <div className='max-w-4xl mx-auto'>
+          <div className='bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
+            {/* Header del formulario */}
+            <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6'>
+              <div className='flex items-center gap-4'>
+                <div className='w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center'>
+                  <span className='text-2xl text-white'>📋</span>
+                </div>
+                <div className='text-white'>
+                  <h2 className='text-xl font-bold mb-1'>
+                    Información del Cliente
+                  </h2>
+                  <p className='text-blue-100'>
+                    Completa todos los campos requeridos
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Formulario */}
+            <div className='p-8'>
+              <NuevoClienteForm
+                onClienteCreado={handleClienteCreado}
+                onCancel={handleCancel}
+              />
+            </div>
+          </div>
+
+          {/* Información adicional */}
+          <div className='mt-8 grid grid-cols-1 md:grid-cols-3 gap-6'>
+            <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200'>
+              <div className='flex items-center gap-3 mb-3'>
+                <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>🔒</span>
+                </div>
+                <h3 className='font-semibold text-gray-900'>Datos Seguros</h3>
+              </div>
+              <p className='text-sm text-gray-600'>
+                Toda la información se almacena de forma segura y encriptada.
+              </p>
+            </div>
+
+            <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200'>
+              <div className='flex items-center gap-3 mb-3'>
+                <div className='w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>⚡</span>
+                </div>
+                <h3 className='font-semibold text-gray-900'>Proceso Rápido</h3>
+              </div>
+              <p className='text-sm text-gray-600'>
+                El registro se completa en menos de 2 minutos.
+              </p>
+            </div>
+
+            <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200'>
+              <div className='flex items-center gap-3 mb-3'>
+                <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>📱</span>
+                </div>
+                <h3 className='font-semibold text-gray-900'>Fácil Acceso</h3>
+              </div>
+              <p className='text-sm text-gray-600'>
+                Podrás gestionar préstamos inmediatamente después.
+              </p>
+            </div>
+          </div>
+
+          {/* Tips */}
+          <div className='mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
+            <div className='flex items-start gap-3'>
+              <div className='w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1'>
+                <span className='text-white text-sm'>💡</span>
+              </div>
+              <div>
+                <h3 className='font-semibold text-blue-900 mb-2'>
+                  Consejos para un registro exitoso
+                </h3>
+                <ul className='text-sm text-blue-700 space-y-1'>
+                  <li>
+                    • Asegúrate de que la foto de la cédula sea clara y legible
+                  </li>
+                  <li>• Verifica que el número de teléfono esté correcto</li>
+                  <li>• La dirección debe ser lo más específica posible</li>
+                  <li>• Todos los campos marcados con * son obligatorios</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
