@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { clientesDB, Cliente } from "@/lib/firebase/database";
 import { inventarioDB, Producto } from "@/lib/firebase/database";
 import { prestamosDB, ProductoPrestamo } from "@/lib/firebase/database";
+import Link from "next/link";
 import Modal from "@/components/Modal";
 import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
 
@@ -18,11 +19,14 @@ export default function NuevoPrestamoPage() {
   const [productosCarrito, setProductosCarrito] = useState<ProductoPrestamo[]>(
     []
   );
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, "0");
   const dd = String(today.getDate()).padStart(2, "0");
   const todayStr = `${yyyy}-${mm}-${dd}`;
+
   const [formData, setFormData] = useState({
     cliente: "",
     producto: "",
@@ -225,7 +229,10 @@ export default function NuevoPrestamoPage() {
       };
 
       await prestamosDB.crear(prestamoData);
-      router.push("/prestamos");
+      setShowSuccess(true);
+      setTimeout(() => {
+        router.push("/prestamos");
+      }, 2000);
     } catch (error) {
       if (error instanceof Error) {
         alert("Error: " + error.message);
@@ -261,561 +268,689 @@ export default function NuevoPrestamoPage() {
     0
   );
 
+  if (showSuccess) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 flex items-center justify-center'>
+        <div className='bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto text-center'>
+          <div className='mb-6'>
+            <div className='w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse'>
+              <span className='text-3xl text-white'>✅</span>
+            </div>
+            <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+              ¡Préstamo Creado!
+            </h2>
+            <p className='text-gray-600'>
+              El préstamo ha sido registrado exitosamente en el sistema.
+            </p>
+          </div>
+
+          <div className='flex items-center justify-center gap-2 text-sm text-gray-500'>
+            <div className='w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
+            Redirigiendo a la lista de préstamos...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className='min-h-screen bg-gray-50 px-3 py-4 sm:px-4 sm:py-6 lg:px-8'>
-      <div className='max-w-5xl mx-auto'>
-        <div className='bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl p-4 sm:p-6 lg:p-10 border border-gray-100'>
-          <h1 className='text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6 sm:mb-8 tracking-tight text-center sm:text-left'>
-            🛒 Nuevo Préstamo
-          </h1>
-          <form onSubmit={handleSubmit} className='space-y-6 sm:space-y-8'>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8'>
-              {/* Cliente (búsqueda y selección) */}
-              <div className='flex flex-col gap-2 order-1'>
-                <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                  Cliente
-                </span>
-                <div className='relative'>
-                  <div className='flex flex-col sm:flex-row gap-2 sm:gap-3'>
-                    <input
-                      type='text'
-                      id='cliente-busqueda'
-                      placeholder='Buscar cliente...'
-                      value={busquedaCliente}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                        setBusquedaCliente(e.target.value);
-                        if (
-                          clienteSeleccionado &&
-                          e.target.value !== clienteSeleccionado.nombre
-                        ) {
-                          setClienteSeleccionado(null);
-                        }
-                      }}
-                      className='flex-1 block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                      autoComplete='off'
-                      required
-                    />
-                    <button
-                      type='button'
-                      className='w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition text-sm shadow focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap'
-                      onClick={() => setModalNuevoCliente(true)}
-                    >
-                      Nuevo Cliente
-                    </button>
-                  </div>
-                  {/* Lista de clientes filtrados */}
-                  {busquedaCliente &&
-                    !clienteSeleccionado &&
-                    clientesFiltrados.length > 0 && (
-                      <div className='absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto'>
-                        {clientesFiltrados.slice(0, 5).map((cliente) => (
-                          <button
-                            key={cliente.id}
-                            type='button'
-                            className='w-full text-left px-4 py-3 hover:bg-indigo-50 transition focus:outline-none focus:bg-indigo-50 border-b border-gray-100 last:border-b-0'
-                            onClick={() => {
-                              setClienteSeleccionado(cliente);
-                              setBusquedaCliente(cliente.nombre);
-                            }}
-                          >
-                            <div className='flex flex-col gap-1'>
-                              <span className='font-semibold text-gray-900 text-sm'>
-                                {cliente.nombre}
-                              </span>
-                              <div className='flex flex-wrap gap-2 text-xs text-gray-500'>
-                                <span className='flex items-center gap-1'>
-                                  📞 {cliente.telefono}
-                                </span>
-                                {cliente.direccion && (
-                                  <span className='flex items-center gap-1'>
-                                    📍 {cliente.direccion}
-                                  </span>
-                                )}
-                              </div>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+      <div className='container mx-auto px-4 py-8'>
+        {/* Header */}
+        <div className='mb-8'>
+          <div className='flex items-center gap-4 mb-6'>
+            <Link
+              href='/prestamos'
+              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors'
+            >
+              <span className='text-xl'>←</span>
+              <span className='font-medium'>Volver a Préstamos</span>
+            </Link>
+          </div>
+
+          <div className='text-center mb-8'>
+            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-sm border border-blue-100 mb-4'>
+              <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center'>
+                <span className='text-xl text-white'>💰</span>
+              </div>
+              <div className='text-left'>
+                <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
+                  Nuevo Préstamo
+                </h1>
+                <p className='text-sm text-gray-600'>
+                  Crea un nuevo préstamo o venta
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pasos del proceso */}
+        <div className='max-w-6xl mx-auto mb-8'>
+          <div className='flex items-center justify-center gap-4 mb-8'>
+            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                1
+              </span>
+              Cliente
+            </div>
+            <div className='w-8 h-px bg-gray-300'></div>
+            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                2
+              </span>
+              Productos
+            </div>
+            <div className='w-8 h-px bg-gray-300'></div>
+            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                3
+              </span>
+              Condiciones
+            </div>
+            <div className='w-8 h-px bg-gray-300'></div>
+            <div className='flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm font-medium'>
+              <span className='w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs font-bold'>
+                4
+              </span>
+              Confirmación
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido principal */}
+        <div className='max-w-6xl mx-auto'>
+          <div className='bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
+            {/* Header del formulario */}
+            <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6'>
+              <div className='flex items-center gap-4'>
+                <div className='w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center'>
+                  <span className='text-2xl text-white'>🛒</span>
+                </div>
+                <div className='text-white'>
+                  <h2 className='text-xl font-bold mb-1'>
+                    Información del Préstamo
+                  </h2>
+                  <p className='text-blue-100'>
+                    Completa todos los campos requeridos
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Formulario */}
+            <div className='p-8'>
+              <form onSubmit={handleSubmit} className='space-y-8'>
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+                  {/* Cliente */}
+                  <div className='space-y-4'>
+                    <div className='flex items-center gap-2 mb-4'>
+                      <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                        <span className='text-blue-600 font-bold'>1</span>
+                      </div>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Seleccionar Cliente
+                      </h3>
+                    </div>
+
+                    <div className='relative'>
+                      <div className='flex gap-3'>
+                        <input
+                          type='text'
+                          placeholder='Buscar cliente por nombre, teléfono o dirección...'
+                          value={busquedaCliente}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                            setBusquedaCliente(e.target.value);
+                            if (
+                              clienteSeleccionado &&
+                              e.target.value !== clienteSeleccionado.nombre
+                            ) {
+                              setClienteSeleccionado(null);
+                            }
+                          }}
+                          className='flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                          autoComplete='off'
+                          required
+                        />
+                        <button
+                          type='button'
+                          className='px-4 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors shadow-sm'
+                          onClick={() => setModalNuevoCliente(true)}
+                        >
+                          + Cliente
+                        </button>
+                      </div>
+
+                      {/* Lista de clientes filtrados */}
+                      {busquedaCliente &&
+                        !clienteSeleccionado &&
+                        clientesFiltrados.length > 0 && (
+                          <div className='absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto'>
+                            {clientesFiltrados.slice(0, 5).map((cliente) => (
+                              <button
+                                key={cliente.id}
+                                type='button'
+                                className='w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 first:rounded-t-xl last:rounded-b-xl'
+                                onClick={() => {
+                                  setClienteSeleccionado(cliente);
+                                  setBusquedaCliente(cliente.nombre);
+                                }}
+                              >
+                                <div className='flex items-center gap-3'>
+                                  <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold'>
+                                    {cliente.nombre
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div className='font-semibold text-gray-900'>
+                                      {cliente.nombre}
+                                    </div>
+                                    <div className='text-sm text-gray-600'>
+                                      {cliente.telefono}
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                      {/* Cliente seleccionado */}
+                      {clienteSeleccionado && (
+                        <div className='mt-3 p-4 border border-blue-200 rounded-xl bg-blue-50'>
+                          <div className='flex items-center gap-3'>
+                            <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold'>
+                              {clienteSeleccionado.nombre
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .substring(0, 2)
+                                .toUpperCase()}
                             </div>
-                          </button>
-                        ))}
+                            <div className='flex-1'>
+                              <div className='font-semibold text-blue-900'>
+                                {clienteSeleccionado.nombre}
+                              </div>
+                              <div className='text-sm text-blue-700'>
+                                {clienteSeleccionado.telefono}
+                              </div>
+                              {clienteSeleccionado.direccion && (
+                                <div className='text-sm text-blue-600'>
+                                  {clienteSeleccionado.direccion}
+                                </div>
+                              )}
+                            </div>
+                            <span className='text-blue-600 text-xl'>✅</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Productos */}
+                  <div className='space-y-4'>
+                    <div className='flex items-center gap-2 mb-4'>
+                      <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                        <span className='text-blue-600 font-bold'>2</span>
+                      </div>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Agregar Productos
+                      </h3>
+                    </div>
+
+                    {/* Búsqueda de productos */}
+                    <div className='relative'>
+                      <input
+                        type='text'
+                        placeholder='Buscar producto del inventario...'
+                        value={busquedaProducto}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                          setBusquedaProducto(e.target.value);
+                          if (
+                            productoSeleccionado &&
+                            e.target.value !== productoSeleccionado.nombre
+                          ) {
+                            setProductoSeleccionado(null);
+                          }
+                        }}
+                        className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                        autoComplete='off'
+                      />
+
+                      {/* Lista de productos filtrados */}
+                      {busquedaProducto &&
+                        !productoSeleccionado &&
+                        productosFiltrados.length > 0 && (
+                          <div className='absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto'>
+                            {productosFiltrados.slice(0, 5).map((producto) => (
+                              <button
+                                key={producto.id}
+                                type='button'
+                                className='w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0'
+                                onClick={() => {
+                                  setProductoSeleccionado(producto);
+                                  setBusquedaProducto(producto.nombre);
+                                }}
+                              >
+                                <div className='flex items-center justify-between'>
+                                  <div>
+                                    <div className='font-semibold text-gray-900'>
+                                      {producto.nombre}
+                                    </div>
+                                    <div className='text-sm text-gray-600'>
+                                      ${producto.precio.toFixed(2)} • Stock:{" "}
+                                      {producto.stock}
+                                    </div>
+                                  </div>
+                                  <span
+                                    className={`text-xs px-2 py-1 rounded-full ${
+                                      producto.stock > 0
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-red-100 text-red-700"
+                                    }`}
+                                  >
+                                    {producto.stock > 0
+                                      ? "Disponible"
+                                      : "Sin stock"}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Producto seleccionado */}
+                    {productoSeleccionado && (
+                      <div className='p-4 border border-blue-200 rounded-xl bg-blue-50'>
+                        <div className='space-y-3'>
+                          <div className='font-semibold text-blue-900'>
+                            {productoSeleccionado.nombre}
+                          </div>
+                          <div className='flex items-center justify-between text-sm'>
+                            <span className='text-blue-700'>
+                              Precio: ${productoSeleccionado.precio.toFixed(2)}
+                            </span>
+                            <span className='text-blue-700'>
+                              Stock: {productoSeleccionado.stock}
+                            </span>
+                          </div>
+
+                          <div className='flex items-center gap-3'>
+                            <label className='text-sm font-medium text-blue-700'>
+                              Cantidad:
+                            </label>
+                            <input
+                              type='number'
+                              min='1'
+                              max={productoSeleccionado.stock}
+                              value={cantidadProducto}
+                              onChange={(e) =>
+                                setCantidadProducto(
+                                  Math.max(1, parseInt(e.target.value) || 1)
+                                )
+                              }
+                              className='w-20 px-2 py-1 border border-blue-300 rounded text-center text-sm focus:ring-2 focus:ring-blue-500'
+                            />
+                            <button
+                              type='button'
+                              onClick={agregarProductoCarrito}
+                              disabled={
+                                productoSeleccionado.stock < cantidadProducto
+                              }
+                              className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed'
+                            >
+                              Agregar
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
 
-                  {/* Cliente seleccionado */}
-                  {clienteSeleccionado && (
-                    <div className='mt-2 p-3 sm:p-4 border border-green-100 rounded-lg bg-green-50 space-y-2 text-sm'>
-                      <div className='font-semibold text-green-700 text-base flex items-center gap-2'>
-                        ✅ {clienteSeleccionado.nombre}
+                    {/* Carrito de productos */}
+                    {productosCarrito.length > 0 && (
+                      <div className='p-4 border border-green-200 rounded-xl bg-green-50'>
+                        <h4 className='font-semibold text-green-800 mb-3 flex items-center gap-2'>
+                          🛒 Productos Agregados ({productosCarrito.length})
+                        </h4>
+                        <div className='space-y-2'>
+                          {productosCarrito.map((item) => (
+                            <div
+                              key={item.productoId}
+                              className='flex items-center justify-between bg-white p-3 rounded-lg border'
+                            >
+                              <div className='flex-1'>
+                                <div className='font-medium text-gray-900'>
+                                  {getProductoNombre(item.productoId)}
+                                </div>
+                                <div className='text-sm text-gray-600'>
+                                  ${item.precioUnitario.toFixed(2)} c/u
+                                </div>
+                              </div>
+                              <div className='flex items-center gap-3'>
+                                <div className='flex items-center gap-2'>
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      actualizarCantidadCarrito(
+                                        item.productoId,
+                                        item.cantidad - 1
+                                      )
+                                    }
+                                    className='w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded text-sm font-bold'
+                                  >
+                                    -
+                                  </button>
+                                  <span className='w-8 text-center text-sm font-medium'>
+                                    {item.cantidad}
+                                  </span>
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      actualizarCantidadCarrito(
+                                        item.productoId,
+                                        item.cantidad + 1
+                                      )
+                                    }
+                                    className='w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded text-sm font-bold'
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <div className='text-right'>
+                                  <div className='font-semibold text-gray-900'>
+                                    ${item.subtotal.toFixed(2)}
+                                  </div>
+                                </div>
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    removerProductoCarrito(item.productoId)
+                                  }
+                                  className='text-red-600 hover:text-red-800 p-1 text-lg'
+                                  title='Remover producto'
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className='mt-4 pt-3 border-t border-green-200'>
+                          <div className='flex justify-between items-center text-lg font-bold text-green-800'>
+                            <span>Total Base:</span>
+                            <span>${montoTotal.toFixed(2)}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 text-gray-600'>
-                        <div className='flex items-center gap-2'>
-                          <span className='text-xs'>📞</span>
-                          <span className='text-sm'>
-                            {clienteSeleccionado.telefono}
+                    )}
+                  </div>
+                </div>
+
+                {/* Condiciones del préstamo */}
+                {productosCarrito.length > 0 && (
+                  <div className='border-t border-gray-200 pt-8'>
+                    <div className='flex items-center gap-2 mb-6'>
+                      <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                        <span className='text-blue-600 font-bold'>3</span>
+                      </div>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Condiciones del Préstamo
+                      </h3>
+                    </div>
+
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                      {/* Tipo de venta */}
+                      <div>
+                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                          Tipo de Venta
+                        </label>
+                        <select
+                          value={formData.tipoVenta}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              tipoVenta: e.target.value as "contado" | "cuotas",
+                            })
+                          }
+                          className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                        >
+                          <option value='cuotas'>
+                            A cuotas (+50% recargo)
+                          </option>
+                          <option value='contado'>
+                            Al contado (precio normal)
+                          </option>
+                        </select>
+                      </div>
+
+                      {/* Monto */}
+                      <div>
+                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                          Monto Final
+                        </label>
+                        <div className='relative'>
+                          <span className='absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500'>
+                            $
+                          </span>
+                          <input
+                            type='number'
+                            value={formData.monto}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              setFormData({
+                                ...formData,
+                                monto: e.target.value,
+                              })
+                            }
+                            className='w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50'
+                            readOnly
+                          />
+                        </div>
+                        <p className='text-xs text-gray-500 mt-1'>
+                          Calculado automáticamente
+                          {formData.tipoVenta === "cuotas" &&
+                            " (incluye 50% recargo)"}
+                        </p>
+                      </div>
+
+                      {/* Cuotas */}
+                      {formData.tipoVenta === "cuotas" && (
+                        <div>
+                          <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                            Número de Cuotas
+                          </label>
+                          <input
+                            type='number'
+                            min='1'
+                            value={formData.cuotas}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              setFormData({
+                                ...formData,
+                                cuotas: e.target.value,
+                              })
+                            }
+                            className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                            placeholder='Ej: 12'
+                            required
+                          />
+                          {formData.cuotas &&
+                            parseFloat(formData.monto) > 0 && (
+                              <p className='text-xs text-gray-500 mt-1'>
+                                Valor por cuota: $
+                                {(
+                                  parseFloat(formData.monto) /
+                                  parseInt(formData.cuotas)
+                                ).toFixed(2)}
+                              </p>
+                            )}
+                        </div>
+                      )}
+
+                      {/* Fecha de inicio */}
+                      <div
+                        className={
+                          formData.tipoVenta === "contado"
+                            ? "md:col-span-2"
+                            : ""
+                        }
+                      >
+                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                          Fecha de Inicio
+                        </label>
+                        <input
+                          type='date'
+                          value={formData.fechaInicio}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            setFormData({
+                              ...formData,
+                              fechaInicio: e.target.value,
+                            })
+                          }
+                          className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Descripción */}
+                    <div className='mt-6'>
+                      <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                        Descripción (Opcional)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={formData.descripcion}
+                        onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                          setFormData({
+                            ...formData,
+                            descripcion: e.target.value,
+                          })
+                        }
+                        className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none'
+                        placeholder={`Préstamo de ${
+                          productosCarrito.length
+                        } producto${
+                          productosCarrito.length > 1 ? "s" : ""
+                        }: ${productosCarrito
+                          .map((p) => getProductoNombre(p.productoId))
+                          .join(", ")}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumen final */}
+                {productosCarrito.length > 0 && (
+                  <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
+                    <h3 className='text-lg font-bold text-blue-900 mb-4 flex items-center gap-2'>
+                      📋 Resumen del{" "}
+                      {formData.tipoVenta === "contado" ? "Pago" : "Préstamo"}
+                    </h3>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                      <div className='space-y-2'>
+                        <div className='flex justify-between'>
+                          <span className='text-gray-700'>Productos:</span>
+                          <span className='font-semibold'>
+                            {productosCarrito.length}
                           </span>
                         </div>
-                        {clienteSeleccionado.direccion && (
-                          <div className='flex items-center gap-2'>
-                            <span className='text-xs'>📍</span>
-                            <span className='text-sm'>
-                              {clienteSeleccionado.direccion}
+                        <div className='flex justify-between'>
+                          <span className='text-gray-700'>Total base:</span>
+                          <span className='font-semibold'>
+                            ${montoTotal.toFixed(2)}
+                          </span>
+                        </div>
+                        {formData.tipoVenta === "cuotas" && (
+                          <div className='flex justify-between'>
+                            <span className='text-gray-700'>
+                              Recargo (50%):
+                            </span>
+                            <span className='font-semibold text-orange-600'>
+                              +${(montoTotal * 0.5).toFixed(2)}
                             </span>
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Productos - Nueva sección con carrito */}
-              <div className='flex flex-col gap-2 order-2'>
-                <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                  Productos del Inventario
-                </span>
-
-                {/* Búsqueda y selección de producto */}
-                <div className='relative'>
-                  <div className='flex gap-2'>
-                    <input
-                      type='text'
-                      placeholder='Buscar producto...'
-                      value={busquedaProducto}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                        setBusquedaProducto(e.target.value);
-                        if (
-                          productoSeleccionado &&
-                          e.target.value !== productoSeleccionado.nombre
-                        ) {
-                          setProductoSeleccionado(null);
-                        }
-                      }}
-                      className='flex-1 block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                      autoComplete='off'
-                    />
-                  </div>
-
-                  {/* Lista de productos filtrados */}
-                  {busquedaProducto &&
-                    !productoSeleccionado &&
-                    productosFiltrados.length > 0 && (
-                      <div className='absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto'>
-                        {productosFiltrados.slice(0, 5).map((producto) => (
-                          <button
-                            key={producto.id}
-                            type='button'
-                            className='w-full text-left px-4 py-3 hover:bg-indigo-50 transition focus:outline-none focus:bg-indigo-50 border-b border-gray-100 last:border-b-0'
-                            onClick={() => {
-                              setProductoSeleccionado(producto);
-                              setBusquedaProducto(producto.nombre);
-                            }}
-                          >
-                            <div className='flex justify-between items-start'>
-                              <div className='flex flex-col gap-1'>
-                                <span className='font-semibold text-gray-900 text-sm'>
-                                  {producto.nombre}
-                                </span>
-                                <div className='flex flex-wrap gap-2 text-xs text-gray-500'>
-                                  <span className='flex items-center gap-1'>
-                                    💰 ${producto.precio.toFixed(2)}
-                                  </span>
-                                  <span className='flex items-center gap-1'>
-                                    📦 Stock: {producto.stock}
-                                  </span>
-                                </div>
-                              </div>
-                              <span
-                                className={`text-xs px-2 py-1 rounded ${
-                                  producto.stock > 0
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                                }`}
-                              >
-                                {producto.stock > 0
-                                  ? "Disponible"
-                                  : "Sin stock"}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                </div>
-
-                {/* Producto seleccionado con cantidad */}
-                {productoSeleccionado && (
-                  <div className='mt-2 p-3 sm:p-4 border border-indigo-100 rounded-lg bg-indigo-50 space-y-3'>
-                    <div className='font-semibold text-indigo-700 text-base'>
-                      {productoSeleccionado.nombre}
-                    </div>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 text-gray-600 text-sm'>
-                      <div className='flex items-center gap-2'>
-                        <span>
-                          💰 ${productoSeleccionado.precio.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <span>📦 Stock: {productoSeleccionado.stock}</span>
-                      </div>
-                    </div>
-
-                    {/* Cantidad y botón agregar */}
-                    <div className='flex items-center gap-3'>
-                      <div className='flex items-center gap-2'>
-                        <label className='text-sm font-medium text-gray-700'>
-                          Cantidad:
-                        </label>
-                        <input
-                          type='number'
-                          min='1'
-                          max={productoSeleccionado.stock}
-                          value={cantidadProducto}
-                          onChange={(e) =>
-                            setCantidadProducto(
-                              Math.max(1, parseInt(e.target.value) || 1)
-                            )
-                          }
-                          className='w-20 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
-                        />
-                      </div>
-                      <button
-                        type='button'
-                        onClick={agregarProductoCarrito}
-                        disabled={productoSeleccionado.stock < cantidadProducto}
-                        className='px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed'
-                      >
-                        Agregar al Préstamo
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Carrito de productos */}
-                {productosCarrito.length > 0 && (
-                  <div className='mt-4 p-4 border border-green-200 rounded-lg bg-green-50'>
-                    <h3 className='font-semibold text-green-800 mb-3 flex items-center gap-2'>
-                      🛒 Productos del Préstamo ({productosCarrito.length})
-                    </h3>
-                    <div className='space-y-2'>
-                      {productosCarrito.map((item) => (
-                        <div
-                          key={item.productoId}
-                          className='flex items-center justify-between bg-white p-3 rounded border'
-                        >
-                          <div className='flex-1'>
-                            <div className='font-medium text-gray-900'>
-                              {getProductoNombre(item.productoId)}
-                            </div>
-                            <div className='text-sm text-gray-600'>
-                              ${item.precioUnitario.toFixed(2)} c/u
-                            </div>
-                          </div>
-                          <div className='flex items-center gap-3'>
-                            <div className='flex items-center gap-2'>
-                              <button
-                                type='button'
-                                onClick={() =>
-                                  actualizarCantidadCarrito(
-                                    item.productoId,
-                                    item.cantidad - 1
-                                  )
-                                }
-                                className='w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded text-sm font-bold'
-                              >
-                                -
-                              </button>
-                              <span className='w-8 text-center text-sm font-medium'>
-                                {item.cantidad}
-                              </span>
-                              <button
-                                type='button'
-                                onClick={() =>
-                                  actualizarCantidadCarrito(
-                                    item.productoId,
-                                    item.cantidad + 1
-                                  )
-                                }
-                                className='w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded text-sm font-bold'
-                              >
-                                +
-                              </button>
-                            </div>
-                            <div className='text-right'>
-                              <div className='font-semibold text-gray-900'>
-                                ${item.subtotal.toFixed(2)}
-                              </div>
-                            </div>
-                            <button
-                              type='button'
-                              onClick={() =>
-                                removerProductoCarrito(item.productoId)
-                              }
-                              className='text-red-600 hover:text-red-800 p-1'
-                              title='Remover producto'
-                            >
-                              🗑️
-                            </button>
-                          </div>
+                      <div className='space-y-2'>
+                        <div className='flex justify-between'>
+                          <span className='text-gray-700'>Monto final:</span>
+                          <span className='font-bold text-lg text-blue-700'>
+                            ${formData.monto}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Total */}
-                    <div className='mt-3 pt-3 border-t border-green-200'>
-                      <div className='flex justify-between items-center text-lg font-bold text-green-800'>
-                        <span>Total Base:</span>
-                        <span>${montoTotal.toFixed(2)}</span>
+                        {formData.tipoVenta === "cuotas" && formData.cuotas && (
+                          <div className='flex justify-between'>
+                            <span className='text-gray-700'>Cuotas:</span>
+                            <span className='font-semibold'>
+                              {formData.cuotas} de $
+                              {(
+                                parseFloat(formData.monto) /
+                                parseInt(formData.cuotas)
+                              ).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <div className='flex justify-between'>
+                          <span className='text-gray-700'>Tipo:</span>
+                          <span className='font-semibold capitalize'>
+                            {formData.tipoVenta}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Tipo de venta */}
-              <div className='flex flex-col gap-2 order-3'>
-                <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                  Tipo de venta
-                </span>
-                <select
-                  value={formData.tipoVenta}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      tipoVenta: e.target.value as "contado" | "cuotas",
-                    })
-                  }
-                  className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition outline-none'
-                >
-                  <option value='cuotas'>A cuotas (precio + 50%)</option>
-                  <option value='contado'>Contado (precio al contado)</option>
-                </select>
-              </div>
-
-              {/* Monto del préstamo */}
-              <div className='flex flex-col gap-2 order-4'>
-                <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                  Monto del préstamo
-                </span>
-                <div className='relative'>
-                  <span className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-sm sm:text-base'>
-                    $
-                  </span>
-                  <input
-                    type='number'
-                    name='monto'
-                    id='monto'
-                    required
-                    min='0'
-                    step='0.01'
-                    value={formData.monto}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, monto: e.target.value })
-                    }
-                    className='pl-7 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                    placeholder='0.00'
-                    readOnly={productosCarrito.length > 0}
-                  />
-                </div>
-                {productosCarrito.length > 0 && (
-                  <div className='text-xs text-gray-500'>
-                    💡 El monto se calcula automáticamente basado en los
-                    productos seleccionados
-                    {formData.tipoVenta === "cuotas" &&
-                      " (incluye 50% de recargo)"}
-                  </div>
-                )}
-              </div>
-
-              {/* Cuotas del préstamo */}
-              {formData.tipoVenta === "cuotas" && (
-                <div className='flex flex-col gap-2 order-5 lg:order-5'>
-                  <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                    Cuotas del préstamo
-                  </span>
-                  <input
-                    type='number'
-                    name='cuotas'
-                    id='cuotas'
-                    required
-                    min='1'
-                    value={formData.cuotas}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, cuotas: e.target.value })
-                    }
-                    className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                    placeholder='Ej: 12'
-                  />
-                  {formData.cuotas && parseFloat(formData.monto) > 0 && (
-                    <div className='text-xs text-gray-500'>
-                      💰 Valor por cuota: $
-                      {(
-                        parseFloat(formData.monto) / parseInt(formData.cuotas)
-                      ).toFixed(2)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Fecha de inicio */}
-              <div className='flex flex-col gap-2 order-6'>
-                <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                  Inicio del préstamo
-                </span>
-                <input
-                  type='date'
-                  name='fechaInicio'
-                  id='fechaInicio'
-                  required
-                  value={formData.fechaInicio}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, fechaInicio: e.target.value })
-                  }
-                  className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none'
-                />
-              </div>
-            </div>
-
-            {/* Descripción - Ancho completo */}
-            <div className='flex flex-col gap-2'>
-              <span className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1'>
-                Descripción
-              </span>
-              <textarea
-                id='descripcion'
-                name='descripcion'
-                rows={3}
-                value={formData.descripcion}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                  setFormData({ ...formData, descripcion: e.target.value })
-                }
-                className='block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition placeholder:text-gray-400 outline-none resize-none'
-                placeholder={
-                  productosCarrito.length > 0
-                    ? `Préstamo de ${productosCarrito.length} producto${
-                        productosCarrito.length > 1 ? "s" : ""
-                      }: ${productosCarrito
-                        .map((p) => getProductoNombre(p.productoId))
-                        .join(", ")}`
-                    : "Descripción del préstamo..."
-                }
-              />
-            </div>
-
-            {/* Resumen final */}
-            {productosCarrito.length > 0 && (
-              <div className='bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200'>
-                <h3 className='text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2'>
-                  📋 Resumen del Préstamo
-                </h3>
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                  <div className='space-y-2'>
-                    <div className='flex justify-between'>
-                      <span className='text-gray-600'>Productos:</span>
-                      <span className='font-semibold'>
-                        {productosCarrito.length}
-                      </span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-gray-600'>Total base:</span>
-                      <span className='font-semibold'>
-                        ${montoTotal.toFixed(2)}
-                      </span>
-                    </div>
-                    {formData.tipoVenta === "cuotas" && (
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Recargo (50%):</span>
-                        <span className='font-semibold text-orange-600'>
-                          +${(montoTotal * 0.5).toFixed(2)}
-                        </span>
-                      </div>
+                {/* Botones */}
+                <div className='flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-gray-200'>
+                  <button
+                    type='button'
+                    onClick={() => router.push("/prestamos")}
+                    disabled={loading}
+                    className='flex-1 sm:flex-none px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type='submit'
+                    disabled={loading || productosCarrito.length === 0}
+                    className='flex-1 sm:flex-none px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                  >
+                    {loading ? (
+                      <>
+                        <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <span>💾</span>
+                        {formData.tipoVenta === "contado"
+                          ? `Registrar Venta (${
+                              productosCarrito.length
+                            } producto${
+                              productosCarrito.length > 1 ? "s" : ""
+                            })`
+                          : `Crear Préstamo (${
+                              productosCarrito.length
+                            } producto${
+                              productosCarrito.length > 1 ? "s" : ""
+                            })`}
+                      </>
                     )}
-                  </div>
-                  <div className='space-y-2'>
-                    <div className='flex justify-between'>
-                      <span className='text-gray-600'>Monto final:</span>
-                      <span className='font-bold text-lg text-indigo-700'>
-                        ${formData.monto}
-                      </span>
-                    </div>
-                    {formData.tipoVenta === "cuotas" && formData.cuotas && (
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Cuotas:</span>
-                        <span className='font-semibold'>
-                          {formData.cuotas} de $
-                          {(
-                            parseFloat(formData.monto) /
-                            parseInt(formData.cuotas)
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  </button>
                 </div>
-              </div>
-            )}
-
-            {/* Botones */}
-            <div className='flex flex-col sm:flex-row gap-3 pt-6'>
-              <button
-                type='button'
-                onClick={() => router.push("/prestamos")}
-                className='flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm sm:text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition'
-              >
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-4 w-4 sm:h-5 sm:w-5'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-                Cancelar
-              </button>
-
-              <button
-                type='submit'
-                disabled={loading || productosCarrito.length === 0}
-                className='flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-2.5 border border-transparent rounded-lg shadow-sm text-sm sm:text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                {loading ? (
-                  <>
-                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      className='h-4 w-4 sm:h-5 sm:w-5 text-white'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      stroke='currentColor'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M5 13l4 4L19 7'
-                      />
-                    </svg>
-                    {formData.tipoVenta === "contado"
-                      ? `Venta al contado (${productosCarrito.length} producto${
-                          productosCarrito.length > 1 ? "s" : ""
-                        })`
-                      : `Crear Préstamo (${productosCarrito.length} producto${
-                          productosCarrito.length > 1 ? "s" : ""
-                        })`}
-                  </>
-                )}
-              </button>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </div>
-      {/* Modal de nuevo cliente fuera del form para evitar forms anidados */}
+
+      {/* Modal de nuevo cliente */}
       <Modal
         isOpen={modalNuevoCliente}
         onClose={() => setModalNuevoCliente(false)}

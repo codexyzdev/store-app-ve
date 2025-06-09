@@ -1,14 +1,5 @@
 import { DashboardCard } from "./DashboardCard";
 
-import {
-  CalendarDaysIcon,
-  ExclamationCircleIcon,
-  ListBulletIcon,
-  UsersIcon,
-  ChartBarIcon,
-  ArchiveBoxIcon,
-} from "@heroicons/react/24/outline";
-
 export const DashboardGrid = () => {
   return (
     <div className='space-y-8'>
@@ -19,14 +10,14 @@ export const DashboardGrid = () => {
         </h2>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <DashboardCard
-            title='Cobros del día'
-            icon={<CalendarDaysIcon className='w-10 h-10' />}
-            href='/cobranza/cobros-del-dia'
+            title='Gestión de Cobranza'
+            icon={<span className='text-4xl'>📅</span>}
+            href='/cobranza'
           />
           <DashboardCard
             title='Cuotas atrasadas'
-            icon={<ExclamationCircleIcon className='w-10 h-10' />}
-            href='/cobranza/cuotas-atrasadas'
+            icon={<span className='text-4xl'>⚠️</span>}
+            href='/cobranza'
           />
         </div>
       </div>
@@ -39,12 +30,12 @@ export const DashboardGrid = () => {
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <DashboardCard
             title='Clientes'
-            icon={<UsersIcon className='w-10 h-10' />}
+            icon={<span className='text-4xl'>👥</span>}
             href='/clientes'
           />
           <DashboardCard
             title='Préstamos'
-            icon={<ListBulletIcon className='w-10 h-10' />}
+            icon={<span className='text-4xl'>💰</span>}
             href='/prestamos'
           />
         </div>
@@ -58,12 +49,12 @@ export const DashboardGrid = () => {
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <DashboardCard
             title='Inventario'
-            icon={<ArchiveBoxIcon className='w-10 h-10' />}
+            icon={<span className='text-4xl'>📦</span>}
             href='/inventario'
           />
           <DashboardCard
             title='Estadísticas'
-            icon={<ChartBarIcon className='w-10 h-10' />}
+            icon={<span className='text-4xl'>📈</span>}
             href='/estadisticas'
           />
         </div>

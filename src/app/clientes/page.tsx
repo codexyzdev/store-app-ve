@@ -97,7 +97,7 @@ export default function ClientesPage() {
           </div>
 
           {/* Estadísticas */}
-          <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mt-8'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-8'>
             <div className='bg-white rounded-2xl p-6 shadow-sm border border-blue-100'>
               <div className='flex items-center gap-3'>
                 <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center'>
@@ -122,30 +122,6 @@ export default function ClientesPage() {
                     {clientesFiltrados.length}
                   </p>
                   <p className='text-sm text-gray-600'>Resultados</p>
-                </div>
-              </div>
-            </div>
-
-            <div className='bg-white rounded-2xl p-6 shadow-sm border border-purple-100'>
-              <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center'>
-                  <span className='text-xl text-white'>📊</span>
-                </div>
-                <div>
-                  <p className='text-2xl font-bold text-purple-600'>95%</p>
-                  <p className='text-sm text-gray-600'>Satisfacción</p>
-                </div>
-              </div>
-            </div>
-
-            <div className='bg-white rounded-2xl p-6 shadow-sm border border-amber-100'>
-              <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center'>
-                  <span className='text-xl text-white'>⭐</span>
-                </div>
-                <div>
-                  <p className='text-2xl font-bold text-amber-600'>4.8</p>
-                  <p className='text-sm text-gray-600'>Rating Promedio</p>
                 </div>
               </div>
             </div>
@@ -248,7 +224,10 @@ export default function ClientesPage() {
                   className='bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-200 overflow-hidden group hover:-translate-y-1 transition-all duration-300'
                   style={{
                     animationDelay: `${index * 100}ms`,
-                    animation: "fadeInUp 0.6s ease-out forwards",
+                    animationName: "fadeInUp",
+                    animationDuration: "0.6s",
+                    animationTimingFunction: "ease-out",
+                    animationFillMode: "forwards",
                   }}
                 >
                   <div className='p-6'>

@@ -4,10 +4,6 @@ import {
   generarUrlOpenStreetMap,
   formatearCoordenadas,
 } from "@/utils/maps";
-import {
-  ArrowTopRightOnSquareIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/outline";
 
 interface MinimapaProps {
   coordenadas: Coordenadas;
@@ -47,7 +43,7 @@ const Minimapa: React.FC<MinimapaProps> = ({
       <div className='absolute top-0 left-0 right-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <MapPinIcon className='w-4 h-4 text-blue-600' />
+            <span className='text-blue-600'>📍</span>
             <span className='text-xs font-medium text-gray-700'>
               {formatearCoordenadas(coordenadas)}
             </span>
@@ -57,7 +53,7 @@ const Minimapa: React.FC<MinimapaProps> = ({
             className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors'
             title='Abrir en Google Maps'
           >
-            <ArrowTopRightOnSquareIcon className='w-3 h-3' />
+            <span>🔗</span>
             <span className='hidden sm:inline'>Abrir</span>
           </button>
         </div>
@@ -77,7 +73,7 @@ const Minimapa: React.FC<MinimapaProps> = ({
       {error && (
         <div className='absolute inset-0 flex items-center justify-center bg-gray-100'>
           <div className='flex flex-col items-center gap-2 p-4 text-center'>
-            <MapPinIcon className='w-8 h-8 text-gray-400' />
+            <span className='text-2xl text-gray-400'>📍</span>
             <span className='text-xs text-gray-500'>
               No se pudo cargar el mapa
             </span>

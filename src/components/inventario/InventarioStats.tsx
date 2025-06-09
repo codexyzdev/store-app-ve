@@ -100,10 +100,10 @@ export function InventarioStats({ productos }: InventarioStatsProps) {
       name: "Valor Inventario",
       value: `$${(animatedValues.valorInventario || 0).toLocaleString()}`,
       icon: "💰",
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-gradient-to-br from-purple-50 to-purple-100",
-      textColor: "text-purple-700",
-      borderColor: "border-purple-200",
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-gradient-to-br from-blue-50 to-blue-100",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200",
       description: "Valor total del inventario",
     },
     {
@@ -207,7 +207,10 @@ export function InventarioStats({ productos }: InventarioStatsProps) {
             className={`${stat.bgColor} rounded-2xl p-6 border ${stat.borderColor} hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden`}
             style={{
               animationDelay: `${index * 100}ms`,
-              animation: "fadeInUp 0.6s ease-out forwards",
+              animationName: "fadeInUp",
+              animationDuration: "0.6s",
+              animationTimingFunction: "ease-out",
+              animationFillMode: "forwards",
             }}
           >
             {/* Efecto de brillo */}

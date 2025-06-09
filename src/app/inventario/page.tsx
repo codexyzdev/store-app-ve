@@ -5,21 +5,9 @@ import {
   inventarioDB,
   Producto as ProductoType,
 } from "@/lib/firebase/database";
-import {
-  PlusIcon,
-  MagnifyingGlassIcon,
-  ArchiveBoxIcon,
-  ExclamationTriangleIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
-  CubeIcon,
-  TagIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-} from "@heroicons/react/24/outline";
 import { ProductoModal } from "@/components/inventario/ProductoModal";
 import { InventarioCard } from "@/components/inventario/InventarioCard";
-import { InventarioStats } from "@/components/inventario/InventarioStats";
+// import { InventarioStats } from "@/components/inventario/InventarioStats";
 
 type ViewMode = "grid" | "list";
 type TabType = "productos" | "categorias" | "proveedores" | "movimientos";
@@ -151,11 +139,11 @@ export default function InventarioPage() {
   };
 
   const tabs = [
-    { id: "productos", name: "Productos", icon: CubeIcon, href: "/inventario" },
+    { id: "productos", name: "Productos", icon: "📦", href: "/inventario" },
     {
       id: "categorias",
       name: "Categorías",
-      icon: TagIcon,
+      icon: "🏷️",
       href: "/inventario/categorias",
     },
   ];
@@ -171,9 +159,9 @@ export default function InventarioPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center'>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto'></div>
+          <div className='animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto'></div>
           <p className='mt-4 text-gray-600 font-medium'>
             Cargando inventario...
           </p>
@@ -183,29 +171,29 @@ export default function InventarioPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Header */}
         <div className='mb-8'>
           <div className='sm:flex sm:items-center sm:justify-between'>
             <div>
-              <h1 className='text-3xl font-bold text-gray-900 flex items-center gap-3'>
-                <ArchiveBoxIcon className='w-8 h-8 text-indigo-600' />
+              <h1 className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3'>
+                <span className='text-2xl'>📦</span>
                 Inventario
               </h1>
-              <p className='mt-2 text-sm text-gray-600'>
+              <p className='mt-2 text-lg text-gray-600'>
                 Gestiona tu inventario y categorías
               </p>
             </div>
             <div className='mt-4 sm:mt-0'>
               <button
-                className='inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 gap-2'
+                className='inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
                 onClick={() => {
                   setProductoSeleccionado(undefined);
                   setModalOpen(true);
                 }}
               >
-                <PlusIcon className='w-5 h-5' />
+                <span className='text-xl'>📦</span>
                 Nuevo Producto
               </button>
             </div>
@@ -228,7 +216,7 @@ export default function InventarioPage() {
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     } whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm rounded-t-lg transition-all duration-200 flex items-center gap-2`}
                   >
-                    <tab.icon className='w-5 h-5' />
+                    <span className='text-xl'>{tab.icon}</span>
                     {tab.name}
                   </a>
                 );
@@ -238,7 +226,7 @@ export default function InventarioPage() {
         </div>
 
         {/* Stats */}
-        <InventarioStats productos={productos} />
+        {/* <InventarioStats productos={productos} /> */}
 
         {/* Filters and Search */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8'>
@@ -246,13 +234,15 @@ export default function InventarioPage() {
             {/* Search */}
             <div className='flex-1'>
               <div className='relative'>
-                <MagnifyingGlassIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <span className='text-gray-400 text-lg'>🔍</span>
+                </div>
                 <input
                   type='text'
                   placeholder='Buscar productos...'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors'
+                  className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
                 />
               </div>
             </div>
@@ -295,7 +285,7 @@ export default function InventarioPage() {
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  <Squares2X2Icon className='w-5 h-5' />
+                  <span className='text-xl'>📦</span>
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
@@ -305,7 +295,7 @@ export default function InventarioPage() {
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  <ListBulletIcon className='w-5 h-5' />
+                  <span className='text-xl'>🏷️</span>
                 </button>
               </div>
             </div>
@@ -332,9 +322,9 @@ export default function InventarioPage() {
                 {label}
                 {sortBy === key &&
                   (sortOrder === "asc" ? (
-                    <ArrowUpIcon className='w-4 h-4' />
+                    <span className='text-xl'>🔼</span>
                   ) : (
-                    <ArrowDownIcon className='w-4 h-4' />
+                    <span className='text-xl'>🔽</span>
                   ))}
               </button>
             ))}
@@ -345,7 +335,7 @@ export default function InventarioPage() {
         {error && (
           <div className='mb-6 rounded-xl bg-red-50 border border-red-200 p-4'>
             <div className='flex'>
-              <ExclamationTriangleIcon className='h-5 w-5 text-red-400' />
+              <span className='text-red-400 text-xl'>❌</span>
               <div className='ml-3'>
                 <h3 className='text-sm font-medium text-red-800'>Error</h3>
                 <div className='mt-2 text-sm text-red-700'>{error}</div>
@@ -357,7 +347,7 @@ export default function InventarioPage() {
         {/* Products Content */}
         {productosFiltrados.length === 0 && !loading ? (
           <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center'>
-            <ArchiveBoxIcon className='mx-auto h-16 w-16 text-gray-400' />
+            <span className='text-gray-400 text-4xl'>🔍</span>
             <h3 className='mt-4 text-lg font-medium text-gray-900'>
               {searchTerm || filterCategory || filterStock
                 ? "No se encontraron productos"
@@ -376,7 +366,7 @@ export default function InventarioPage() {
                 }}
                 className='mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 gap-2'
               >
-                <PlusIcon className='w-5 h-5' />
+                <span className='text-xl'>📦</span>
                 Agregar Primer Producto
               </button>
             )}
