@@ -104,7 +104,7 @@ export default function FinanciamientoCuotaPage() {
       financiamiento.clienteId
     ).toLowerCase();
     const clienteTelefono = getClienteTelefono(financiamiento.clienteId);
-    const monto = financiamiento.monto.toFixed(2);
+    const monto = financiamiento.monto.toFixed(0);
     const productoNombre = getProductoNombre(
       financiamiento.productoId
     ).toLowerCase();

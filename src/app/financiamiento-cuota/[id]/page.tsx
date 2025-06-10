@@ -155,7 +155,8 @@ export default function FinanciamientoClientePage() {
     cobros
       .filter(
         (c: Cobro) =>
-          c.financiamientoId === financiamientoId && c.tipo === "cuota"
+          c.financiamientoId === financiamientoId &&
+          (c.tipo === "cuota" || c.tipo === "inicial")
       )
       .sort((a: Cobro, b: Cobro) => b.fecha - a.fecha);
 
@@ -184,7 +185,15 @@ export default function FinanciamientoClientePage() {
       const cuotasAPagar = Math.floor(data.monto / valorCuota);
 
       const cobrosExistentes = getCobrosFinanciamiento(financiamientoId).filter(
-        (c: Cobro) => c.tipo === "cuota" && !!c.id && c.id !== "temp"
+        (c: Cobro) =>
+          (c.tipo === "cuota" || c.tipo === "inicial") &&
+          !!c.id &&
+          c.id !== "temp"
+      );
+
+      // Separar cobros iniciales de cuotas regulares para numeración correcta
+      const cobrosRegulares = cobrosExistentes.filter(
+        (c) => c.tipo === "cuota"
       );
 
       // Crear cobros
@@ -197,7 +206,7 @@ export default function FinanciamientoClientePage() {
           comprobante: data.comprobante || "",
           tipoPago: data.tipoPago,
           imagenComprobante: data.imagenComprobante || "",
-          numeroCuota: cobrosExistentes.length + i + 1,
+          numeroCuota: cobrosRegulares.length + i + 1, // Solo contar cuotas regulares
         });
       }
 
@@ -530,7 +539,9 @@ export default function FinanciamientoClientePage() {
                       financiamiento.id
                     ).filter(
                       (c: Cobro) =>
-                        c.tipo === "cuota" && !!c.id && c.id !== "temp"
+                        (c.tipo === "cuota" || c.tipo === "inicial") &&
+                        !!c.id &&
+                        c.id !== "temp"
                     );
                     const abonos = cobrosValidos.reduce(
                       (acc: number, cobro: Cobro) =>

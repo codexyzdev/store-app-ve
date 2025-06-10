@@ -101,7 +101,7 @@ const FinanciamientoCard: React.FC<FinanciamientoCardProps> = ({
         <div className='flex items-center gap-2 text-gray-700'>
           <span className='font-semibold'>💵 Monto total:</span>
           <span className='text-gray-900 font-semibold'>
-            ${montoTotal.toFixed(2)}
+            ${montoTotal.toFixed(0)}
           </span>
         </div>
       </div>
@@ -118,7 +118,7 @@ const FinanciamientoCard: React.FC<FinanciamientoCardProps> = ({
           <div className='flex items-center gap-2 text-gray-700'>
             <span className='font-semibold'>⏳ Monto pendiente:</span>
             <span className='text-blue-600 font-bold'>
-              ${montoPendiente.toFixed(2)}
+              ${montoPendiente.toFixed(0)}
             </span>
             <Tooltip text='Lo que falta por pagar de este financiamiento.' />
           </div>
@@ -218,10 +218,10 @@ const FinanciamientoCard: React.FC<FinanciamientoCardProps> = ({
                 <span className='text-gray-800'>{item.nombre}</span>
                 <div className='text-right text-gray-600'>
                   <div>
-                    {item.cantidad} x ${item.precioUnitario.toFixed(2)}
+                    {item.cantidad} x ${item.precioUnitario.toFixed(0)}
                   </div>
                   <div className='font-semibold text-gray-800'>
-                    ${item.subtotal.toFixed(2)}
+                    ${item.subtotal.toFixed(0)}
                   </div>
                 </div>
               </div>

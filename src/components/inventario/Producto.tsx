@@ -15,9 +15,7 @@ export default function Producto({
   handleEliminarProducto,
 }: ProductoProps) {
   return (
-    <tr
-      className='hover:bg-indigo-50 transition-colors duration-150'
-    >
+    <tr className='hover:bg-indigo-50 transition-colors duration-150'>
       <td className='px-6 py-4 whitespace-nowrap'>
         <div className='flex items-center gap-3'>
           {/* <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg'>
@@ -50,7 +48,7 @@ export default function Producto({
         </span>
       </td>
       <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-        ${producto.precio.toFixed(2)}
+        ${producto.precio.toFixed(0)}
       </td>
       <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
         <div className='flex justify-end space-x-3'>

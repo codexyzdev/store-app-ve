@@ -72,7 +72,7 @@ export default function NuevoFinanciamientoPage() {
       formData.tipoVenta === "contado" ? montoTotal : montoTotal * 1.5;
     setFormData((prev) => ({
       ...prev,
-      monto: montoConRecargo.toFixed(2),
+      monto: Math.round(montoConRecargo).toString(),
     }));
   }, [productosCarrito, formData.tipoVenta]);
 
@@ -570,7 +570,7 @@ export default function NuevoFinanciamientoPage() {
                                       {producto.nombre}
                                     </div>
                                     <div className='text-sm text-gray-600'>
-                                      ${producto.precio.toFixed(2)} • Stock:{" "}
+                                      ${producto.precio.toFixed(0)} • Stock:{" "}
                                       {producto.stock}
                                     </div>
                                   </div>
@@ -601,7 +601,7 @@ export default function NuevoFinanciamientoPage() {
                           </div>
                           <div className='flex items-center justify-between text-sm'>
                             <span className='text-blue-700'>
-                              Precio: ${productoSeleccionado.precio.toFixed(2)}
+                              Precio: ${productoSeleccionado.precio.toFixed(0)}
                             </span>
                             <span className='text-blue-700'>
                               Stock: {productoSeleccionado.stock}
@@ -656,7 +656,7 @@ export default function NuevoFinanciamientoPage() {
                                   {getProductoNombre(item.productoId)}
                                 </div>
                                 <div className='text-sm text-gray-600'>
-                                  ${item.precioUnitario.toFixed(2)} c/u
+                                  ${item.precioUnitario.toFixed(0)} c/u
                                 </div>
                               </div>
                               <div className='flex items-center gap-3'>
@@ -691,7 +691,7 @@ export default function NuevoFinanciamientoPage() {
                                 </div>
                                 <div className='text-right'>
                                   <div className='font-semibold text-gray-900'>
-                                    ${item.subtotal.toFixed(2)}
+                                    ${item.subtotal.toFixed(0)}
                                   </div>
                                 </div>
                                 <button
@@ -712,7 +712,7 @@ export default function NuevoFinanciamientoPage() {
                         <div className='mt-4 pt-3 border-t border-green-200'>
                           <div className='flex justify-between items-center text-lg font-bold text-green-800'>
                             <span>Total Base:</span>
-                            <span>${montoTotal.toFixed(2)}</span>
+                            <span>${montoTotal.toFixed(0)}</span>
                           </div>
                         </div>
                       </div>
@@ -916,7 +916,7 @@ export default function NuevoFinanciamientoPage() {
                         <div className='flex justify-between'>
                           <span className='text-gray-700'>Total base:</span>
                           <span className='font-semibold'>
-                            ${montoTotal.toFixed(2)}
+                            ${montoTotal.toFixed(0)}
                           </span>
                         </div>
                         {formData.tipoVenta === "cuotas" && (
@@ -925,7 +925,7 @@ export default function NuevoFinanciamientoPage() {
                               Recargo (50%):
                             </span>
                             <span className='font-semibold text-orange-600'>
-                              +${(montoTotal * 0.5).toFixed(2)}
+                              +${(montoTotal * 0.5).toFixed(0)}
                             </span>
                           </div>
                         )}

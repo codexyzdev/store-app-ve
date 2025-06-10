@@ -16,6 +16,7 @@ interface Cuota {
   fechaTentativa: Date;
   estado: "pendiente" | "pagada";
   fechaPago?: Date;
+  tipo?: "inicial" | "regular";
 }
 
 const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
@@ -27,32 +28,51 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
 }) => {
   // Generar las cuotas del plan de pagos
   const generarCuotas = (): Cuota[] => {
-    const cobrosOrdenados = [...cobros].sort((a, b) => a.fecha - b.fecha);
+    // Separar cobros por tipo
+    const cobrosIniciales = cobros.filter((c) => c.tipo === "inicial");
+    const cobrosRegulares = cobros.filter((c) => c.tipo === "cuota");
 
-    // Generar las cuotas semanales
+    // Generar las 15 cuotas semanales
     const cuotas: Cuota[] = Array.from({ length: prestamo.cuotas }, (_, i) => {
+      // Cuotas regulares empiezan 7 días después de la fecha de inicio
       const fechaTentativa = new Date(prestamo.fechaInicio);
-      fechaTentativa.setDate(fechaTentativa.getDate() + i * 7);
+      fechaTentativa.setDate(fechaTentativa.getDate() + (i + 1) * 7);
+
       return {
         numero: i + 1,
         fechaTentativa,
         estado: "pendiente",
+        tipo: "regular",
       };
     });
 
-    // Asignar cobros a cuotas en orden
-    let cuotaIndex = 0;
-    for (const cobro of cobrosOrdenados) {
-      let montoRestante = cobro.monto;
-      while (montoRestante >= valorCuota - 0.01 && cuotaIndex < cuotas.length) {
-        if (cuotas[cuotaIndex].estado === "pendiente") {
-          cuotas[cuotaIndex].estado = "pagada";
-          cuotas[cuotaIndex].fechaPago = new Date(cobro.fecha);
-          montoRestante -= valorCuota;
-        }
-        cuotaIndex++;
+    // Marcar cuotas iniciales como pagadas (en las últimas posiciones)
+    cobrosIniciales.forEach((cobro) => {
+      if (
+        cobro.numeroCuota &&
+        cobro.numeroCuota >= 1 &&
+        cobro.numeroCuota <= prestamo.cuotas
+      ) {
+        const cuotaIndex = cobro.numeroCuota - 1;
+        cuotas[cuotaIndex].estado = "pagada";
+        cuotas[cuotaIndex].fechaPago = new Date(cobro.fecha);
+        cuotas[cuotaIndex].tipo = "inicial";
       }
-    }
+    });
+
+    // Marcar cuotas regulares como pagadas (desde las primeras posiciones)
+    cobrosRegulares.forEach((cobro) => {
+      if (
+        cobro.numeroCuota &&
+        cobro.numeroCuota >= 1 &&
+        cobro.numeroCuota <= prestamo.cuotas
+      ) {
+        const cuotaIndex = cobro.numeroCuota - 1;
+        cuotas[cuotaIndex].estado = "pagada";
+        cuotas[cuotaIndex].fechaPago = new Date(cobro.fecha);
+        cuotas[cuotaIndex].tipo = "regular";
+      }
+    });
 
     return cuotas;
   };
@@ -126,11 +146,11 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
             <strong>Productos:</strong> {productosNombres || "N/A"}
           </p>
           <p>
-            <strong>Total:</strong> ${prestamo.monto.toFixed(2)}
+            <strong>Total:</strong> ${prestamo.monto.toFixed(0)}
           </p>
           <p>
             <strong>Cuotas:</strong> {prestamo.cuotas} x $
-            {valorCuota.toFixed(2)}
+            {valorCuota.toFixed(0)}
           </p>
           <p>
             <strong>Inicio:</strong>{" "}
@@ -144,10 +164,10 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
         <thead>
           <tr>
             <th>#</th>
-            <th>FECHA</th>
+            <th>FECHA PROGRAMADA</th>
             <th>MONTO</th>
-            <th>ESTADO</th>
-            <th>PAGADO</th>
+            <th>TIPO</th>
+            <th>FECHA PAGO</th>
             <th>FIRMA</th>
           </tr>
         </thead>
@@ -159,8 +179,14 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
             >
               <td>{cuota.numero}</td>
               <td>{formatearFecha(cuota.fechaTentativa)}</td>
-              <td>${valorCuota.toFixed(2)}</td>
-              <td>{cuota.estado === "pagada" ? "✓" : "PEND"}</td>
+              <td>${valorCuota.toFixed(0)}</td>
+              <td>
+                {cuota.estado === "pagada"
+                  ? cuota.tipo === "inicial"
+                    ? "INICIAL ✓"
+                    : "REGULAR ✓"
+                  : "PENDIENTE"}
+              </td>
               <td>{cuota.fechaPago ? formatearFecha(cuota.fechaPago) : "-"}</td>
               <td className='signature-cell'></td>
             </tr>
@@ -183,10 +209,10 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
           <div>
             <p>
               <strong>Pagado:</strong> $
-              {(cuotasPagadas * valorCuota).toFixed(2)}
+              {(cuotasPagadas * valorCuota).toFixed(0)}
             </p>
             <p>
-              <strong>Pendiente:</strong> ${montoPendiente.toFixed(2)}
+              <strong>Pendiente:</strong> ${montoPendiente.toFixed(0)}
             </p>
           </div>
         </div>
@@ -194,7 +220,7 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
           <div className='next-payment'>
             <strong>
               PRÓXIMO: {formatearFecha(proximaCuota.fechaTentativa)} - $
-              {valorCuota.toFixed(2)}
+              {valorCuota.toFixed(0)}
             </strong>
           </div>
         )}

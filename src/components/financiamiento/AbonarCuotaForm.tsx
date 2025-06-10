@@ -183,7 +183,7 @@ const AbonarCuotaForm = ({
               </h3>
               <p className='text-sm text-indigo-600'>
                 Valor por cuota:{" "}
-                <span className='font-bold'>${cuota.toFixed(2)}</span>
+                <span className='font-bold'>${cuota.toFixed(0)}</span>
               </p>
               {montoInput > 0 && getCuotasAPagar() > 1 && numeroCuota && (
                 <p className='text-xs text-indigo-500 mt-1'>
@@ -205,7 +205,7 @@ const AbonarCuotaForm = ({
               <span className='text-red-500'>⚠️</span>
               <span>
                 El monto debe ser múltiplo del valor de la cuota ($
-                {cuota.toFixed(2)})
+                {cuota.toFixed(0)})
               </span>
             </div>
           </div>

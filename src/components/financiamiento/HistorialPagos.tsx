@@ -68,7 +68,7 @@ const ComprobanteModal: React.FC<ComprobanteModalProps> = ({
             <div className='text-center'>
               <p className='text-gray-600 font-medium'>Monto</p>
               <p className='font-bold text-green-600'>
-                ${(pago.monto || 0).toFixed(2)}
+                ${(pago.monto || 0).toFixed(0)}
               </p>
             </div>
             <div className='text-center'>
@@ -208,7 +208,7 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
     const filas = pagosFiltrados.map((p) => [
       new Date(p.fecha).toLocaleDateString("es-ES"),
       p.numeroCuota || "-",
-      p.monto.toFixed(2),
+      p.monto.toFixed(0),
       getTipoPagoLabel(p.tipoPago)
         .replace(/[📊💵🏦📱🏧💳]/g, "")
         .trim(),
@@ -288,7 +288,7 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
               <h3 className='text-lg font-bold text-gray-900'>{titulo}</h3>
               <p className='text-sm text-gray-600'>
                 {totalCuotas} pago{totalCuotas !== 1 ? "s" : ""} • $
-                {totalPagado.toFixed(2)} total
+                {totalPagado.toFixed(0)} total
               </p>
             </div>
           </div>
@@ -416,7 +416,9 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
                         <div>
                           <h4 className='text-lg font-bold text-gray-900'>
                             {pago.numeroCuota
-                              ? `Cuota #${pago.numeroCuota}`
+                              ? `${
+                                  pago.tipo === "inicial" ? "Inicial" : "Cuota"
+                                } #${pago.numeroCuota}`
                               : "Pago"}
                           </h4>
                           <p className='text-sm text-gray-600'>
@@ -426,7 +428,7 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
                       </div>
                       <div className='text-right'>
                         <p className='text-2xl font-bold text-green-600'>
-                          ${pago.monto.toFixed(2)}
+                          ${pago.monto.toFixed(0)}
                         </p>
                         {valorCuota > 0 && (
                           <p className='text-sm text-gray-600'>
@@ -526,8 +528,19 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
                     className='border-b border-gray-100 hover:bg-gray-50'
                   >
                     <td className='py-3 px-2'>
-                      <span className='inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium'>
-                        ✅ {pago.numeroCuota ? `#${pago.numeroCuota}` : "Pago"}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          pago.tipo === "inicial"
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {pago.tipo === "inicial" ? "🎯" : "✅"}
+                        {pago.numeroCuota
+                          ? `${
+                              pago.tipo === "inicial" ? "Inicial" : "Cuota"
+                            } #${pago.numeroCuota}`
+                          : "Pago"}
                       </span>
                     </td>
                     <td className='py-3 px-2 text-gray-900 font-medium'>
@@ -535,7 +548,7 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
                     </td>
                     <td className='py-3 px-2'>
                       <span className='font-bold text-green-600'>
-                        ${pago.monto.toFixed(2)}
+                        ${pago.monto.toFixed(0)}
                       </span>
                     </td>
                     <td className='py-3 px-2'>
