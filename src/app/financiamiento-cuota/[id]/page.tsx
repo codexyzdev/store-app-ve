@@ -17,6 +17,7 @@ import {
 import Modal from "@/components/Modal";
 import CuadriculaCuotas from "@/components/financiamiento/CuadriculaCuotas";
 import PlanPagosPrint from "@/components/financiamiento/PlanPagosPrint";
+import HistorialPagos from "@/components/financiamiento/HistorialPagos";
 import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
 import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
 import Minimapa from "@/components/maps/Minimapa";
@@ -42,6 +43,9 @@ export default function FinanciamientoClientePage() {
     [key: string]: boolean;
   }>({});
   const [mostrarImpresion, setMostrarImpresion] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [mostrarHistorialPagos, setMostrarHistorialPagos] = useState<{
     [key: string]: boolean;
   }>({});
   const [totalPendiente, setTotalPendiente] = useState(0);
@@ -215,6 +219,17 @@ export default function FinanciamientoClientePage() {
       }
     } catch (error) {
       console.error("Error al procesar pago:", error);
+
+      // Mostrar mensaje específico si es error de comprobante duplicado
+      if (
+        error instanceof Error &&
+        error.message.includes("ya está registrado")
+      ) {
+        alert(`❌ Error: ${error.message}`);
+      } else {
+        alert("❌ Error al procesar el pago. Por favor, intenta nuevamente.");
+      }
+
       throw error;
     } finally {
       setAbonando((prev) => ({ ...prev, [financiamientoId]: false }));
@@ -773,6 +788,30 @@ export default function FinanciamientoClientePage() {
 
                                     <button
                                       onClick={() =>
+                                        setMostrarHistorialPagos((prev) => ({
+                                          ...prev,
+                                          [financiamiento.id]:
+                                            !prev[financiamiento.id],
+                                        }))
+                                      }
+                                      className='w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
+                                    >
+                                      <span>📋</span>
+                                      <span className='hidden sm:inline'>
+                                        {mostrarHistorialPagos[
+                                          financiamiento.id
+                                        ]
+                                          ? "Ocultar"
+                                          : "Ver"}{" "}
+                                        Historial de Pagos
+                                      </span>
+                                      <span className='sm:hidden'>
+                                        Historial
+                                      </span>
+                                    </button>
+
+                                    <button
+                                      onClick={() =>
                                         imprimirPlanPagos(financiamiento.id)
                                       }
                                       className='w-full sm:col-span-2 xl:col-span-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
@@ -810,6 +849,22 @@ export default function FinanciamientoClientePage() {
                                 </div>
                               )}
                           </div>
+
+                          {/* Historial de Pagos */}
+                          {financiamiento.tipoVenta === "cuotas" &&
+                            mostrarHistorialPagos[financiamiento.id] && (
+                              <div className='mt-6'>
+                                <HistorialPagos
+                                  pagos={getCobrosFinanciamiento(
+                                    financiamiento.id
+                                  )}
+                                  valorCuota={valorCuota}
+                                  titulo={`Historial de Pagos - ${getProductosNombres(
+                                    financiamiento
+                                  )}`}
+                                />
+                              </div>
+                            )}
                         </div>
                       </div>
                     );

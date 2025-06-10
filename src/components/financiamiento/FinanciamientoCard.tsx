@@ -191,7 +191,15 @@ const FinanciamientoCard: React.FC<FinanciamientoCardProps> = ({
               ? "Ocultar historial de pagos"
               : "Ver historial de pagos"}
           </button>
-          {mostrarHistorial && <HistorialPagos pagos={pagos} />}
+          {mostrarHistorial && (
+            <HistorialPagos
+              pagos={pagos}
+              valorCuota={valorCuota}
+              titulo={`Historial de Pagos - ${
+                financiamiento.tipoVenta === "cuotas" ? "Cuotas" : "Contado"
+              }`}
+            />
+          )}
         </div>
       )}
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Modal from "@/components/Modal";
+import { cobrosDB } from "@/lib/firebase/database";
 
 interface ModalPagoCuotaProps {
   isOpen: boolean;
@@ -41,9 +42,68 @@ export default function ModalPagoCuota({
   const [fecha, setFecha] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
+  const [verificandoComprobante, setVerificandoComprobante] = useState(false);
+  const [comprobanteEsDuplicado, setComprobanteEsDuplicado] = useState(false);
+  const [mensajeValidacion, setMensajeValidacion] = useState<string>("");
 
   const cuotasAPagar = Math.floor(monto / valorCuota);
   const montoParcial = monto % valorCuota;
+
+  // Función para verificar comprobante duplicado
+  const verificarComprobante = useCallback(
+    async (numeroComprobante: string) => {
+      if (!numeroComprobante.trim() || tipoPago === "efectivo") {
+        setComprobanteEsDuplicado(false);
+        setMensajeValidacion("");
+        return;
+      }
+
+      setVerificandoComprobante(true);
+      setMensajeValidacion("");
+
+      try {
+        const esDuplicado = await cobrosDB.verificarComprobanteDuplicado(
+          numeroComprobante.trim()
+        );
+        setComprobanteEsDuplicado(esDuplicado);
+
+        if (esDuplicado) {
+          setMensajeValidacion(
+            `⚠️ Este número de comprobante ya está registrado en el sistema`
+          );
+        } else {
+          setMensajeValidacion(`✅ Número de comprobante disponible`);
+        }
+      } catch (error) {
+        console.error("Error al verificar comprobante:", error);
+        setComprobanteEsDuplicado(false);
+        setMensajeValidacion("⚠️ Error al verificar comprobante");
+      } finally {
+        setVerificandoComprobante(false);
+      }
+    },
+    [tipoPago]
+  );
+
+  // Verificar comprobante cuando cambie el número o tipo de pago
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (tipoPago !== "efectivo") {
+        verificarComprobante(comprobante);
+      }
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [comprobante, tipoPago, verificarComprobante]);
+
+  // Limpiar validación cuando cambie a efectivo
+  useEffect(() => {
+    if (tipoPago === "efectivo") {
+      setComprobanteEsDuplicado(false);
+      setMensajeValidacion("");
+      setVerificandoComprobante(false);
+    }
+  }, [tipoPago]);
 
   const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +129,13 @@ export default function ModalPagoCuota({
       return;
     }
 
+    if (tipoPago !== "efectivo" && comprobanteEsDuplicado) {
+      alert(
+        "No se puede procesar el pago: el número de comprobante ya está registrado en el sistema"
+      );
+      return;
+    }
+
     if (tipoPago !== "efectivo" && !imagenComprobante) {
       alert("Debes adjuntar la imagen del comprobante");
       return;
@@ -88,6 +155,8 @@ export default function ModalPagoCuota({
       setComprobante("");
       setImagenComprobante("");
       setFecha(new Date().toISOString().split("T")[0]);
+      setComprobanteEsDuplicado(false);
+      setMensajeValidacion("");
       onClose();
     } catch (error) {
       console.error("Error al procesar pago:", error);
@@ -276,14 +345,36 @@ export default function ModalPagoCuota({
                 <label className='block text-sm font-medium text-gray-900'>
                   Número de Comprobante/Referencia
                 </label>
-                <input
-                  type='text'
-                  value={comprobante}
-                  onChange={(e) => setComprobante(e.target.value)}
-                  placeholder='Ej: 123456789'
-                  className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
-                  required
-                />
+                <div className='relative'>
+                  <input
+                    type='text'
+                    value={comprobante}
+                    onChange={(e) => setComprobante(e.target.value)}
+                    placeholder='Ej: 123456789'
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-colors ${
+                      comprobanteEsDuplicado
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                        : mensajeValidacion.includes("✅")
+                        ? "border-green-300 focus:ring-green-500 focus:border-green-500 bg-green-50"
+                        : "border-gray-300 focus:ring-sky-500 focus:border-sky-500"
+                    }`}
+                    required
+                  />
+                  {verificandoComprobante && (
+                    <div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
+                      <div className='w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
+                    </div>
+                  )}
+                </div>
+                {mensajeValidacion && (
+                  <p
+                    className={`text-sm mt-1 ${
+                      comprobanteEsDuplicado ? "text-red-600" : "text-green-600"
+                    }`}
+                  >
+                    {mensajeValidacion}
+                  </p>
+                )}
               </div>
 
               <div className='space-y-2'>
@@ -322,7 +413,9 @@ export default function ModalPagoCuota({
             </button>
             <button
               type='submit'
-              disabled={cargando}
+              disabled={
+                cargando || comprobanteEsDuplicado || verificandoComprobante
+              }
               className='flex-1 px-6 py-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
             >
               {cargando ? (
