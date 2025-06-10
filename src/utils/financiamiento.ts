@@ -1,34 +1,5 @@
 import { FinanciamientoCuota, Cobro } from "@/lib/firebase/database";
 
-// Función helper para debugging cobros
-export function debugCobrosFinanciamiento(financiamientoId: string, cobros?: Cobro[]) {
-  if (!cobros) return { totalCobros: 0, cobrosEsteFinanciamiento: 0, cobrosValidos: 0 };
-  
-  const cobrosEsteFinanciamiento = cobros.filter(c => c.financiamientoId === financiamientoId);
-  const cobrosValidosCuota = cobrosEsteFinanciamiento.filter(c => 
-    c.tipo === "cuota" && c.numeroCuota && c.numeroCuota > 0
-  );
-  
-  console.log(`🔍 Debug cobros para financiamiento ${financiamientoId}:`, {
-    totalCobrosEnSistema: cobros.length,
-    cobrosEsteFinanciamiento: cobrosEsteFinanciamiento.length,
-    cobrosValidosCuota: cobrosValidosCuota.length,
-    detalleCobros: cobrosValidosCuota.map(c => ({
-      id: c.id,
-      numeroCuota: c.numeroCuota,
-      monto: c.monto,
-      fecha: new Date(c.fecha).toLocaleDateString(),
-      tipo: c.tipo
-    }))
-  });
-  
-  return {
-    totalCobros: cobros.length,
-    cobrosEsteFinanciamiento: cobrosEsteFinanciamiento.length,
-    cobrosValidos: cobrosValidosCuota.length
-  };
-}
-
 export function calcularCuotasAtrasadas(financiamiento: FinanciamientoCuota, cobros?: Cobro[]): number {
   // Solo calcular para financiamientos activos o atrasados de tipo cuotas
   if (
@@ -64,20 +35,6 @@ export function calcularCuotasAtrasadas(financiamiento: FinanciamientoCuota, cob
   
   // Las cuotas atrasadas son la diferencia
   const cuotasAtrasadas = Math.max(0, cuotasQueDeberianEstarPagadas - cuotasPagadas);
-  
-  // DEBUG: Log temporal para verificar cálculos
-  if (financiamiento.id && (cuotasAtrasadas > 0 || semanasPasadas > 0)) {
-    console.log(`🐛 DEBUG Financiamiento ${financiamiento.id}:`, {
-      fechaInicio: fechaInicio.toLocaleDateString(),
-      fechaActual: hoy.toLocaleDateString(),
-      semanasPasadas,
-      cuotasQueDeberianEstarPagadas,
-      cuotasPagadas,
-      cuotasAtrasadas,
-      totalCobros: cobros?.length || 0,
-      cobrosValidosParaEsteFinanciamiento: cobrosValidos.length
-    });
-  }
   
   return cuotasAtrasadas;
 } 
