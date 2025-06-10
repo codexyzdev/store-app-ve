@@ -87,7 +87,7 @@ export default function CuotasAtrasadasPage() {
     return encodeURIComponent(
       `Hola ${nombreCliente}, espero que te encuentres bien. 
 
-Te escribo desde Store App Ve para recordarte que tienes ${cuotasAtrasadas} cuota${
+Te escribo desde Los Tiburones para recordarte que tienes ${cuotasAtrasadas} cuota${
         cuotasAtrasadas > 1 ? "s" : ""
       } atrasada${
         cuotasAtrasadas > 1 ? "s" : ""

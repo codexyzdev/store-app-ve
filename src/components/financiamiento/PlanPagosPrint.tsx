@@ -81,8 +81,17 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
     <div className='print-document'>
       {/* Header del documento */}
       <div className='print-header'>
-        <h1>STORE APP VE</h1>
-        <h2>PLAN DE PAGOS - PRÉSTAMO</h2>
+        <div className='header-content'>
+          <img
+            src='/logo-los-tiburones.webp'
+            alt='Los Tiburones'
+            className='company-logo'
+          />
+          <div className='header-text'>
+            <h1>LOS TIBURONES</h1>
+            <h2>PLAN DE PAGOS - FINANCIAMIENTO</h2>
+          </div>
+        </div>
         <p>Fecha: {fechaEmision}</p>
       </div>
 
@@ -93,6 +102,11 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
           <p>
             <strong>Nombre:</strong> {cliente.nombre}
           </p>
+          {cliente.numeroControl && (
+            <p>
+              <strong>Control:</strong> #{cliente.numeroControl}
+            </p>
+          )}
           <p>
             <strong>Cédula:</strong> {cliente.cedula || "N/A"}
           </p>
@@ -102,10 +116,12 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
         </div>
 
         <div className='print-info-block'>
-          <h3>PRÉSTAMO</h3>
-          <p>
-            <strong>ID:</strong> #{prestamo.id.slice(-8)}
-          </p>
+          <h3>FINANCIAMIENTO</h3>
+          {prestamo.numeroControl && (
+            <p>
+              <strong>Control:</strong> #F-{prestamo.numeroControl}
+            </p>
+          )}
           <p>
             <strong>Productos:</strong> {productosNombres || "N/A"}
           </p>
@@ -187,19 +203,29 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
       {/* Footer compacto */}
       <div className='print-footer'>
         <div className='terms'>
-          <h4>TÉRMINOS:</h4>
+          <h4>TÉRMINOS Y CONDICIONES:</h4>
           <ul>
             <li>Pagos puntuales en fechas establecidas</li>
-            <li>Conservar documento como comprobante</li>
-            <li>Consultas al teléfono de la empresa</li>
+            <li>Conservar documento como comprobante de pagos</li>
+            <li>Consultas e información al teléfono de contacto</li>
+            <li>Documento válido con firma de ambas partes</li>
           </ul>
+        </div>
+
+        <div className='contact-info'>
+          <h4>LOS TIBURONES</h4>
+          <p>📞 Teléfono: [Tu número de contacto]</p>
+          <p>📍 Dirección: [Tu dirección comercial]</p>
+          <p>📧 Email: alejandrobaez938@gmail.com</p>
         </div>
 
         <div className='signatures'>
           <div className='signature-block'>
             <div className='signature-line'></div>
             <p>
-              <strong>PRESTAMISTA</strong>
+              <strong>COMERCIANTE</strong>
+              <br />
+              Alejandro Baez
             </p>
           </div>
           <div className='signature-block'>
@@ -208,6 +234,12 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
               <strong>CLIENTE</strong>
               <br />
               {cliente.nombre}
+              {cliente.cedula && (
+                <>
+                  <br />
+                  C.I: {cliente.cedula}
+                </>
+              )}
             </p>
           </div>
         </div>
