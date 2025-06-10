@@ -69,7 +69,7 @@ export default function ModalPagoCuota({
 
         if (esDuplicado) {
           setMensajeValidacion(
-            `⚠️ Este número de comprobante ya está registrado en el sistema`
+            `❌ El número "${numeroComprobante}" ya está registrado. Usa un número diferente.`
           );
         } else {
           setMensajeValidacion(`✅ Número de comprobante disponible`);
@@ -88,10 +88,10 @@ export default function ModalPagoCuota({
   // Verificar comprobante cuando cambie el número o tipo de pago
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (tipoPago !== "efectivo") {
+      if (tipoPago !== "efectivo" && comprobante.trim()) {
         verificarComprobante(comprobante);
       }
-    }, 500); // Debounce de 500ms
+    }, 800); // Aumentar debounce a 800ms para mayor estabilidad
 
     return () => clearTimeout(timeoutId);
   }, [comprobante, tipoPago, verificarComprobante]);
@@ -129,17 +129,12 @@ export default function ModalPagoCuota({
       return;
     }
 
-    if (tipoPago !== "efectivo" && comprobanteEsDuplicado) {
-      alert(
-        "No se puede procesar el pago: el número de comprobante ya está registrado en el sistema"
-      );
-      return;
-    }
-
     if (tipoPago !== "efectivo" && !imagenComprobante) {
       alert("Debes adjuntar la imagen del comprobante");
       return;
     }
+
+    // La validación de duplicados se maneja completamente en el backend
 
     try {
       await onPagar({
@@ -365,15 +360,44 @@ export default function ModalPagoCuota({
                       <div className='w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
                     </div>
                   )}
+                  {comprobanteEsDuplicado && (
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setComprobante("");
+                        setComprobanteEsDuplicado(false);
+                        setMensajeValidacion("");
+                      }}
+                      className='absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors'
+                      title='Limpiar campo'
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
                 {mensajeValidacion && (
-                  <p
+                  <div
                     className={`text-sm mt-1 ${
                       comprobanteEsDuplicado ? "text-red-600" : "text-green-600"
                     }`}
                   >
-                    {mensajeValidacion}
-                  </p>
+                    <div className='flex items-center justify-between'>
+                      <span>{mensajeValidacion}</span>
+                      {comprobanteEsDuplicado && (
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setComprobante("");
+                            setComprobanteEsDuplicado(false);
+                            setMensajeValidacion("");
+                          }}
+                          className='ml-2 text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded transition-colors'
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
 

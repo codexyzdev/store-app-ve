@@ -195,10 +195,22 @@ export const prestamosDB = financiamientoDB;
 // Funciones CRUD para Cobros
 export const cobrosDB = {
   async crear(cobro: Omit<Cobro, 'id'>) {
-    // Validar comprobante duplicado si no es efectivo y tiene comprobante
+    // Validar comprobante duplicado inmediatamente antes de crear
     if (cobro.tipoPago && cobro.tipoPago !== 'efectivo' && cobro.comprobante && cobro.comprobante.trim()) {
+      // Hacer una verificación final con timestamp para evitar condiciones de carrera
+      const tiempoVerificacion = Date.now();
       const esDuplicado = await this.verificarComprobanteDuplicado(cobro.comprobante.trim());
+      
       if (esDuplicado) {
+        throw new Error(`El número de comprobante "${cobro.comprobante}" ya está registrado en el sistema`);
+      }
+      
+      // Pequeña pausa para asegurar que no haya operaciones concurrentes
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verificar una vez más antes de crear (doble verificación)
+      const esDuplicadoFinal = await this.verificarComprobanteDuplicado(cobro.comprobante.trim());
+      if (esDuplicadoFinal) {
         throw new Error(`El número de comprobante "${cobro.comprobante}" ya está registrado en el sistema`);
       }
     }
@@ -216,6 +228,13 @@ export const cobrosDB = {
   // Verificar si un comprobante ya existe en el sistema
   async verificarComprobanteDuplicado(numeroComprobante: string): Promise<boolean> {
     try {
+      // Normalizar el número de comprobante
+      const comprobanteNormalizado = numeroComprobante.trim().toLowerCase();
+      
+      if (!comprobanteNormalizado) {
+        return false; // Comprobante vacío no puede ser duplicado
+      }
+      
       const cobrosRef = ref(database, 'cobros');
       const snapshot = await get(cobrosRef);
       
@@ -227,15 +246,25 @@ export const cobrosDB = {
       
       // Buscar si algún cobro tiene el mismo comprobante
       const cobroConComprobante = Object.values(todosLosCobros).find(
-        cobro => cobro.comprobante && 
-                 cobro.comprobante.trim().toLowerCase() === numeroComprobante.toLowerCase() &&
-                 cobro.tipoPago !== 'efectivo'
+        cobro => {
+          // Verificar que el cobro tenga comprobante y no sea efectivo
+          if (!cobro.comprobante || cobro.tipoPago === 'efectivo') {
+            return false;
+          }
+          
+          // Normalizar y comparar
+          const comprobanteExistente = cobro.comprobante.trim().toLowerCase();
+          return comprobanteExistente === comprobanteNormalizado;
+        }
       );
       
-      return !!cobroConComprobante; // Retorna true si encontró duplicado
+      const resultado = !!cobroConComprobante;
+      console.log(`Verificación comprobante "${numeroComprobante}": ${resultado ? 'DUPLICADO' : 'DISPONIBLE'}`);
+      
+      return resultado;
     } catch (error) {
       console.error('Error al verificar comprobante duplicado:', error);
-      // En caso de error, permitir la operación para no bloquear la funcionalidad
+      // En caso de error, ser conservador y permitir la operación
       return false;
     }
   },
