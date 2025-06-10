@@ -7,6 +7,7 @@ import { inventarioDB, Producto } from "@/lib/firebase/database";
 import {
   financiamientoDB,
   ProductoFinanciamiento,
+  cobrosDB,
 } from "@/lib/firebase/database";
 import Link from "next/link";
 import Modal from "@/components/Modal";
@@ -34,13 +35,14 @@ export default function NuevoFinanciamientoPage() {
     cliente: "",
     producto: "",
     monto: "",
-    cuotas: "",
+    cuotas: "15", // siempre 15 cuotas fijas
     fechaInicio: todayStr,
     descripcion: "",
     tipoVenta: "cuotas", // por defecto cuotas
   });
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [cantidadProducto, setCantidadProducto] = useState(1);
+  const [cuotasIniciales, setCuotasIniciales] = useState(0);
   // Estados para búsqueda y selección de cliente
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] =
@@ -213,8 +215,7 @@ export default function NuevoFinanciamientoPage() {
       const financiamientoData = {
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
-        cuotas:
-          formData.tipoVenta === "contado" ? 0 : parseInt(formData.cuotas, 10),
+        cuotas: formData.tipoVenta === "contado" ? 0 : 15, // Siempre 15 cuotas para financiamiento
         fechaInicio: fechaInicio,
         estado:
           formData.tipoVenta === "contado"
@@ -231,7 +232,26 @@ export default function NuevoFinanciamientoPage() {
           }`,
       };
 
-      await financiamientoDB.crear(financiamientoData);
+      const nuevoFinanciamiento = await financiamientoDB.crear(
+        financiamientoData
+      );
+
+      // Si hay cuotas iniciales, crear cobros para las últimas cuotas
+      if (formData.tipoVenta === "cuotas" && cuotasIniciales > 0) {
+        const valorCuota = parseFloat(formData.monto) / 15;
+
+        for (let i = 0; i < cuotasIniciales; i++) {
+          const numeroCuota = 15 - i; // Últimas cuotas: 15, 14, 13...
+          await cobrosDB.crear({
+            financiamientoId: nuevoFinanciamiento.id,
+            monto: Math.round(valorCuota),
+            fecha: fechaInicio,
+            tipo: "inicial",
+            numeroCuota: numeroCuota,
+            tipoPago: "efectivo", // Asumimos efectivo para pago inicial
+          });
+        }
+      }
       setShowSuccess(true);
       setTimeout(() => {
         router.push("/financiamiento-cuota");
@@ -766,35 +786,61 @@ export default function NuevoFinanciamientoPage() {
                         </p>
                       </div>
 
-                      {/* Cuotas */}
+                      {/* Cuotas Fijas */}
                       {formData.tipoVenta === "cuotas" && (
                         <div>
                           <label className='block text-sm font-semibold text-gray-700 mb-2'>
-                            Número de Cuotas
+                            Plan de Cuotas
                           </label>
-                          <input
-                            type='number'
-                            min='1'
-                            value={formData.cuotas}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                              setFormData({
-                                ...formData,
-                                cuotas: e.target.value,
-                              })
+                          <div className='w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600'>
+                            15 cuotas semanales (fijo)
+                          </div>
+                          {parseFloat(formData.monto) > 0 && (
+                            <p className='text-xs text-gray-500 mt-1'>
+                              Valor por cuota: $
+                              {Math.round(
+                                parseFloat(formData.monto) / 15
+                              ).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Cuotas Iniciales */}
+                      {formData.tipoVenta === "cuotas" && (
+                        <div>
+                          <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                            Cuotas Iniciales (Opcional)
+                          </label>
+                          <select
+                            value={cuotasIniciales}
+                            onChange={(e) =>
+                              setCuotasIniciales(parseInt(e.target.value))
                             }
                             className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
-                            placeholder='Ej: 12'
-                            required
-                          />
-                          {formData.cuotas &&
+                          >
+                            <option value={0}>Sin pago inicial</option>
+                            <option value={1}>1 cuota inicial</option>
+                            <option value={2}>2 cuotas iniciales</option>
+                            <option value={3}>3 cuotas iniciales</option>
+                            <option value={4}>4 cuotas iniciales</option>
+                          </select>
+                          {cuotasIniciales > 0 &&
                             parseFloat(formData.monto) > 0 && (
-                              <p className='text-xs text-gray-500 mt-1'>
-                                Valor por cuota: $
-                                {Math.round(
-                                  parseFloat(formData.monto) /
-                                    parseInt(formData.cuotas)
-                                ).toLocaleString()}
-                              </p>
+                              <div className='mt-2 space-y-1'>
+                                <p className='text-xs text-blue-600 font-medium'>
+                                  💰 Pago inicial: $
+                                  {Math.round(
+                                    (parseFloat(formData.monto) / 15) *
+                                      cuotasIniciales
+                                  ).toLocaleString()}
+                                </p>
+                                <p className='text-xs text-gray-500'>
+                                  Se marcarán como pagadas las últimas{" "}
+                                  {cuotasIniciales} cuota
+                                  {cuotasIniciales > 1 ? "s" : ""} del plan
+                                </p>
+                              </div>
                             )}
                         </div>
                       )}
@@ -891,17 +937,34 @@ export default function NuevoFinanciamientoPage() {
                             ${formData.monto}
                           </span>
                         </div>
-                        {formData.tipoVenta === "cuotas" && formData.cuotas && (
-                          <div className='flex justify-between'>
-                            <span className='text-gray-700'>Cuotas:</span>
-                            <span className='font-semibold'>
-                              {formData.cuotas} de $
-                              {Math.round(
-                                parseFloat(formData.monto) /
-                                  parseInt(formData.cuotas)
-                              ).toLocaleString()}
-                            </span>
-                          </div>
+                        {formData.tipoVenta === "cuotas" && (
+                          <>
+                            <div className='flex justify-between'>
+                              <span className='text-gray-700'>Cuotas:</span>
+                              <span className='font-semibold'>
+                                15 de $
+                                {Math.round(
+                                  parseFloat(formData.monto) / 15
+                                ).toLocaleString()}
+                              </span>
+                            </div>
+                            {cuotasIniciales > 0 && (
+                              <div className='flex justify-between'>
+                                <span className='text-gray-700'>
+                                  Pago inicial:
+                                </span>
+                                <span className='font-semibold text-blue-600'>
+                                  $
+                                  {Math.round(
+                                    (parseFloat(formData.monto) / 15) *
+                                      cuotasIniciales
+                                  ).toLocaleString()}{" "}
+                                  ({cuotasIniciales} cuota
+                                  {cuotasIniciales > 1 ? "s" : ""})
+                                </span>
+                              </div>
+                            )}
+                          </>
                         )}
                         <div className='flex justify-between'>
                           <span className='text-gray-700'>Tipo:</span>

@@ -67,15 +67,10 @@ export default function FinanciamientoCuotaPage() {
 
   const getCobrosFinanciamiento = (financiamientoId: string) => {
     return cobros.filter(
-      (c) => c.financiamientoId === financiamientoId && c.tipo === "cuota"
+      (c) =>
+        c.financiamientoId === financiamientoId &&
+        (c.tipo === "cuota" || c.tipo === "inicial")
     );
-  };
-
-  const getUltimaCuota = (financiamientoId: string) => {
-    const cobrosFinanciamiento = getCobrosFinanciamiento(financiamientoId).sort(
-      (a, b) => b.fecha - a.fecha
-    );
-    return cobrosFinanciamiento[0] || null;
   };
 
   // Calcular estadísticas
@@ -84,13 +79,6 @@ export default function FinanciamientoCuotaPage() {
       f.tipoVenta === "cuotas" &&
       (f.estado === "activo" || f.estado === "atrasado")
   );
-  const financiamientosAtrasados = financiamientosActivos.filter((f) => {
-    const cuotasAtrasadas = calcularCuotasAtrasadas(
-      f,
-      getCobrosFinanciamiento(f.id)
-    );
-    return cuotasAtrasadas > 0;
-  });
 
   // Filtrar financiamientos
   const financiamientosFiltrados = financiamientos.filter((financiamiento) => {

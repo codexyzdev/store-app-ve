@@ -19,7 +19,7 @@ interface Cobro {
   financiamientoId: string;
   monto: number;
   fecha: number;
-  tipo: "cuota" | "abono";
+  tipo: "cuota" | "abono" | "inicial";
   numeroCuota?: number;
 }
 
@@ -44,7 +44,9 @@ export function FinanciamientoStats({
   // Función para obtener cobros de un financiamiento específico
   const getCobrosFinanciamiento = (financiamientoId: string) => {
     return cobros.filter(
-      (c) => c.financiamientoId === financiamientoId && c.tipo === "cuota"
+      (c) =>
+        c.financiamientoId === financiamientoId &&
+        (c.tipo === "cuota" || c.tipo === "inicial")
     );
   };
 
@@ -96,7 +98,7 @@ export function FinanciamientoStats({
     .filter(
       (c) =>
         idsFinanciamientosCuotas.includes(c.financiamientoId) &&
-        c.tipo === "cuota"
+        (c.tipo === "cuota" || c.tipo === "inicial")
     )
     .reduce((sum, c) => sum + c.monto, 0);
 

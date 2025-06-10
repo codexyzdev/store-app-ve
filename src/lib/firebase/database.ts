@@ -58,7 +58,7 @@ export interface Cobro {
   financiamientoId: string;
   monto: number;
   fecha: number;
-  tipo: 'cuota' | 'abono';
+  tipo: 'cuota' | 'abono' | 'inicial';
   tipoPago?: string;
   comprobante?: string;
   imagenComprobante?: string;
