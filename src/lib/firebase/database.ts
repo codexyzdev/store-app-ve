@@ -11,12 +11,14 @@ import {
   onValue,
   off,
   DataSnapshot,
-  push
+  push,
+  runTransaction
 } from 'firebase/database';
 
 // Tipos de datos
 export interface Cliente {
   id: string;
+  numeroControl: number;
   nombre: string;
   cedula: string;
   telefono: string;
@@ -27,6 +29,7 @@ export interface Cliente {
 
 export interface FinanciamientoCuota {
   id: string;
+  numeroControl: number;
   clienteId: string;
   monto: number; // Monto fijo al momento de crear el financiamiento. No se modifica si el precio del producto cambia.
   cuotas: number; // 0 si es contado
@@ -74,15 +77,26 @@ export interface Producto {
   updatedAt: number;
 }
 
+
+
 // Funciones CRUD para Clientes
 export const clientesDB = {
-  async crear(cliente: Omit<Cliente, 'id'>) {
+  async crear(cliente: Omit<Cliente, 'id' | 'numeroControl'>) {
+    // Verificar que la cédula sea única
+    const esUnica = await verificarCedulaUnica(cliente.cedula);
+    if (!esUnica) {
+      throw new Error(`Ya existe un cliente con la cédula ${cliente.cedula}`);
+    }
+
+    // Obtener siguiente número de control
+    const numeroControl = await contadoresDB.obtenerSiguiente('clientes');
+    
     const clientesRef = ref(database, 'clientes');
     const newClienteRef = push(clientesRef);
     const id = newClienteRef.key;
     if (!id) throw new Error('Error al generar ID');
     
-    const nuevoCliente = { ...cliente, id };
+    const nuevoCliente = { ...cliente, id, numeroControl };
     await set(newClienteRef, nuevoCliente);
     return nuevoCliente;
   },
@@ -93,6 +107,14 @@ export const clientesDB = {
   },
 
   async actualizar(id: string, datos: Partial<Cliente>) {
+    // Si se está actualizando la cédula, verificar que sea única
+    if (datos.cedula) {
+      const esUnica = await verificarCedulaUnica(datos.cedula, id);
+      if (!esUnica) {
+        throw new Error(`Ya existe un cliente con la cédula ${datos.cedula}`);
+      }
+    }
+    
     await update(ref(database, `clientes/${id}`), datos);
   },
 
@@ -116,13 +138,16 @@ export const clientesDB = {
 
 // Funciones CRUD para Financiamientos
 export const financiamientoDB = {
-  async crear(financiamiento: Omit<FinanciamientoCuota, 'id'>) {
+  async crear(financiamiento: Omit<FinanciamientoCuota, 'id' | 'numeroControl'>) {
+    // Obtener siguiente número de control
+    const numeroControl = await contadoresDB.obtenerSiguiente('financiamientos');
+    
     const financiamientosRef = ref(database, 'financiamientos');
     const newFinanciamientoRef = push(financiamientosRef);
     const id = newFinanciamientoRef.key;
     if (!id) throw new Error('Error al generar ID');
     
-    const nuevoFinanciamiento = { ...financiamiento, id };
+    const nuevoFinanciamiento = { ...financiamiento, id, numeroControl };
     await set(newFinanciamientoRef, nuevoFinanciamiento);
     return nuevoFinanciamiento;
   },
@@ -302,4 +327,57 @@ export const inventarioDB = {
 
     return () => off(productosRef);
   }
-}; 
+};
+
+// Funciones para manejar contadores autoincrement
+export const contadoresDB = {
+  async obtenerSiguiente(entidad: 'clientes' | 'financiamientos'): Promise<number> {
+    const contadorRef = ref(database, `contadores/${entidad}`);
+    
+    try {
+      const resultado = await runTransaction(contadorRef, (valorActual) => {
+        // Si no existe el contador, empezar en 1
+        const nuevoValor = (valorActual || 0) + 1;
+        return nuevoValor;
+      });
+      
+      return resultado.snapshot.val();
+    } catch (error) {
+      console.error('Error al obtener siguiente número de control:', error);
+      throw new Error('Error al generar número de control');
+    }
+  }
+};
+
+// Función para verificar unicidad de cédula
+async function verificarCedulaUnica(cedula: string, idExcluir?: string): Promise<boolean> {
+  try {
+    // Obtener todos los clientes y filtrar en el cliente
+    const snapshot = await get(ref(database, 'clientes'));
+    
+    if (!snapshot.exists()) {
+      return true; // No hay clientes, la cédula es única
+    }
+    
+    const todosLosClientes = snapshot.val() as Record<string, Cliente>;
+    
+    // Buscar si algún cliente tiene la misma cédula
+    const clientesConCedula = Object.values(todosLosClientes).filter(
+      cliente => cliente.cedula === cedula
+    );
+    
+    // Si estamos editando un cliente, excluirlo de la verificación
+    if (idExcluir) {
+      const clientesFiltrados = clientesConCedula.filter(
+        cliente => cliente.id !== idExcluir
+      );
+      return clientesFiltrados.length === 0;
+    }
+    
+    return clientesConCedula.length === 0; // Retorna true si no hay clientes con esa cédula
+  } catch (error) {
+    console.error('Error al verificar unicidad de cédula:', error);
+    // En caso de error, permitir la operación para no bloquear la funcionalidad
+    return true;
+  }
+} 

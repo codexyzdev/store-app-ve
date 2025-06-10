@@ -26,7 +26,9 @@ export default function ClientesPage() {
       cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       cliente.telefono.includes(busqueda) ||
       cliente.direccion.toLowerCase().includes(busqueda.toLowerCase()) ||
-      (cliente.cedula && cliente.cedula === busqueda)
+      (cliente.cedula && cliente.cedula === busqueda) ||
+      (cliente.numeroControl &&
+        cliente.numeroControl.toString().includes(busqueda))
   );
 
   const handleEliminar = async (id: string) => {
@@ -149,7 +151,7 @@ export default function ClientesPage() {
                   type='text'
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder='Buscar por nombre, teléfono, dirección o cédula...'
+                  placeholder='Buscar por nombre, teléfono, dirección, cédula o número de control...'
                   className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors'
                 />
               </div>
@@ -237,9 +239,16 @@ export default function ClientesPage() {
                         {getInitials(cliente.nombre)}
                       </div>
                       <div className='flex-1 min-w-0'>
-                        <h3 className='font-bold text-lg text-gray-900 truncate'>
-                          {cliente.nombre}
-                        </h3>
+                        <div className='flex items-center gap-2 mb-1'>
+                          <h3 className='font-bold text-lg text-gray-900 truncate'>
+                            {cliente.nombre}
+                          </h3>
+                          {cliente.numeroControl && (
+                            <span className='px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-medium'>
+                              #{cliente.numeroControl}
+                            </span>
+                          )}
+                        </div>
                         <p className='text-sm text-gray-600'>
                           {cliente.telefono}
                         </p>
@@ -313,6 +322,11 @@ export default function ClientesPage() {
                         <h3 className='font-semibold text-gray-900 truncate'>
                           {cliente.nombre}
                         </h3>
+                        {cliente.numeroControl && (
+                          <span className='text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-full font-medium'>
+                            #{cliente.numeroControl}
+                          </span>
+                        )}
                         {cliente.cedula && (
                           <span className='text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full'>
                             {cliente.cedula}

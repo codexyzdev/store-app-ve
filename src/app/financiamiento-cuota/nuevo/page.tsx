@@ -258,7 +258,12 @@ export default function NuevoFinanciamientoPage() {
       cliente.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
       cliente.telefono.includes(busquedaCliente) ||
       (cliente.direccion &&
-        cliente.direccion.toLowerCase().includes(busquedaCliente.toLowerCase()))
+        cliente.direccion
+          .toLowerCase()
+          .includes(busquedaCliente.toLowerCase())) ||
+      (cliente.cedula && cliente.cedula.includes(busquedaCliente)) ||
+      (cliente.numeroControl &&
+        cliente.numeroControl.toString().includes(busquedaCliente))
   );
 
   const getProductoNombre = (id: string) => {

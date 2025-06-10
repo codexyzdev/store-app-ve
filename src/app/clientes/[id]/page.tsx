@@ -18,10 +18,13 @@ export default function EditarClientePage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [cliente, setCliente] = useState<Cliente | null>(null);
-  const [formData, setFormData] = useState<Omit<Cliente, "id" | "createdAt">>({
+  const [formData, setFormData] = useState<
+    Omit<Cliente, "id" | "createdAt" | "numeroControl">
+  >({
     nombre: "",
     telefono: "",
     direccion: "",
+    cedula: "",
   });
 
   useEffect(() => {
@@ -63,9 +66,25 @@ export default function EditarClientePage({
         router.push("/clientes");
       }, 2000);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al actualizar el cliente"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al actualizar el cliente";
+
+      // Manejar específicamente el error de cédula duplicada
+      if (errorMessage.includes("Ya existe un cliente con la cédula")) {
+        setError(
+          `⚠️ ${errorMessage}. Por favor, verifica el número de cédula e intenta nuevamente.`
+        );
+        // Focalizar el campo de cédula para facilitar la corrección
+        const cedulaInput = document.querySelector(
+          'input[title="Solo números, mínimo 6 dígitos"]'
+        ) as HTMLInputElement;
+        if (cedulaInput) {
+          cedulaInput.focus();
+          cedulaInput.select();
+        }
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setSaving(false);
     }
@@ -156,6 +175,11 @@ export default function EditarClientePage({
                     {cliente.nombre}
                   </h1>
                   <div className='flex flex-wrap gap-4 text-sm text-gray-600'>
+                    {cliente.numeroControl && (
+                      <span className='flex items-center gap-1'>
+                        <span>🔢</span> Control #{cliente.numeroControl}
+                      </span>
+                    )}
                     <span className='flex items-center gap-1'>
                       <span>📞</span> {cliente.telefono}
                     </span>

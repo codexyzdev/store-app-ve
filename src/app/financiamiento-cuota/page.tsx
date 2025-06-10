@@ -120,13 +120,15 @@ export default function FinanciamientoCuotaPage() {
     const productoNombre = getProductoNombre(
       financiamiento.productoId
     ).toLowerCase();
+    const numeroControl = financiamiento.numeroControl?.toString() || "";
 
     return (
       clienteNombre.includes(busqueda.toLowerCase()) ||
       clienteCedula.includes(busqueda.toLowerCase()) ||
       clienteTelefono.includes(busqueda) ||
       monto.includes(busqueda) ||
-      productoNombre.includes(busqueda.toLowerCase())
+      productoNombre.includes(busqueda.toLowerCase()) ||
+      numeroControl.includes(busqueda)
     );
   });
 
@@ -221,7 +223,7 @@ export default function FinanciamientoCuotaPage() {
                     type='text'
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder='Buscar por cliente, cédula, teléfono, monto o producto...'
+                    placeholder='Buscar por cliente, cédula, teléfono, monto, producto o número de control...'
                     className='w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-sm sm:text-base'
                   />
                 </div>
@@ -359,9 +361,16 @@ export default function FinanciamientoCuotaPage() {
                           {getInitials(clienteNombre)}
                         </div>
                         <div className='flex-1 min-w-0'>
-                          <h3 className='font-bold text-lg text-gray-900 truncate'>
-                            {clienteNombre}
-                          </h3>
+                          <div className='flex items-center gap-2 mb-1'>
+                            <h3 className='font-bold text-lg text-gray-900 truncate'>
+                              {clienteNombre}
+                            </h3>
+                            {financiamiento.numeroControl && (
+                              <span className='px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium'>
+                                #F-{financiamiento.numeroControl}
+                              </span>
+                            )}
+                          </div>
                           <p className='text-sm text-gray-600'>
                             {clienteTelefono}
                           </p>
@@ -486,9 +495,16 @@ export default function FinanciamientoCuotaPage() {
 
                       <div className='flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-2'>
                         <div>
-                          <h3 className='font-semibold text-gray-900 truncate'>
-                            {clienteNombre}
-                          </h3>
+                          <div className='flex items-center gap-2 mb-1'>
+                            <h3 className='font-semibold text-gray-900 truncate'>
+                              {clienteNombre}
+                            </h3>
+                            {financiamiento.numeroControl && (
+                              <span className='px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium'>
+                                #F-{financiamiento.numeroControl}
+                              </span>
+                            )}
+                          </div>
                           <p className='text-xs text-gray-500'>
                             {clienteTelefono}
                           </p>

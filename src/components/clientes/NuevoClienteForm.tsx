@@ -44,9 +44,25 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
       await clientesDB.actualizar(nuevoCliente.id, { fotoCedulaUrl: url });
       onClienteCreado({ ...nuevoCliente, fotoCedulaUrl: url });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al crear el cliente"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al crear el cliente";
+
+      // Manejar específicamente el error de cédula duplicada
+      if (errorMessage.includes("Ya existe un cliente con la cédula")) {
+        setError(
+          `⚠️ ${errorMessage}. Por favor, verifica el número de cédula e intenta nuevamente.`
+        );
+        // Focalizar el campo de cédula para facilitar la corrección
+        const cedulaInput = document.querySelector(
+          'input[title="Solo números, mínimo 6 dígitos"]'
+        ) as HTMLInputElement;
+        if (cedulaInput) {
+          cedulaInput.focus();
+          cedulaInput.select();
+        }
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
