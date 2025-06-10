@@ -59,11 +59,11 @@ export default function ClientesPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
           <div className='flex justify-center items-center min-h-[400px]'>
             <div className='flex flex-col items-center gap-4'>
-              <div className='w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+              <div className='w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
               <p className='text-gray-600 font-medium'>Cargando clientes...</p>
             </div>
           </div>
@@ -73,13 +73,13 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
       <div className='container mx-auto px-4 py-8'>
         {/* Header mejorado */}
         <div className='mb-8'>
           <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6'>
             <div>
-              <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2'>
+              <h1 className='text-4xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent mb-2'>
                 Gestión de Clientes
               </h1>
               <p className='text-gray-600 text-lg'>
@@ -89,7 +89,7 @@ export default function ClientesPage() {
 
             <Link
               href='/clientes/nuevo'
-              className='inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+              className='inline-flex items-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
             >
               <span className='text-xl'>👤</span>
               Nuevo Cliente
@@ -98,13 +98,13 @@ export default function ClientesPage() {
 
           {/* Estadísticas */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-8'>
-            <div className='bg-white rounded-2xl p-6 shadow-sm border border-blue-100'>
+            <div className='bg-white rounded-2xl p-6 shadow-sm border border-sky-100'>
               <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center'>
+                <div className='w-12 h-12 bg-gradient-to-br from-slate-700 to-sky-500 rounded-xl flex items-center justify-center'>
                   <span className='text-xl text-white'>👥</span>
                 </div>
                 <div>
-                  <p className='text-2xl font-bold text-blue-600'>
+                  <p className='text-2xl font-bold text-sky-600'>
                     {clientes.length}
                   </p>
                   <p className='text-sm text-gray-600'>Total Clientes</p>
@@ -150,7 +150,7 @@ export default function ClientesPage() {
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder='Buscar por nombre, teléfono, dirección o cédula...'
-                  className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                  className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors'
                 />
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function ClientesPage() {
                 onClick={() => setVistaCards(true)}
                 className={`p-3 rounded-lg transition-colors ${
                   vistaCards
-                    ? "bg-blue-100 text-blue-600 border border-blue-200"
+                    ? "bg-sky-100 text-sky-600 border border-sky-200"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
                 title='Vista de tarjetas'
@@ -171,7 +171,7 @@ export default function ClientesPage() {
                 onClick={() => setVistaCards(false)}
                 className={`p-3 rounded-lg transition-colors ${
                   !vistaCards
-                    ? "bg-blue-100 text-blue-600 border border-blue-200"
+                    ? "bg-sky-100 text-sky-600 border border-sky-200"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
                 title='Vista de lista'
@@ -200,15 +200,15 @@ export default function ClientesPage() {
               {!busqueda && (
                 <Link
                   href='/clientes/nuevo'
-                  className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
+                  className='inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-transform duration-200'
                 >
-                  <span>👤</span>
-                  Agregar Primer Cliente
+                  <span className='text-lg'>👤</span>
+                  Crear Primer Cliente
                 </Link>
               )}
             </div>
           </div>
-        ) : (
+        ) : vistaCards ? (
           <div
             className={
               vistaCards
@@ -233,7 +233,7 @@ export default function ClientesPage() {
                   <div className='p-6'>
                     {/* Header del cliente */}
                     <div className='flex items-center gap-4 mb-4'>
-                      <div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg'>
+                      <div className='w-14 h-14 bg-gradient-to-br from-slate-700 to-sky-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg'>
                         {getInitials(cliente.nombre)}
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -276,7 +276,7 @@ export default function ClientesPage() {
                     <div className='flex gap-2'>
                       <Link
                         href={`/prestamos/${cliente.id}`}
-                        className='flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-sm'
+                        className='flex-1 bg-gradient-to-r from-slate-700 to-sky-500 text-white text-center py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-sm'
                       >
                         Ver Préstamos
                       </Link>
@@ -304,7 +304,7 @@ export default function ClientesPage() {
                   className='bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 p-4 group transition-all duration-200'
                 >
                   <div className='flex items-center gap-4'>
-                    <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg'>
+                    <div className='w-12 h-12 bg-gradient-to-br from-slate-700 to-sky-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg'>
                       {getInitials(cliente.nombre)}
                     </div>
 
@@ -329,7 +329,7 @@ export default function ClientesPage() {
                     <div className='flex gap-2'>
                       <Link
                         href={`/prestamos/${cliente.id}`}
-                        className='px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium'
+                        className='px-4 py-2 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition-colors text-sm font-medium'
                       >
                         Préstamos
                       </Link>
@@ -352,6 +352,31 @@ export default function ClientesPage() {
                 </div>
               )
             )}
+          </div>
+        ) : (
+          <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center'>
+            <div className='max-w-md mx-auto'>
+              <span className='text-6xl mb-4 block'>😔</span>
+              <h3 className='text-xl font-semibold text-gray-900 mb-2'>
+                {busqueda
+                  ? "No se encontraron clientes"
+                  : "No hay clientes registrados"}
+              </h3>
+              <p className='text-gray-600 mb-6'>
+                {busqueda
+                  ? "Intenta con otros términos de búsqueda"
+                  : "Comienza agregando tu primer cliente al sistema"}
+              </p>
+              {!busqueda && (
+                <Link
+                  href='/clientes/nuevo'
+                  className='inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
+                >
+                  <span>👤</span>
+                  Agregar Primer Cliente
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </div>

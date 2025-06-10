@@ -1,14 +1,14 @@
 {
-  "name": "store-app-ve",
+  "name": "los-tiburones",
   "version": "0.1.0",
-  "description": "Sistema de Gestión Financiera y Comercial - Aplicación para el manejo de préstamos, inventario, clientes y cobranza",
+  "description": "Los Tiburones - Sistema de Gestión Financiera y Comercial - Aplicación para el manejo de préstamos, inventario, clientes y cobranza",
   "private": true,
   "license": "PROPRIETARY",
   "author": {
     "name": "Alejandro Baez",
     "email": "alejandrobaez938@gmail.com"
   },
-  "homepage": "https://storeappve.com",
+  "homepage": "https://lostiburones.com",
   "repository": {
     "type": "git",
     "url": "private"

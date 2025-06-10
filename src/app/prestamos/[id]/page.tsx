@@ -15,22 +15,12 @@ import {
   Cobro,
 } from "@/lib/firebase/database";
 import Modal from "@/components/Modal";
-import PrestamoCard from "@/components/prestamos/PrestamoCard";
 import CuadriculaCuotas from "@/components/prestamos/CuadriculaCuotas";
 import PlanPagosPrint from "@/components/prestamos/PlanPagosPrint";
 import { calcularCuotasAtrasadas } from "@/utils/prestamos";
-import ClienteCard from "@/components/prestamos/ClienteCard";
-import ResumenGlobal from "@/components/prestamos/ResumenGlobal";
 import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
 import Minimapa from "@/components/maps/Minimapa";
-
-// Componente para mostrar tooltips simples
-type TooltipProps = { text: string };
-const Tooltip: React.FC<TooltipProps> = ({ text }: TooltipProps) => (
-  <span className='ml-1 text-xs text-gray-400 cursor-help' title={text}>
-    ⓘ
-  </span>
-);
+import ModalPagoCuota from "@/components/prestamos/ModalPagoCuota";
 
 export default function PrestamosClientePage() {
   const router = useRouter();
@@ -42,12 +32,10 @@ export default function PrestamosClientePage() {
   const [cobros, setCobros] = useState<Cobro[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPagos, setShowPagos] = useState<{ [key: string]: boolean }>({});
   const [abonando, setAbonando] = useState<{ [key: string]: boolean }>({});
-  const [mostrarFormularioAbono, setMostrarFormularioAbono] = useState<{
+  const [modalPagoCuotaAbierto, setModalPagoCuotaAbierto] = useState<{
     [key: string]: boolean;
   }>({});
-  const [montoAbono, setMontoAbono] = useState<{ [key: string]: number }>({});
   const [mostrarPlanPago, setMostrarPlanPago] = useState<{
     [key: string]: boolean;
   }>({});
@@ -70,7 +58,7 @@ export default function PrestamosClientePage() {
   }, [clienteId]);
 
   useEffect(() => {
-    // Calcular totales (corregido y reactivo)
+    // Calcular totales
     const nuevoTotalPendiente = prestamos.reduce((acc: number, p: Prestamo) => {
       if (
         p.tipoVenta !== "cuotas" ||
@@ -113,14 +101,8 @@ export default function PrestamosClientePage() {
     setTotalCuotasAtrasadas(nuevoTotalCuotasAtrasadas);
   }, [prestamos, productos, cobros]);
 
-  const getProductoNombre = (id: string) => {
-    const producto = productos.find((p: Producto) => p.id === id);
-    return producto ? producto.nombre : "Producto no encontrado";
-  };
-
   const getProductosPrestamo = (prestamo: Prestamo) => {
     if (prestamo.productos && prestamo.productos.length > 0) {
-      // Préstamo con múltiples productos
       return prestamo.productos.map((p) => {
         const producto = productos.find((prod) => prod.id === p.productoId);
         return {
@@ -130,7 +112,6 @@ export default function PrestamosClientePage() {
         };
       });
     } else {
-      // Préstamo con un solo producto (compatibilidad)
       const producto = productos.find((p) => p.id === prestamo.productoId);
       return [
         {
@@ -161,65 +142,119 @@ export default function PrestamosClientePage() {
       .filter((c: Cobro) => c.prestamoId === prestamoId && c.tipo === "cuota")
       .sort((a: Cobro, b: Cobro) => b.fecha - a.fecha);
 
-  // Desactivar el loader cuando los préstamos cambian (la suscripción se actualiza)
-  useEffect(() => {
-    if (actualizando) {
+  const handlePagarCuota = async (
+    prestamoId: string,
+    data: {
+      monto: number;
+      tipoPago: string;
+      comprobante?: string;
+      imagenComprobante?: string;
+      fecha?: string;
+    }
+  ) => {
+    const prestamo = prestamos.find((p) => p.id === prestamoId);
+    if (!prestamo) return;
+
+    setAbonando((prev) => ({ ...prev, [prestamoId]: true }));
+    setActualizando(true);
+
+    try {
+      const valorCuota = prestamo.monto / prestamo.cuotas;
+      const cuotasAPagar = Math.floor(data.monto / valorCuota);
+
+      const cobrosExistentes = getCobrosPrestamo(prestamoId).filter(
+        (c: Cobro) => c.tipo === "cuota" && !!c.id && c.id !== "temp"
+      );
+
+      // Crear cobros
+      for (let i = 0; i < cuotasAPagar; i++) {
+        await cobrosDB.crear({
+          prestamoId: prestamoId,
+          monto: valorCuota,
+          fecha: data.fecha ? new Date(data.fecha).getTime() : Date.now(),
+          tipo: "cuota",
+          comprobante: data.comprobante || "",
+          tipoPago: data.tipoPago,
+          imagenComprobante: data.imagenComprobante || "",
+          numeroCuota: cobrosExistentes.length + i + 1,
+        });
+      }
+
+      // Actualizar estado del préstamo
+      const totalAbonado =
+        (cobrosExistentes.length + cuotasAPagar) * valorCuota;
+      const montoPendiente = Math.max(0, prestamo.monto - totalAbonado);
+
+      if (montoPendiente <= 0) {
+        await prestamosDB.actualizar(prestamoId, { estado: "completado" });
+      } else {
+        const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo, cobros);
+        const nuevoEstado = cuotasAtrasadas > 0 ? "atrasado" : "activo";
+        if (prestamo.estado !== nuevoEstado) {
+          await prestamosDB.actualizar(prestamoId, { estado: nuevoEstado });
+        }
+      }
+    } catch (error) {
+      console.error("Error al procesar pago:", error);
+      throw error;
+    } finally {
+      setAbonando((prev) => ({ ...prev, [prestamoId]: false }));
       setActualizando(false);
     }
-  }, [prestamos, cobros]);
+  };
 
   const imprimirPlanPagos = (prestamoId: string) => {
-    setMostrarImpresion((prev) => ({
-      ...prev,
-      [prestamoId]: true,
-    }));
-
-    // Esperar un poco para que se renderice la modal y luego imprimir
+    setMostrarImpresion((prev) => ({ ...prev, [prestamoId]: true }));
     setTimeout(() => {
-      // Configurar la página para impresión
       const originalTitle = document.title;
       document.title = `Plan de Pagos - ${cliente?.nombre || "Cliente"}`;
-
-      // Imprimir
       window.print();
-
-      // Restaurar el título original
       document.title = originalTitle;
     }, 500);
   };
 
   const cerrarImpresion = (prestamoId: string) => {
-    setMostrarImpresion((prev) => ({
-      ...prev,
-      [prestamoId]: false,
-    }));
+    setMostrarImpresion((prev) => ({ ...prev, [prestamoId]: false }));
   };
 
+  if (loading) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100 flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
+          <p className='text-gray-600 font-medium'>
+            Cargando información del cliente...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
-      <div className='container mx-auto px-4 py-8'>
-        {/* Header con navegación */}
-        <div className='mb-8'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
+      <div className='container mx-auto px-4 py-6 sm:py-8'>
+        {/* Header mejorado */}
+        <div className='mb-6 sm:mb-8'>
           <div className='flex items-center gap-4 mb-6'>
             <button
               onClick={() => router.back()}
-              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors'
+              className='inline-flex items-center gap-2 text-gray-600 hover:text-sky-600 transition-colors'
             >
               <span className='text-xl'>←</span>
               <span className='font-medium'>Volver</span>
             </button>
           </div>
 
-          <div className='text-center mb-8'>
-            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-sm border border-blue-100 mb-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center'>
-                <span className='text-xl text-white'>👤</span>
+          <div className='text-center mb-6 sm:mb-8'>
+            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-sky-100 mb-4'>
+              <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-slate-700 to-sky-500 rounded-xl flex items-center justify-center'>
+                <span className='text-lg sm:text-xl text-white'>👤</span>
               </div>
               <div className='text-left'>
-                <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
+                <h1 className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent'>
                   Detalle del Cliente
                 </h1>
-                <p className='text-sm text-gray-600'>
+                <p className='text-xs sm:text-sm text-gray-600'>
                   Información detallada del cliente y sus préstamos
                 </p>
               </div>
@@ -227,14 +262,14 @@ export default function PrestamosClientePage() {
           </div>
         </div>
 
-        {/* Información del cliente mejorada */}
+        {/* Información del cliente optimizada */}
         {cliente ? (
-          <div className='mb-8'>
-            <div className='bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
+          <div className='mb-6 sm:mb-8'>
+            <div className='bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
               {/* Header del cliente */}
-              <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6'>
-                <div className='flex items-center gap-4'>
-                  <div className='w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden'>
+              <div className='bg-gradient-to-r from-slate-700 to-sky-500 px-4 sm:px-8 py-4 sm:py-6'>
+                <div className='flex flex-col sm:flex-row items-center sm:items-start gap-4'>
+                  <div className='w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0'>
                     {cliente.fotoCedulaUrl ? (
                       <img
                         src={cliente.fotoCedulaUrl}
@@ -242,7 +277,7 @@ export default function PrestamosClientePage() {
                         className='w-full h-full object-cover'
                       />
                     ) : (
-                      <span className='text-3xl text-white font-bold'>
+                      <span className='text-2xl sm:text-3xl text-white font-bold'>
                         {cliente.nombre
                           .split(" ")
                           .map((n) => n[0])
@@ -252,17 +287,25 @@ export default function PrestamosClientePage() {
                       </span>
                     )}
                   </div>
-                  <div className='text-white flex-1'>
-                    <h2 className='text-2xl font-bold mb-1'>
+                  <div className='text-white flex-1 text-center sm:text-left'>
+                    <h2 className='text-xl sm:text-2xl font-bold mb-2'>
                       {cliente.nombre}
                     </h2>
-                    <div className='flex flex-wrap gap-4 text-blue-100'>
-                      <span className='flex items-center gap-2'>
+                    <div className='flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 text-sm sm:text-base text-sky-100'>
+                      <span className='flex items-center justify-center sm:justify-start gap-2'>
                         <span>📞</span>
                         {cliente.telefono}
                       </span>
-                      {cliente.direccion && (
-                        <span className='flex items-center gap-2'>
+                      {cliente.cedula && (
+                        <span className='flex items-center justify-center sm:justify-start gap-2'>
+                          <span>🆔</span>
+                          {cliente.cedula}
+                        </span>
+                      )}
+                    </div>
+                    {cliente.direccion && (
+                      <div className='mt-2'>
+                        <span className='flex items-center justify-center sm:justify-start gap-2 text-sm text-sky-100'>
                           <span>📍</span>
                           {esEnlaceGoogleMaps(cliente.direccion) ? (
                             <button
@@ -274,26 +317,20 @@ export default function PrestamosClientePage() {
                               Ver ubicación en Google Maps
                             </button>
                           ) : (
-                            <span className='line-clamp-1'>
+                            <span className='line-clamp-2'>
                               {cliente.direccion}
                             </span>
                           )}
                         </span>
-                      )}
-                      {cliente.cedula && (
-                        <span className='flex items-center gap-2'>
-                          <span>🆔</span>
-                          {cliente.cedula}
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Información adicional del cliente */}
-              <div className='p-8'>
-                <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+              {/* Información adicional colapsable en mobile */}
+              <div className='p-4 sm:p-8'>
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8'>
                   {/* Información básica */}
                   <div className='space-y-4'>
                     <h3 className='text-lg font-semibold text-gray-900 flex items-center gap-2'>
@@ -301,7 +338,7 @@ export default function PrestamosClientePage() {
                       Información del Cliente
                     </h3>
 
-                    <div className='bg-gray-50 rounded-xl p-4 space-y-3'>
+                    <div className='bg-sky-50 rounded-xl p-4 space-y-3'>
                       <div className='flex items-center justify-between'>
                         <span className='text-sm font-medium text-gray-600'>
                           Nombre completo:
@@ -330,38 +367,16 @@ export default function PrestamosClientePage() {
                           </span>
                         </div>
                       )}
-
-                      {cliente.direccion && (
-                        <div className='space-y-2'>
-                          <span className='text-sm font-medium text-gray-600'>
-                            Dirección:
-                          </span>
-                          {esEnlaceGoogleMaps(cliente.direccion) ? (
-                            <button
-                              onClick={() =>
-                                window.open(cliente.direccion, "_blank")
-                              }
-                              className='text-sm text-blue-600 hover:text-blue-700 underline transition-colors block text-left'
-                            >
-                              Ver ubicación en Google Maps
-                            </button>
-                          ) : (
-                            <p className='text-sm text-gray-900 leading-relaxed'>
-                              {cliente.direccion}
-                            </p>
-                          )}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Foto de cédula ampliada */}
+                    {/* Foto de cédula */}
                     {cliente.fotoCedulaUrl && (
                       <div className='space-y-3'>
-                        <h4 className='text-md font-semibold text-gray-900 flex items-center gap-2'>
+                        <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
                           <span>🆔</span>
                           Documento de Identidad
                         </h4>
-                        <div className='bg-gray-50 rounded-xl p-4'>
+                        <div className='bg-sky-50 rounded-xl p-4'>
                           <img
                             src={cliente.fotoCedulaUrl}
                             alt='Cédula del cliente'
@@ -372,19 +387,19 @@ export default function PrestamosClientePage() {
                     )}
                   </div>
 
-                  {/* Mapa de ubicación */}
+                  {/* Mapa */}
                   {cliente.direccion &&
                     esEnlaceGoogleMaps(cliente.direccion) &&
                     (() => {
                       const coordenadas = extraerCoordenadas(cliente.direccion);
                       return coordenadas ? (
                         <div className='space-y-3'>
-                          <h4 className='text-md font-semibold text-gray-900 flex items-center gap-2'>
+                          <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
                             <span>🗺️</span>
                             Ubicación del Cliente
                           </h4>
-                          <div className='bg-gray-50 rounded-xl p-4'>
-                            <div className='h-64 rounded-lg overflow-hidden'>
+                          <div className='bg-sky-50 rounded-xl p-4'>
+                            <div className='h-48 sm:h-64 rounded-lg overflow-hidden'>
                               <Minimapa
                                 coordenadas={coordenadas}
                                 direccionOriginal={cliente.direccion}
@@ -406,55 +421,47 @@ export default function PrestamosClientePage() {
           </div>
         )}
 
-        {/* Resumen global mejorado */}
-        <div className='mb-8'>
+        {/* Resumen financiero mejorado */}
+        <div className='mb-6 sm:mb-8'>
           {actualizando && (
-            <div className='bg-white rounded-2xl shadow-sm border border-blue-200 p-4 mb-6'>
+            <div className='bg-white rounded-2xl shadow-sm border border-sky-200 p-4 mb-6'>
               <div className='flex items-center justify-center gap-3'>
-                <div className='w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
-                <span className='text-blue-600 font-semibold'>
+                <div className='w-6 h-6 sm:w-8 sm:h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
+                <span className='text-sky-600 font-semibold text-sm sm:text-base'>
                   Actualizando datos del préstamo...
                 </span>
               </div>
             </div>
           )}
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            {/* Total pendiente */}
-            <div className='bg-white rounded-2xl shadow-sm border border-red-100 p-6'>
-              <div className='flex items-center gap-4'>
-                <div className='w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg'>
-                  <span className='text-2xl text-white'>💰</span>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
+            <div className='bg-white rounded-2xl shadow-sm border border-red-100 p-4 sm:p-6'>
+              <div className='flex items-center gap-3 sm:gap-4'>
+                <div className='w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0'>
+                  <span className='text-xl sm:text-2xl text-white'>💰</span>
                 </div>
-                <div className='flex-1'>
-                  <p className='text-3xl font-bold text-red-600'>
+                <div className='flex-1 min-w-0'>
+                  <p className='text-2xl sm:text-3xl font-bold text-red-600 truncate'>
                     ${totalPendiente.toLocaleString()}
                   </p>
-                  <p className='text-sm text-gray-600 font-medium'>
+                  <p className='text-xs sm:text-sm text-gray-600 font-medium'>
                     Total Pendiente de Cobro
-                  </p>
-                  <p className='text-xs text-gray-500'>
-                    Monto total que debe el cliente
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Cuotas atrasadas */}
-            <div className='bg-white rounded-2xl shadow-sm border border-amber-100 p-6'>
-              <div className='flex items-center gap-4'>
-                <div className='w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg'>
-                  <span className='text-2xl text-white'>⏰</span>
+            <div className='bg-white rounded-2xl shadow-sm border border-amber-100 p-4 sm:p-6'>
+              <div className='flex items-center gap-3 sm:gap-4'>
+                <div className='w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0'>
+                  <span className='text-xl sm:text-2xl text-white'>⏰</span>
                 </div>
-                <div className='flex-1'>
-                  <p className='text-3xl font-bold text-amber-600'>
+                <div className='flex-1 min-w-0'>
+                  <p className='text-2xl sm:text-3xl font-bold text-amber-600 truncate'>
                     ${totalCuotasAtrasadas.toLocaleString()}
                   </p>
-                  <p className='text-sm text-gray-600 font-medium'>
+                  <p className='text-xs sm:text-sm text-gray-600 font-medium'>
                     Valor de Cuotas Atrasadas
-                  </p>
-                  <p className='text-xs text-gray-500'>
-                    Cuotas vencidas pendientes de pago
                   </p>
                 </div>
               </div>
@@ -462,53 +469,49 @@ export default function PrestamosClientePage() {
           </div>
         </div>
 
-        {/* Lista de préstamos mejorada */}
-        <div className='bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
-          <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6'>
-            <div className='flex items-center gap-4'>
-              <div className='w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center'>
-                <span className='text-2xl text-white'>📋</span>
+        {/* Lista de préstamos optimizada */}
+        <div className='bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
+          <div className='bg-gradient-to-r from-slate-700 to-sky-500 px-4 sm:px-8 py-4 sm:py-6'>
+            <div className='flex items-center gap-3 sm:gap-4'>
+              <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center'>
+                <span className='text-xl sm:text-2xl text-white'>📋</span>
               </div>
               <div className='text-white'>
-                <h2 className='text-xl font-bold mb-1'>
+                <h2 className='text-lg sm:text-xl font-bold mb-1'>
                   Préstamos del Cliente
                 </h2>
-                <p className='text-blue-100'>
+                <p className='text-sm sm:text-base text-sky-100'>
                   Historial completo de préstamos y pagos
                 </p>
               </div>
             </div>
           </div>
 
-          <div className='p-8'>
+          <div className='p-4 sm:p-8'>
             {prestamos.length === 0 ? (
-              <div className='text-center py-12'>
-                <div className='w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                  <span className='text-4xl text-gray-400'>📭</span>
+              <div className='text-center py-8 sm:py-12'>
+                <div className='w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                  <span className='text-3xl sm:text-4xl text-gray-400'>📭</span>
                 </div>
-                <h3 className='text-xl font-semibold text-gray-900 mb-2'>
+                <h3 className='text-lg sm:text-xl font-semibold text-gray-900 mb-2'>
                   No hay préstamos activos
                 </h3>
-                <p className='text-gray-500 text-lg mb-6'>
+                <p className='text-gray-500 text-sm sm:text-lg mb-6'>
                   Este cliente no tiene préstamos registrados en el sistema.
                 </p>
                 <Link
                   href='/prestamos/nuevo'
-                  className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
+                  className='inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
                 >
                   <span>💰</span>
                   Crear Nuevo Préstamo
                 </Link>
               </div>
             ) : (
-              <div className='space-y-8'>
-                {prestamos.map((prestamo: Prestamo) => {
-                  const producto = productos.find(
-                    (p: Producto) => p.id === prestamo.productoId
-                  );
+              <div className='space-y-6 sm:space-y-8'>
+                {prestamos.map((prestamo: Prestamo, index: number) => {
                   const productosDelPrestamo = getProductosPrestamo(prestamo);
                   const montoTotal = prestamo.monto;
-                  // Solo cobros válidos para abonos y pagos
                   const cobrosValidos: Cobro[] = getCobrosPrestamo(
                     prestamo.id
                   ).filter(
@@ -523,12 +526,7 @@ export default function PrestamosClientePage() {
                         : 0),
                     0
                   );
-                  const montoPendiente = Math.max(
-                    0,
-                    Number.isFinite(montoTotal - abonos)
-                      ? montoTotal - abonos
-                      : 0
-                  );
+                  const montoPendiente = Math.max(0, montoTotal - abonos);
                   const valorCuota =
                     prestamo.tipoVenta === "contado"
                       ? 0
@@ -537,17 +535,10 @@ export default function PrestamosClientePage() {
                         prestamo.cuotas > 0
                       ? montoTotal / prestamo.cuotas
                       : 0.01;
-                  const cuotasPendientes =
-                    prestamo.tipoVenta === "contado"
-                      ? 0
-                      : valorCuota > 0
-                      ? Math.max(0, Math.ceil(montoPendiente / valorCuota))
-                      : prestamo.cuotas - cobrosValidos.length;
                   const cuotasAtrasadas = calcularCuotasAtrasadas(
                     prestamo,
                     getCobrosPrestamo(prestamo.id)
                   );
-
                   const progreso =
                     montoPendiente > 0
                       ? ((montoTotal - montoPendiente) / montoTotal) * 100
@@ -555,16 +546,17 @@ export default function PrestamosClientePage() {
 
                   const estadoPrincipal =
                     prestamo.tipoVenta === "contado" ? (
-                      <div className='inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-bold'>
+                      <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-sky-100 text-sky-700 rounded-full font-bold text-sm'>
                         <span>💵</span>Pagado
                       </div>
                     ) : cuotasAtrasadas > 0 ? (
-                      <div className='inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full font-bold'>
-                        <span>⏰</span>Atrasado: {cuotasAtrasadas} cuota
-                        {cuotasAtrasadas > 1 ? "s" : ""}
+                      <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-red-100 text-red-700 rounded-full font-bold text-sm'>
+                        <span>⏰</span>
+                        <span className='hidden sm:inline'>Atrasado: </span>
+                        {cuotasAtrasadas} cuota{cuotasAtrasadas > 1 ? "s" : ""}
                       </div>
                     ) : (
-                      <div className='inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full font-bold'>
+                      <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-green-100 text-green-700 rounded-full font-bold text-sm'>
                         <span>✔️</span>Al día
                       </div>
                     );
@@ -576,34 +568,34 @@ export default function PrestamosClientePage() {
                     >
                       {/* Header del préstamo */}
                       <div
-                        className={`px-6 py-4 ${
+                        className={`px-4 sm:px-6 py-3 sm:py-4 ${
                           cuotasAtrasadas > 0
                             ? "bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200"
                             : montoPendiente <= 0
                             ? "bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200"
-                            : "bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200"
+                            : "bg-gradient-to-r from-sky-50 to-sky-100 border-b border-sky-200"
                         }`}
                       >
-                        <div className='flex items-center justify-between'>
-                          <div className='flex items-center gap-4'>
+                        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
+                          <div className='flex items-center gap-3 sm:gap-4'>
                             <div
-                              className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${
+                              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm ${
                                 cuotasAtrasadas > 0
                                   ? "bg-red-500 text-white"
                                   : montoPendiente <= 0
                                   ? "bg-green-500 text-white"
-                                  : "bg-blue-500 text-white"
+                                  : "bg-sky-500 text-white"
                               }`}
                             >
-                              <span className='text-xl font-bold'>
-                                #{prestamos.indexOf(prestamo) + 1}
+                              <span className='text-sm sm:text-lg font-bold'>
+                                #{index + 1}
                               </span>
                             </div>
                             <div>
-                              <h3 className='text-lg font-bold text-gray-900'>
+                              <h3 className='text-base sm:text-lg font-bold text-gray-900 line-clamp-1'>
                                 {getProductosNombres(prestamo)}
                               </h3>
-                              <p className='text-sm text-gray-600'>
+                              <p className='text-xs sm:text-sm text-gray-600'>
                                 Creado el{" "}
                                 {new Date(
                                   prestamo.fechaInicio
@@ -615,41 +607,41 @@ export default function PrestamosClientePage() {
                         </div>
                       </div>
 
-                      <div className='p-6'>
-                        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+                      <div className='p-4 sm:p-6'>
+                        <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8'>
                           {/* Información del préstamo */}
                           <div className='space-y-6'>
                             <div>
-                              <h4 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
+                              <h4 className='text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
                                 <span>📊</span>
                                 Información del Préstamo
                               </h4>
 
-                              <div className='space-y-4'>
-                                <div className='flex items-center justify-between p-3 bg-gray-50 rounded-xl'>
-                                  <span className='text-sm font-medium text-gray-600'>
+                              <div className='space-y-3 sm:space-y-4'>
+                                <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                  <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                     Monto total:
                                   </span>
-                                  <span className='text-lg font-bold text-gray-900'>
+                                  <span className='text-base sm:text-lg font-bold text-gray-900'>
                                     ${montoTotal.toLocaleString()}
                                   </span>
                                 </div>
 
-                                <div className='flex items-center justify-between p-3 bg-gray-50 rounded-xl'>
-                                  <span className='text-sm font-medium text-gray-600'>
+                                <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                  <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                     Monto cobrado:
                                   </span>
-                                  <span className='text-lg font-bold text-green-600'>
+                                  <span className='text-base sm:text-lg font-bold text-green-600'>
                                     ${abonos.toLocaleString()}
                                   </span>
                                 </div>
 
-                                <div className='flex items-center justify-between p-3 bg-gray-50 rounded-xl'>
-                                  <span className='text-sm font-medium text-gray-600'>
+                                <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                  <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                     Pendiente:
                                   </span>
                                   <span
-                                    className={`text-lg font-bold ${
+                                    className={`text-base sm:text-lg font-bold ${
                                       montoPendiente > 0
                                         ? "text-red-600"
                                         : "text-green-600"
@@ -661,20 +653,20 @@ export default function PrestamosClientePage() {
 
                                 {prestamo.tipoVenta === "cuotas" && (
                                   <>
-                                    <div className='flex items-center justify-between p-3 bg-gray-50 rounded-xl'>
-                                      <span className='text-sm font-medium text-gray-600'>
+                                    <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                      <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                         Cuotas:
                                       </span>
-                                      <span className='text-lg font-bold text-gray-900'>
+                                      <span className='text-base sm:text-lg font-bold text-gray-900'>
                                         {cobrosValidos.length}/{prestamo.cuotas}
                                       </span>
                                     </div>
 
-                                    <div className='flex items-center justify-between p-3 bg-gray-50 rounded-xl'>
-                                      <span className='text-sm font-medium text-gray-600'>
+                                    <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                      <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                         Valor por cuota:
                                       </span>
-                                      <span className='text-lg font-bold text-gray-900'>
+                                      <span className='text-base sm:text-lg font-bold text-gray-900'>
                                         ${valorCuota.toFixed(2)}
                                       </span>
                                     </div>
@@ -682,19 +674,19 @@ export default function PrestamosClientePage() {
                                 )}
 
                                 {/* Barra de progreso */}
-                                <div className='p-3 bg-gray-50 rounded-xl'>
-                                  <div className='flex justify-between text-sm font-medium text-gray-600 mb-2'>
+                                <div className='p-3 bg-sky-50 rounded-xl'>
+                                  <div className='flex justify-between text-xs sm:text-sm font-medium text-gray-600 mb-2'>
                                     <span>Progreso del pago</span>
                                     <span>{progreso.toFixed(1)}%</span>
                                   </div>
-                                  <div className='w-full bg-gray-200 rounded-full h-3'>
+                                  <div className='w-full bg-gray-200 rounded-full h-2 sm:h-3'>
                                     <div
-                                      className={`h-3 rounded-full transition-all duration-1000 ease-out ${
+                                      className={`h-2 sm:h-3 rounded-full transition-all duration-1000 ease-out ${
                                         progreso >= 100
                                           ? "bg-gradient-to-r from-green-500 to-green-600"
                                           : cuotasAtrasadas > 0
                                           ? "bg-gradient-to-r from-red-500 to-red-600"
-                                          : "bg-gradient-to-r from-blue-500 to-blue-600"
+                                          : "bg-gradient-to-r from-sky-500 to-sky-600"
                                       }`}
                                       style={{
                                         width: `${Math.min(progreso, 100)}%`,
@@ -708,308 +700,73 @@ export default function PrestamosClientePage() {
                             {/* Acciones */}
                             {montoPendiente > 0 && (
                               <div className='space-y-3'>
-                                <h4 className='text-lg font-semibold text-gray-900 flex items-center gap-2'>
+                                <h4 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2'>
                                   <span>⚡</span>
                                   Acciones Rápidas
                                 </h4>
 
-                                <button
-                                  onClick={() => {
-                                    const valorCuota =
-                                      Number.isFinite(
-                                        prestamo.monto / prestamo.cuotas
-                                      ) &&
-                                      prestamo.monto > 0 &&
-                                      prestamo.cuotas > 0
-                                        ? prestamo.monto / prestamo.cuotas
-                                        : 0.01;
-                                    setMontoAbono(
-                                      (prev: { [key: string]: number }) => ({
-                                        ...prev,
-                                        [prestamo.id]: valorCuota,
-                                      })
-                                    );
-                                    setMostrarFormularioAbono(
-                                      (prev: { [key: string]: boolean }) => ({
+                                <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3'>
+                                  <button
+                                    onClick={() => {
+                                      setModalPagoCuotaAbierto(
+                                        (prev: { [key: string]: boolean }) => ({
+                                          ...prev,
+                                          [prestamo.id]: true,
+                                        })
+                                      );
+                                    }}
+                                    disabled={abonando[prestamo.id]}
+                                    className='w-full bg-gradient-to-r from-sky-500 to-sky-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                                  >
+                                    <span>💰</span>
+                                    <span className='hidden sm:inline'>
+                                      Pagar Cuota
+                                    </span>
+                                    <span className='sm:hidden'>Pagar</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() =>
+                                      setMostrarPlanPago((prev) => ({
                                         ...prev,
                                         [prestamo.id]: !prev[prestamo.id],
-                                      })
-                                    );
-                                  }}
-                                  disabled={abonando[prestamo.id]}
-                                  className='w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
-                                >
-                                  <span>💰</span>
-                                  {mostrarFormularioAbono[prestamo.id]
-                                    ? "Cancelar Abono"
-                                    : "Abonar Cuota"}
-                                </button>
+                                      }))
+                                    }
+                                    className='w-full bg-gradient-to-r from-slate-500 to-slate-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
+                                  >
+                                    <span>📅</span>
+                                    <span className='hidden sm:inline'>
+                                      {mostrarPlanPago[prestamo.id]
+                                        ? "Ocultar"
+                                        : "Ver"}{" "}
+                                      Plan de Pagos
+                                    </span>
+                                    <span className='sm:hidden'>Plan</span>
+                                  </button>
 
-                                <button
-                                  onClick={() =>
-                                    setMostrarPlanPago((prev) => ({
-                                      ...prev,
-                                      [prestamo.id]: !prev[prestamo.id],
-                                    }))
-                                  }
-                                  className='w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
-                                >
-                                  <span>📅</span>
-                                  {mostrarPlanPago[prestamo.id]
-                                    ? "Ocultar"
-                                    : "Ver"}{" "}
-                                  Plan de Pagos
-                                </button>
-
-                                <button
-                                  onClick={() => imprimirPlanPagos(prestamo.id)}
-                                  className='w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
-                                >
-                                  <span>🖨️</span>
-                                  Imprimir Plan
-                                </button>
+                                  <button
+                                    onClick={() =>
+                                      imprimirPlanPagos(prestamo.id)
+                                    }
+                                    className='w-full sm:col-span-2 xl:col-span-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
+                                  >
+                                    <span>🖨️</span>
+                                    <span className='hidden sm:inline'>
+                                      Imprimir Plan
+                                    </span>
+                                    <span className='sm:hidden'>Imprimir</span>
+                                  </button>
+                                </div>
                               </div>
                             )}
                           </div>
 
-                          {/* Formulario de abono */}
-                          {mostrarFormularioAbono[prestamo.id] && (
-                            <div className='lg:col-span-2'>
-                              <div className='bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200'>
-                                <h4 className='text-lg font-semibold text-green-800 mb-4 flex items-center gap-2'>
-                                  <span>💳</span>
-                                  Registrar Pago de Cuota
-                                </h4>
-
-                                <PrestamoCard
-                                  prestamo={prestamo}
-                                  producto={producto}
-                                  productosDelPrestamo={productosDelPrestamo}
-                                  abonos={abonos}
-                                  montoTotal={montoTotal}
-                                  montoPendiente={montoPendiente}
-                                  valorCuota={valorCuota}
-                                  cuotasPendientes={cuotasPendientes}
-                                  cuotasAtrasadas={cuotasAtrasadas}
-                                  estadoPrincipal={estadoPrincipal}
-                                  mostrarFormularioAbono={true}
-                                  abonando={!!abonando[prestamo.id]}
-                                  montoAbono={montoAbono[prestamo.id] || 0}
-                                  onMostrarFormularioAbono={() => {
-                                    setMostrarFormularioAbono(
-                                      (prev: { [key: string]: boolean }) => ({
-                                        ...prev,
-                                        [prestamo.id]: false,
-                                      })
-                                    );
-                                  }}
-                                  onChangeMontoAbono={(valor) =>
-                                    setMontoAbono(
-                                      (prev: { [key: string]: number }) => ({
-                                        ...prev,
-                                        [prestamo.id]: valor,
-                                      })
-                                    )
-                                  }
-                                  onAbonarCuota={async (data) => {
-                                    setAbonando((prev) => ({
-                                      ...prev,
-                                      [prestamo.id]: true,
-                                    }));
-                                    setActualizando(true);
-                                    try {
-                                      if (
-                                        !data.monto ||
-                                        isNaN(data.monto) ||
-                                        data.monto <= 0
-                                      ) {
-                                        alert(
-                                          "Por favor ingresa un monto válido"
-                                        );
-                                        setAbonando((prev) => ({
-                                          ...prev,
-                                          [prestamo.id]: false,
-                                        }));
-                                        setActualizando(false);
-                                        return;
-                                      }
-                                      if (data.tipoPago !== "efectivo") {
-                                        if (!data.imagenComprobante) {
-                                          alert(
-                                            "Debes adjuntar el comprobante de pago."
-                                          );
-                                          setAbonando((prev) => ({
-                                            ...prev,
-                                            [prestamo.id]: false,
-                                          }));
-                                          setActualizando(false);
-                                          return;
-                                        }
-                                        if (
-                                          !data.comprobante ||
-                                          data.comprobante.trim() === ""
-                                        ) {
-                                          alert(
-                                            "Debes ingresar el número de comprobante."
-                                          );
-                                          setAbonando((prev) => ({
-                                            ...prev,
-                                            [prestamo.id]: false,
-                                          }));
-                                          setActualizando(false);
-                                          return;
-                                        }
-                                      }
-
-                                      // Calcular cuántas cuotas se están pagando
-                                      const valorCuota =
-                                        prestamo.monto / prestamo.cuotas;
-                                      const cuotasAPagar = Math.floor(
-                                        data.monto / valorCuota
-                                      );
-
-                                      // Obtener cobros existentes para saber el número de la próxima cuota
-                                      const cobrosExistentes =
-                                        getCobrosPrestamo(prestamo.id).filter(
-                                          (c: Cobro) =>
-                                            c.tipo === "cuota" &&
-                                            !!c.id &&
-                                            c.id !== "temp"
-                                        );
-
-                                      // Crear un cobro por cada cuota pagada
-                                      for (let i = 0; i < cuotasAPagar; i++) {
-                                        await cobrosDB.crear({
-                                          prestamoId: prestamo.id,
-                                          monto: valorCuota,
-                                          fecha: (() => {
-                                            if (data.fecha) {
-                                              const [yyyy, mm, dd] =
-                                                data.fecha.split("-");
-                                              return new Date(
-                                                Number(yyyy),
-                                                Number(mm) - 1,
-                                                Number(dd),
-                                                0,
-                                                0,
-                                                0,
-                                                0
-                                              ).getTime();
-                                            }
-                                            return Date.now();
-                                          })(),
-                                          tipo: "cuota",
-                                          comprobante: data.comprobante || "",
-                                          tipoPago: data.tipoPago,
-                                          imagenComprobante:
-                                            data.imagenComprobante || "",
-                                          numeroCuota:
-                                            cobrosExistentes.length + i + 1,
-                                        });
-                                      }
-
-                                      // Recalcular el estado del préstamo
-                                      const todosCobros = [...cobrosExistentes];
-                                      // Simular los nuevos cobros para el cálculo
-                                      for (let i = 0; i < cuotasAPagar; i++) {
-                                        todosCobros.push({
-                                          id: `temp-${i}`,
-                                          prestamoId: prestamo.id,
-                                          monto: valorCuota,
-                                          fecha: Date.now(),
-                                          tipo: "cuota",
-                                          numeroCuota:
-                                            cobrosExistentes.length + i + 1,
-                                        } as Cobro);
-                                      }
-
-                                      const totalAbonado = todosCobros.reduce(
-                                        (acc: number, cobro: Cobro) =>
-                                          acc + cobro.monto,
-                                        0
-                                      );
-                                      const montoPendiente = Math.max(
-                                        0,
-                                        prestamo.monto - totalAbonado
-                                      );
-                                      const cuotasPendientes = Math.ceil(
-                                        montoPendiente / valorCuota
-                                      );
-
-                                      // Actualizar el estado del préstamo
-                                      if (
-                                        montoPendiente <= 0 ||
-                                        cuotasPendientes <= 0
-                                      ) {
-                                        await prestamosDB.actualizar(
-                                          prestamo.id,
-                                          {
-                                            estado: "completado",
-                                          }
-                                        );
-                                      } else {
-                                        // Mantener el estado actual si aún hay cuotas pendientes
-                                        // Solo cambiar si es necesario actualizar las cuotas atrasadas
-                                        const cuotasAtrasadas =
-                                          calcularCuotasAtrasadas(
-                                            prestamo,
-                                            todosCobros
-                                          );
-                                        if (
-                                          cuotasAtrasadas > 0 &&
-                                          prestamo.estado !== "atrasado"
-                                        ) {
-                                          await prestamosDB.actualizar(
-                                            prestamo.id,
-                                            {
-                                              estado: "atrasado",
-                                            }
-                                          );
-                                        } else if (
-                                          cuotasAtrasadas === 0 &&
-                                          prestamo.estado === "atrasado"
-                                        ) {
-                                          await prestamosDB.actualizar(
-                                            prestamo.id,
-                                            {
-                                              estado: "activo",
-                                            }
-                                          );
-                                        }
-                                        // Si no hay cambios necesarios en el estado, no actualizar nada
-                                      }
-
-                                      setMostrarFormularioAbono((prev) => ({
-                                        ...prev,
-                                        [prestamo.id]: false,
-                                      }));
-                                    } catch (e) {
-                                      console.error(
-                                        "Error al abonar cuota:",
-                                        e
-                                      );
-                                      alert("Error al abonar cuota");
-                                      setActualizando(false);
-                                    } finally {
-                                      setAbonando((prev) => ({
-                                        ...prev,
-                                        [prestamo.id]: false,
-                                      }));
-                                    }
-                                  }}
-                                  pagos={getCobrosPrestamo(prestamo.id)}
-                                  Tooltip={Tooltip}
-                                />
-                              </div>
-                            </div>
-                          )}
-
                           {/* Plan de pagos */}
                           {prestamo.tipoVenta === "cuotas" &&
                             mostrarPlanPago[prestamo.id] && (
-                              <div className='lg:col-span-2'>
-                                <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
-                                  <h4 className='text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2'>
+                              <div className='xl:col-span-1'>
+                                <div className='bg-gradient-to-r from-sky-50 to-slate-50 rounded-2xl p-4 sm:p-6 border border-sky-200'>
+                                  <h4 className='text-base sm:text-lg font-semibold text-sky-800 mb-4 flex items-center gap-2'>
                                     <span>📅</span>
                                     Plan de Pagos
                                   </h4>
@@ -1032,7 +789,43 @@ export default function PrestamosClientePage() {
         </div>
       </div>
 
-      {/* Modales de impresión para cada préstamo */}
+      {/* Modales de pago de cuota */}
+      {prestamos.map((prestamo: Prestamo) => {
+        const valorCuota = prestamo.monto / prestamo.cuotas;
+        const cobrosValidos = getCobrosPrestamo(prestamo.id);
+        const abonos = cobrosValidos.reduce(
+          (acc, cobro) => acc + cobro.monto,
+          0
+        );
+        const montoPendiente = Math.max(0, prestamo.monto - abonos);
+        const cuotasPendientes = Math.ceil(montoPendiente / valorCuota);
+        const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo, cobros);
+
+        return (
+          <ModalPagoCuota
+            key={`modal-${prestamo.id}`}
+            isOpen={!!modalPagoCuotaAbierto[prestamo.id]}
+            onClose={() =>
+              setModalPagoCuotaAbierto((prev) => ({
+                ...prev,
+                [prestamo.id]: false,
+              }))
+            }
+            prestamo={{
+              id: prestamo.id,
+              monto: prestamo.monto,
+              cuotas: prestamo.cuotas,
+            }}
+            valorCuota={valorCuota}
+            cuotasPendientes={cuotasPendientes}
+            cuotasAtrasadas={cuotasAtrasadas}
+            onPagar={(data) => handlePagarCuota(prestamo.id, data)}
+            cargando={!!abonando[prestamo.id]}
+          />
+        );
+      })}
+
+      {/* Modales de impresión */}
       {prestamos.map((prestamo: Prestamo) => (
         <Modal
           key={`print-${prestamo.id}`}
@@ -1049,21 +842,9 @@ export default function PrestamosClientePage() {
               <div className='flex gap-2 justify-center'>
                 <button
                   onClick={() => window.print()}
-                  className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2'
+                  className='px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition flex items-center gap-2'
                 >
-                  <svg
-                    className='w-4 h-4'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z'
-                    />
-                  </svg>
+                  <span>🖨️</span>
                   Imprimir
                 </button>
                 <button
@@ -1088,28 +869,19 @@ export default function PrestamosClientePage() {
         </Modal>
       ))}
 
-      {/* Estilos globales para impresión */}
+      {/* Estilos para impresión */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
         @media print {
-          .no-print {
-            display: none !important;
-          }
-
+          .no-print { display: none !important; }
           .print-container {
             width: 100% !important;
             max-width: none !important;
             margin: 0 !important;
             padding: 0 !important;
           }
-
-          /* Ocultar elementos del modal en impresión */
-          .fixed.inset-0 > div:first-child {
-            display: none !important;
-          }
-
-          /* Mostrar solo el contenido del plan */
+          .fixed.inset-0 > div:first-child { display: none !important; }
           .fixed.inset-0 .plan-pagos-print {
             position: static !important;
             transform: none !important;

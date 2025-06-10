@@ -49,7 +49,7 @@ export default function Header() {
 
   return (
     <>
-      <header className='sticky top-0 z-40 flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-lg'>
+      <header className='sticky top-0 z-40 flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-slate-800 to-sky-500 text-white shadow-lg'>
         <div className='flex items-center gap-4'>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -59,7 +59,7 @@ export default function Header() {
             <Bars3Icon className='w-6 h-6' />
           </button>
           <h1 className='text-lg sm:text-2xl font-bold tracking-tight truncate'>
-            Store App Ve
+            Los Tiburones
           </h1>
           <HeaderBackButton />
         </div>
@@ -86,7 +86,7 @@ export default function Header() {
           <h2 className='text-xl font-bold text-gray-800'>Navegación</h2>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className='p-2 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            className='p-2 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500'
             aria-label='Cerrar menú'
           >
             <XMarkIcon className='w-5 h-5 text-gray-600' />
@@ -98,9 +98,9 @@ export default function Header() {
           <nav className='flex flex-col gap-3'>
             <button
               onClick={() => navigateTo("/dashboard")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <FolderIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <FolderIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Inicio</span>
             </button>
 
@@ -112,16 +112,16 @@ export default function Header() {
 
             <button
               onClick={() => navigateTo("/cobranza/cobros-del-dia")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <CalendarDaysIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <CalendarDaysIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Cobros del día</span>
             </button>
             <button
               onClick={() => navigateTo("/cobranza/cuotas-atrasadas")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <ExclamationCircleIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <ExclamationCircleIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Cuotas atrasadas</span>
             </button>
 
@@ -133,16 +133,16 @@ export default function Header() {
 
             <button
               onClick={() => navigateTo("/clientes")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <UsersIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <UsersIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Clientes</span>
             </button>
             <button
               onClick={() => navigateTo("/prestamos")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <ListBulletIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <ListBulletIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Préstamos</span>
             </button>
 
@@ -154,16 +154,16 @@ export default function Header() {
 
             <button
               onClick={() => navigateTo("/inventario")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <ArchiveBoxIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <ArchiveBoxIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Inventario</span>
             </button>
             <button
               onClick={() => navigateTo("/estadisticas")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
-              <ChartBarIcon className='w-5 h-5 text-gray-600 group-hover:text-indigo-600' />
+              <ChartBarIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Estadísticas</span>
             </button>
           </nav>

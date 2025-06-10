@@ -122,11 +122,11 @@ export default function CobranzaPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
           <div className='flex justify-center items-center min-h-[400px]'>
             <div className='flex flex-col items-center gap-4'>
-              <div className='w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+              <div className='w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
               <p className='text-gray-600 font-medium'>
                 Cargando información de cobranza...
               </p>
@@ -138,13 +138,13 @@ export default function CobranzaPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
       <div className='container mx-auto px-4 py-8'>
         {/* Header */}
         <div className='mb-8'>
           <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6'>
             <div>
-              <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2'>
+              <h1 className='text-4xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent mb-2'>
                 Gestión de Cobranza
               </h1>
               <p className='text-gray-600 text-lg'>

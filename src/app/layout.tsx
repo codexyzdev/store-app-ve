@@ -7,8 +7,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 
 export const metadata: Metadata = {
-  title: "Store App Venta",
-  description: "Store App Venta A Plazo",
+  title: "Los Tiburones",
+  description: "Los Tiburones - Sistema de Gestión Financiera y Comercial",
 };
 
 export default function RootLayout({

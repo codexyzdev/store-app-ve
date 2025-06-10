@@ -137,11 +137,11 @@ export default function PrestamosPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
           <div className='flex justify-center items-center min-h-[400px]'>
             <div className='flex flex-col items-center gap-4'>
-              <div className='w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+              <div className='w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
               <p className='text-gray-600 font-medium'>Cargando préstamos...</p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function PrestamosPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
       <div className='w-full'>
         {/* Hero Header Section */}
         <div className='bg-white shadow-sm border-b border-gray-100'>
@@ -159,10 +159,10 @@ export default function PrestamosPage() {
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
               <div className='text-center sm:text-left'>
                 <div className='flex items-center justify-center sm:justify-start gap-3 mb-2'>
-                  <div className='w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg'>
+                  <div className='w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-slate-700 to-sky-500 rounded-2xl flex items-center justify-center shadow-lg'>
                     <span className='text-2xl sm:text-3xl text-white'>💰</span>
                   </div>
-                  <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
+                  <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent'>
                     Gestión de Préstamos
                   </h1>
                 </div>
@@ -173,7 +173,7 @@ export default function PrestamosPage() {
               <div className='flex justify-center sm:justify-end'>
                 <Link
                   href='/prestamos/nuevo'
-                  className='w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+                  className='w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
                 >
                   <span className='text-xl'>💰</span>
                   <span className='hidden sm:inline'>Nuevo Préstamo</span>
@@ -204,7 +204,7 @@ export default function PrestamosPage() {
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
                     placeholder='Buscar por cliente, cédula, teléfono, monto o producto...'
-                    className='w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base'
+                    className='w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-sm sm:text-base'
                   />
                 </div>
               </div>

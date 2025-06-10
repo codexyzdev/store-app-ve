@@ -159,9 +159,9 @@ export default function InventarioPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center'>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100 flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto'></div>
+          <div className='animate-spin rounded-full h-16 w-16 border-b-2 border-sky-600 mx-auto'></div>
           <p className='mt-4 text-gray-600 font-medium'>
             Cargando inventario...
           </p>
@@ -171,13 +171,13 @@ export default function InventarioPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Header */}
         <div className='mb-8'>
           <div className='sm:flex sm:items-center sm:justify-between'>
             <div>
-              <h1 className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3'>
+              <h1 className='text-3xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent flex items-center gap-3'>
                 <span className='text-2xl'>📦</span>
                 Inventario
               </h1>
@@ -187,7 +187,7 @@ export default function InventarioPage() {
             </div>
             <div className='mt-4 sm:mt-0'>
               <button
-                className='inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+                className='inline-flex items-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
                 onClick={() => {
                   setProductoSeleccionado(undefined);
                   setModalOpen(true);
