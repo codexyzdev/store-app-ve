@@ -1,11 +1,8 @@
 import { DashboardCard } from "./DashboardCard";
-import { FinancialStats } from "./FinancialStats";
 
 export const DashboardGrid = () => {
   return (
     <div className='space-y-8'>
-      {/* Estadísticas Financieras */}
-      <FinancialStats />
       {/* Sección Principal - Cobranza */}
       <div>
         <h2 className='text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2'>
