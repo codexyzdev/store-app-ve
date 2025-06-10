@@ -7,7 +7,7 @@ import {
 } from "@/lib/firebase/database";
 import { ProductoModal } from "@/components/inventario/ProductoModal";
 import { InventarioCard } from "@/components/inventario/InventarioCard";
-// import { InventarioStats } from "@/components/inventario/InventarioStats";
+import { InventarioStatsExpanded } from "@/components/inventario/InventarioStatsExpanded";
 
 type ViewMode = "grid" | "list";
 type TabType = "productos" | "categorias" | "proveedores" | "movimientos";
@@ -41,7 +41,7 @@ export default function InventarioPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
   // Filtrar y ordenar productos
@@ -226,7 +226,7 @@ export default function InventarioPage() {
         </div>
 
         {/* Stats */}
-        {/* <InventarioStats productos={productos} /> */}
+        <InventarioStatsExpanded productos={productos} />
 
         {/* Filters and Search */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8'>
