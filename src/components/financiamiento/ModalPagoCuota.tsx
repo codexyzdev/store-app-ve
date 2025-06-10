@@ -65,7 +65,7 @@ export default function ModalPagoCuota({
       }
 
       setVerificandoComprobante(true);
-      setMensajeValidacion("");
+      setMensajeValidacion("🔍 Verificando número de comprobante...");
 
       try {
         const esDuplicado = await cobrosDB.verificarComprobanteDuplicado(
@@ -75,15 +75,17 @@ export default function ModalPagoCuota({
 
         if (esDuplicado) {
           setMensajeValidacion(
-            `❌ El número "${numeroComprobante}" ya está registrado. Usa un número diferente.`
+            `❌ El número "${numeroComprobante}" ya está registrado en el sistema. Por favor, verifica e ingresa un número diferente.`
           );
         } else {
-          setMensajeValidacion(`✅ Número de comprobante disponible`);
+          setMensajeValidacion(`✅ Número de comprobante disponible para usar`);
         }
       } catch (error) {
         console.error("Error al verificar comprobante:", error);
         setComprobanteEsDuplicado(false);
-        setMensajeValidacion("⚠️ Error al verificar comprobante");
+        setMensajeValidacion(
+          "⚠️ Error al verificar comprobante. Intenta nuevamente."
+        );
       } finally {
         setVerificandoComprobante(false);
       }
@@ -97,7 +99,7 @@ export default function ModalPagoCuota({
       if (tipoPago !== "efectivo" && comprobante.trim()) {
         verificarComprobante(comprobante);
       }
-    }, 800); // Aumentar debounce a 800ms para mayor estabilidad
+    }, 500); // 500ms debounce - bueno balance entre responsividad y rendimiento
 
     return () => clearTimeout(timeoutId);
   }, [comprobante, tipoPago, verificarComprobante]);
@@ -110,6 +112,26 @@ export default function ModalPagoCuota({
       setVerificandoComprobante(false);
     }
   }, [tipoPago]);
+
+  // Limpiar estado cuando se abra/cierre el modal
+  useEffect(() => {
+    if (isOpen) {
+      // Modal se está abriendo - resetear estados
+      setComprobanteEsDuplicado(false);
+      setMensajeValidacion("");
+      setVerificandoComprobante(false);
+    } else {
+      // Modal se está cerrando - limpiar completamente
+      setMonto(valorCuota);
+      setComprobante("");
+      setImagenComprobante("");
+      setFecha(new Date().toISOString().split("T")[0]);
+      setComprobanteEsDuplicado(false);
+      setMensajeValidacion("");
+      setVerificandoComprobante(false);
+      setTipoPago("efectivo");
+    }
+  }, [isOpen, valorCuota]);
 
   const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -140,7 +162,19 @@ export default function ModalPagoCuota({
       return;
     }
 
-    // La validación de duplicados se maneja completamente en el backend
+    // Validar que no sea un comprobante duplicado
+    if (tipoPago !== "efectivo" && comprobanteEsDuplicado) {
+      alert(
+        "❌ El número de comprobante ya está registrado. Por favor, usa un número diferente."
+      );
+      return;
+    }
+
+    // Verificar una vez más si hay validación en progreso
+    if (verificandoComprobante) {
+      alert("⏳ Esperando validación del comprobante. Intenta nuevamente.");
+      return;
+    }
 
     try {
       await onPagar({
@@ -161,6 +195,7 @@ export default function ModalPagoCuota({
       onClose();
     } catch (error) {
       console.error("Error al procesar pago:", error);
+      // No necesitamos manejar el error aquí, se maneja en el componente padre
     }
   };
 

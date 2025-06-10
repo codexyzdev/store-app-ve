@@ -227,12 +227,18 @@ export default function FinanciamientoClientePage() {
         error instanceof Error &&
         error.message.includes("ya está registrado")
       ) {
-        alert(`❌ Error: ${error.message}`);
+        alert(
+          `❌ Comprobante duplicado: ${error.message}\n\n💡 Sugerencia: Verifica que el número de comprobante no haya sido usado anteriormente o usa un número diferente.`
+        );
       } else {
-        alert("❌ Error al procesar el pago. Por favor, intenta nuevamente.");
+        const mensajeError =
+          error instanceof Error ? error.message : "Error desconocido";
+        alert(
+          `❌ Error al procesar el pago: ${mensajeError}\n\nPor favor, verifica los datos e intenta nuevamente.`
+        );
       }
 
-      throw error;
+      // No relanzar el error para evitar errores no capturados en la consola
     } finally {
       setAbonando((prev) => ({ ...prev, [financiamientoId]: false }));
       setActualizando(false);
