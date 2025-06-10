@@ -15,7 +15,7 @@ export default function ResumenCobrosPendientes({
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
-  // Filtrar préstamos activos
+  // Filtrar financiamientos activos
   const prestamosActivos = prestamos.filter(
     (p) => p.estado === "activo" || p.estado === "atrasado"
   );

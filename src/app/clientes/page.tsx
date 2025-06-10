@@ -275,10 +275,10 @@ export default function ClientesPage() {
                     {/* Acciones */}
                     <div className='flex gap-2'>
                       <Link
-                        href={`/prestamos/${cliente.id}`}
+                        href={`/financiamiento-cuota/${cliente.id}`}
                         className='flex-1 bg-gradient-to-r from-slate-700 to-sky-500 text-white text-center py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-sm'
                       >
-                        Ver Préstamos
+                        Ver Financiamientos
                       </Link>
                       <button
                         onClick={() => router.push(`/clientes/${cliente.id}`)}
@@ -328,10 +328,10 @@ export default function ClientesPage() {
 
                     <div className='flex gap-2'>
                       <Link
-                        href={`/prestamos/${cliente.id}`}
+                        href={`/financiamiento-cuota/${cliente.id}`}
                         className='px-4 py-2 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition-colors text-sm font-medium'
                       >
-                        Préstamos
+                        Financiamientos
                       </Link>
                       <button
                         onClick={() => router.push(`/clientes/${cliente.id}`)}

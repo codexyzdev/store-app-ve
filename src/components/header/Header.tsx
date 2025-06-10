@@ -139,11 +139,13 @@ export default function Header() {
               <span className='font-medium text-sm'>Clientes</span>
             </button>
             <button
-              onClick={() => navigateTo("/prestamos")}
+              onClick={() => navigateTo("/financiamiento-cuota")}
               className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
               <ListBulletIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Préstamos</span>
+              <span className='font-medium text-sm'>
+                Financiamiento a Cuota
+              </span>
             </button>
 
             {/* Separador */}

@@ -3,25 +3,27 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   clientesDB,
-  prestamosDB,
+  financiamientoDB,
   cobrosDB,
   inventarioDB,
   Cliente,
-  Prestamo,
+  FinanciamientoCuota,
   Cobro,
   Producto,
 } from "@/lib/firebase/database";
 
 export default function EstadisticasPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [financiamientos, setFinanciamientos] = useState<FinanciamientoCuota[]>(
+    []
+  );
   const [cobros, setCobros] = useState<Cobro[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubClientes = clientesDB.suscribir(setClientes);
-    const unsubPrestamos = prestamosDB.suscribir(setPrestamos);
+    const unsubFinanciamientos = financiamientoDB.suscribir(setFinanciamientos);
     const unsubCobros = cobrosDB.suscribir
       ? cobrosDB.suscribir(setCobros)
       : () => {};
@@ -31,23 +33,23 @@ export default function EstadisticasPage() {
 
     return () => {
       unsubClientes();
-      unsubPrestamos();
+      unsubFinanciamientos();
       unsubCobros();
       unsubProductos();
     };
   }, []);
 
   // Cálculos
-  const prestamosActivos = prestamos.filter(
-    (p: Prestamo) => p.estado === "activo"
+  const financiamientosActivos = financiamientos.filter(
+    (f: FinanciamientoCuota) => f.estado === "activo"
   );
-  const prestamosVencidos = prestamos.filter(
-    (p: Prestamo) => p.estado === "atrasado"
+  const financiamientosVencidos = financiamientos.filter(
+    (f: FinanciamientoCuota) => f.estado === "atrasado"
   );
-  const prestamosCompletados = prestamos.filter(
-    (p: Prestamo) => p.estado === "completado"
+  const financiamientosCompletados = financiamientos.filter(
+    (f: FinanciamientoCuota) => f.estado === "completado"
   );
-  const totalPrestamos = prestamos.length;
+  const totalFinanciamientos = financiamientos.length;
   const totalClientes = clientes.length;
   const totalProductos = productos.length;
 
@@ -57,20 +59,24 @@ export default function EstadisticasPage() {
     0
   );
 
-  const totalPendiente = prestamosActivos.reduce((acc: number, p: Prestamo) => {
-    const cobrosDelPrestamo = cobros.filter(
-      (c: Cobro) => c.prestamoId === p.id
-    );
-    const totalCobrado = cobrosDelPrestamo.reduce(
-      (a: number, c: Cobro) => a + (typeof c.monto === "number" ? c.monto : 0),
-      0
-    );
-    return acc + Math.max(0, p.monto - totalCobrado);
-  }, 0);
+  const totalPendiente = financiamientosActivos.reduce(
+    (acc: number, f: FinanciamientoCuota) => {
+      const cobrosDelFinanciamiento = cobros.filter(
+        (c: Cobro) => c.financiamientoId === f.id
+      );
+      const totalCobrado = cobrosDelFinanciamiento.reduce(
+        (a: number, c: Cobro) =>
+          a + (typeof c.monto === "number" ? c.monto : 0),
+        0
+      );
+      return acc + Math.max(0, f.monto - totalCobrado);
+    },
+    0
+  );
 
   const tasaCobranza =
-    totalPrestamos > 0
-      ? (prestamosCompletados.length / totalPrestamos) * 100
+    totalFinanciamientos > 0
+      ? (financiamientosCompletados.length / totalFinanciamientos) * 100
       : 0;
   const ingresosMensuales = cobros
     .filter((c) => {
@@ -136,9 +142,9 @@ export default function EstadisticasPage() {
               </div>
               <div>
                 <p className='text-2xl font-bold text-blue-600'>
-                  {totalPrestamos}
+                  {totalFinanciamientos}
                 </p>
-                <p className='text-sm text-gray-600'>Total Préstamos</p>
+                <p className='text-sm text-gray-600'>Total Financiamientos</p>
               </div>
             </div>
           </div>
@@ -197,9 +203,11 @@ export default function EstadisticasPage() {
             </div>
             <div className='space-y-3'>
               <div className='flex justify-between text-sm'>
-                <span className='text-gray-600'>Préstamos completados</span>
+                <span className='text-gray-600'>
+                  Financiamientos completados
+                </span>
                 <span className='font-medium'>
-                  {prestamosCompletados.length}/{totalPrestamos}
+                  {financiamientosCompletados.length}/{totalFinanciamientos}
                 </span>
               </div>
               <div className='w-full bg-gray-200 rounded-full h-3'>
@@ -217,7 +225,7 @@ export default function EstadisticasPage() {
           <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200'>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-semibold text-gray-900'>
-                Estado de Préstamos
+                Estado de Financiamientos
               </h3>
               <span className='text-2xl'>🎯</span>
             </div>
@@ -225,19 +233,19 @@ export default function EstadisticasPage() {
               <div className='flex justify-between items-center'>
                 <span className='text-sm text-gray-600'>Activos</span>
                 <span className='bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium'>
-                  {prestamosActivos.length}
+                  {financiamientosActivos.length}
                 </span>
               </div>
               <div className='flex justify-between items-center'>
                 <span className='text-sm text-gray-600'>Completados</span>
                 <span className='bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium'>
-                  {prestamosCompletados.length}
+                  {financiamientosCompletados.length}
                 </span>
               </div>
               <div className='flex justify-between items-center'>
                 <span className='text-sm text-gray-600'>Atrasados</span>
                 <span className='bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium'>
-                  {prestamosVencidos.length}
+                  {financiamientosVencidos.length}
                 </span>
               </div>
             </div>

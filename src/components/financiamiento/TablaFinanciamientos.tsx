@@ -33,10 +33,10 @@ export default function TablaPrestamos({
               Cliente
             </th>
             <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-              Total Préstamos
+              Total Financiamientos
             </th>
             <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-              Préstamos Activos
+              Financiamientos Activos
             </th>
             <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
               Total Pendiente
@@ -56,7 +56,7 @@ export default function TablaPrestamos({
           {prestamosAgrupados.length === 0 ? (
             <tr>
               <td colSpan={7} className='text-center py-8 text-gray-400'>
-                No hay préstamos registrados
+                No hay financiamientos registrados
               </td>
             </tr>
           ) : (

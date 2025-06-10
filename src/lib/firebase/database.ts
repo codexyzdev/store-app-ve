@@ -25,21 +25,25 @@ export interface Cliente {
   fotoCedulaUrl?: string;
 }
 
-export interface Prestamo {
+export interface FinanciamientoCuota {
   id: string;
   clienteId: string;
-  monto: number; // Monto fijo al momento de crear el préstamo. No se modifica si el precio del producto cambia.
+  monto: number; // Monto fijo al momento de crear el financiamiento. No se modifica si el precio del producto cambia.
   cuotas: number; // 0 si es contado
   fechaInicio: number;
   estado: 'activo' | 'completado' | 'atrasado';
-  productoId: string; // Mantener para compatibilidad con préstamos existentes
-  productos?: ProductoPrestamo[]; // Array de productos para préstamos agrupados
+  productoId: string; // Mantener para compatibilidad con financiamientos existentes
+  productos?: ProductoFinanciamiento[]; // Array de productos para financiamientos agrupados
   tipoVenta: 'contado' | 'cuotas';
   pagado?: boolean; // solo para contado
   descripcion?: string;
 }
 
-export interface ProductoPrestamo {
+// Alias para compatibilidad con código existente
+export type Prestamo = FinanciamientoCuota;
+export type ProductoPrestamo = ProductoFinanciamiento;
+
+export interface ProductoFinanciamiento {
   productoId: string;
   cantidad: number;
   precioUnitario: number;
@@ -48,7 +52,7 @@ export interface ProductoPrestamo {
 
 export interface Cobro {
   id: string;
-  prestamoId: string;
+  financiamientoId: string;
   monto: number;
   fecha: number;
   tipo: 'cuota' | 'abono';
@@ -110,55 +114,58 @@ export const clientesDB = {
   }
 };
 
-// Funciones CRUD para Préstamos
-export const prestamosDB = {
-  async crear(prestamo: Omit<Prestamo, 'id'>) {
-    const prestamosRef = ref(database, 'prestamos');
-    const newPrestamoRef = push(prestamosRef);
-    const id = newPrestamoRef.key;
+// Funciones CRUD para Financiamientos
+export const financiamientoDB = {
+  async crear(financiamiento: Omit<FinanciamientoCuota, 'id'>) {
+    const financiamientosRef = ref(database, 'financiamientos');
+    const newFinanciamientoRef = push(financiamientosRef);
+    const id = newFinanciamientoRef.key;
     if (!id) throw new Error('Error al generar ID');
     
-    const nuevoPrestamo = { ...prestamo, id };
-    await set(newPrestamoRef, nuevoPrestamo);
-    return nuevoPrestamo;
+    const nuevoFinanciamiento = { ...financiamiento, id };
+    await set(newFinanciamientoRef, nuevoFinanciamiento);
+    return nuevoFinanciamiento;
   },
 
   async obtener(id: string) {
-    const snapshot = await get(ref(database, `prestamos/${id}`));
-    return snapshot.val() as Prestamo;
+    const snapshot = await get(ref(database, `financiamientos/${id}`));
+    return snapshot.val() as FinanciamientoCuota;
   },
 
-  async actualizar(id: string, datos: Partial<Prestamo>) {
-    await update(ref(database, `prestamos/${id}`), datos);
+  async actualizar(id: string, datos: Partial<FinanciamientoCuota>) {
+    await update(ref(database, `financiamientos/${id}`), datos);
   },
 
   async eliminar(id: string) {
-    await remove(ref(database, `prestamos/${id}`));
+    await remove(ref(database, `financiamientos/${id}`));
   },
 
-  // Obtener préstamos por cliente
+  // Obtener financiamientos por cliente
   async obtenerPorCliente(clienteId: string) {
-    const prestamosQuery = query(
-      ref(database, 'prestamos'),
+    const financiamientosQuery = query(
+      ref(database, 'financiamientos'),
       orderByChild('clienteId'),
       equalTo(clienteId)
     );
-    const snapshot = await get(prestamosQuery);
-    return snapshot.val() as Record<string, Prestamo>;
+    const snapshot = await get(financiamientosQuery);
+    return snapshot.val() as Record<string, FinanciamientoCuota>;
   },
 
   // Suscripción en tiempo real
-  suscribir(callback: (prestamos: Prestamo[]) => void) {
-    const prestamosRef = ref(database, 'prestamos');
-    onValue(prestamosRef, (snapshot) => {
+  suscribir(callback: (financiamientos: FinanciamientoCuota[]) => void) {
+    const financiamientosRef = ref(database, 'financiamientos');
+    onValue(financiamientosRef, (snapshot) => {
       const data = snapshot.val();
-      const prestamos = data ? Object.values(data) : [];
-      callback(prestamos as Prestamo[]);
+      const financiamientos = data ? Object.values(data) : [];
+      callback(financiamientos as FinanciamientoCuota[]);
     });
 
-    return () => off(prestamosRef);
+    return () => off(financiamientosRef);
   }
 };
+
+// Mantener funciones de préstamos para compatibilidad con datos existentes
+export const prestamosDB = financiamientoDB;
 
 // Funciones CRUD para Cobros
 export const cobrosDB = {

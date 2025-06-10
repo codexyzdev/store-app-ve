@@ -15,7 +15,7 @@ export default function ResumenCuotasPendientes({
   clientes,
   cobros,
 }: ResumenCuotasPendientesProps) {
-  // Filtrar préstamos activos
+  // Filtrar financiamientos activos
   const prestamosActivos = prestamos.filter(
     (p) => p.estado === "activo" || p.estado === "atrasado"
   );
@@ -25,7 +25,7 @@ export default function ResumenCuotasPendientes({
   const sieteDiasDespues = new Date();
   sieteDiasDespues.setDate(hoy.getDate() + 7);
 
-  // Filtrar préstamos con cuotas por pagar en los próximos 7 días
+  // Filtrar financiamientos con cuotas por pagar en los próximos 7 días
   const prestamosConCuotasPendientes = prestamosActivos.filter((prestamo) => {
     const fechaInicio = new Date(prestamo.fechaInicio);
     const semanasTranscurridas = Math.floor(
@@ -69,7 +69,7 @@ export default function ResumenCuotasPendientes({
           return (
             <Link
               key={prestamo.id}
-              href={`/prestamos/${prestamo.clienteId}`}
+              href={`/financiamiento-cuota/${prestamo.clienteId}`}
               className='bg-white p-4 rounded-lg shadow border border-gray-200 block hover:shadow-lg hover:border-indigo-400 transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400'
             >
               <div className='flex justify-between items-start mb-2'>

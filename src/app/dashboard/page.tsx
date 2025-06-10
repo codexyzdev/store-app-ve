@@ -49,7 +49,7 @@ export default async function Dashboard() {
                   Bienvenido, {nombreUsuario}
                 </h1>
                 <p className='text-gray-700 text-lg font-medium'>
-                  Gestiona tu sistema de préstamos desde aquí
+                  Gestiona tu sistema de financiamientos desde aquí
                 </p>
               </div>
             </div>

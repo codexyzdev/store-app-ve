@@ -28,7 +28,7 @@ export default function ListaPrestamos({
     <div className='lg:hidden space-y-4'>
       {prestamosAgrupados.length === 0 ? (
         <div className='text-center py-8 text-gray-400'>
-          No hay préstamos registrados
+          No hay financiamientos registrados
         </div>
       ) : (
         prestamosAgrupados.map((grupo) => {
@@ -57,7 +57,7 @@ export default function ListaPrestamos({
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
                 <div className='flex justify-between sm:flex-col sm:justify-start'>
                   <span className='font-semibold text-gray-700'>
-                    Total Préstamos:
+                    Total Financiamientos:
                   </span>
                   <span className='text-gray-900 font-medium'>
                     {grupo.prestamos.length}
@@ -65,7 +65,7 @@ export default function ListaPrestamos({
                 </div>
                 <div className='flex justify-between sm:flex-col sm:justify-start'>
                   <span className='font-semibold text-gray-700'>
-                    Préstamos Activos:
+                    Financiamientos Activos:
                   </span>
                   <span className='text-gray-900 font-medium'>
                     {prestamosActivos.length}

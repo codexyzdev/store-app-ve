@@ -25,7 +25,7 @@ export const DashboardGrid = () => {
       {/* Sección de Gestión */}
       <div>
         <h2 className='text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2'>
-          👥 Gestión de Clientes y Préstamos
+          👥 Gestión de Clientes y Financiamientos
         </h2>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <DashboardCard
@@ -34,9 +34,9 @@ export const DashboardGrid = () => {
             href='/clientes'
           />
           <DashboardCard
-            title='Préstamos'
+            title='Financiamiento a Cuota'
             icon={<span className='text-4xl'>💰</span>}
-            href='/prestamos'
+            href='/financiamiento-cuota'
           />
         </div>
       </div>

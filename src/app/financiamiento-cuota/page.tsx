@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  prestamosDB,
-  Prestamo,
+  financiamientoDB,
+  FinanciamientoCuota,
   clientesDB,
   Cliente,
   inventarioDB,
@@ -12,11 +12,13 @@ import {
   Cobro,
 } from "@/lib/firebase/database";
 import Link from "next/link";
-import { calcularCuotasAtrasadas } from "@/utils/prestamos";
-import { PrestamosStats } from "@/components/prestamos/PrestamosStats";
+import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
+import { FinanciamientoStats } from "@/components/financiamiento/FinanciamientoStats";
 
-export default function PrestamosPage() {
-  const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+export default function FinanciamientoCuotaPage() {
+  const [financiamientos, setFinanciamientos] = useState<FinanciamientoCuota[]>(
+    []
+  );
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cobros, setCobros] = useState<Cobro[]>([]);
@@ -26,8 +28,8 @@ export default function PrestamosPage() {
   const [vistaCards, setVistaCards] = useState(true);
 
   useEffect(() => {
-    const unsubPrestamos = prestamosDB.suscribir((data) => {
-      setPrestamos(data);
+    const unsubFinanciamientos = financiamientoDB.suscribir((data) => {
+      setFinanciamientos(data);
       setLoading(false);
     });
     const unsubClientes = clientesDB.suscribir(setClientes);
@@ -36,7 +38,7 @@ export default function PrestamosPage() {
       ? cobrosDB.suscribir(setCobros)
       : () => {};
     return () => {
-      unsubPrestamos();
+      unsubFinanciamientos();
       unsubClientes();
       unsubProductos();
       unsubCobros();
@@ -63,51 +65,61 @@ export default function PrestamosPage() {
     return producto ? producto.nombre : "Producto no encontrado";
   };
 
-  const getCobrosPrestamo = (prestamoId: string) => {
+  const getCobrosFinanciamiento = (financiamientoId: string) => {
     return cobros.filter(
-      (c) => c.prestamoId === prestamoId && c.tipo === "cuota"
+      (c) => c.financiamientoId === financiamientoId && c.tipo === "cuota"
     );
   };
 
-  const getUltimaCuota = (prestamoId: string) => {
-    const cobrosPrestamo = getCobrosPrestamo(prestamoId).sort(
+  const getUltimaCuota = (financiamientoId: string) => {
+    const cobrosFinanciamiento = getCobrosFinanciamiento(financiamientoId).sort(
       (a, b) => b.fecha - a.fecha
     );
-    return cobrosPrestamo[0] || null;
+    return cobrosFinanciamiento[0] || null;
   };
 
   // Calcular estadísticas
-  const prestamosActivos = prestamos.filter(
-    (p) =>
-      p.tipoVenta === "cuotas" &&
-      (p.estado === "activo" || p.estado === "atrasado")
+  const financiamientosActivos = financiamientos.filter(
+    (f) =>
+      f.tipoVenta === "cuotas" &&
+      (f.estado === "activo" || f.estado === "atrasado")
   );
-  const prestamosAtrasados = prestamosActivos.filter((p) => {
-    const cuotasAtrasadas = calcularCuotasAtrasadas(p, getCobrosPrestamo(p.id));
+  const financiamientosAtrasados = financiamientosActivos.filter((f) => {
+    const cuotasAtrasadas = calcularCuotasAtrasadas(
+      f,
+      getCobrosFinanciamiento(f.id)
+    );
     return cuotasAtrasadas > 0;
   });
 
-  // Filtrar préstamos
-  const prestamosFiltrados = prestamos.filter((prestamo) => {
-    // Solo mostrar préstamos a cuotas
-    if (prestamo.tipoVenta !== "cuotas") return false;
+  // Filtrar financiamientos
+  const financiamientosFiltrados = financiamientos.filter((financiamiento) => {
+    // Solo mostrar financiamientos a cuotas
+    if (financiamiento.tipoVenta !== "cuotas") return false;
 
     // Filtro por estado
     if (filtroEstado !== "todos") {
       const cuotasAtrasadas = calcularCuotasAtrasadas(
-        prestamo,
-        getCobrosPrestamo(prestamo.id)
+        financiamiento,
+        getCobrosFinanciamiento(financiamiento.id)
       );
-      const estadoReal = cuotasAtrasadas > 0 ? "atrasado" : prestamo.estado;
+      const estadoReal =
+        cuotasAtrasadas > 0 ? "atrasado" : financiamiento.estado;
       if (filtroEstado !== estadoReal) return false;
     }
 
     // Filtro por búsqueda
-    const clienteNombre = getClienteNombre(prestamo.clienteId).toLowerCase();
-    const clienteCedula = getClienteCedula(prestamo.clienteId).toLowerCase();
-    const clienteTelefono = getClienteTelefono(prestamo.clienteId);
-    const monto = prestamo.monto.toFixed(2);
-    const productoNombre = getProductoNombre(prestamo.productoId).toLowerCase();
+    const clienteNombre = getClienteNombre(
+      financiamiento.clienteId
+    ).toLowerCase();
+    const clienteCedula = getClienteCedula(
+      financiamiento.clienteId
+    ).toLowerCase();
+    const clienteTelefono = getClienteTelefono(financiamiento.clienteId);
+    const monto = financiamiento.monto.toFixed(2);
+    const productoNombre = getProductoNombre(
+      financiamiento.productoId
+    ).toLowerCase();
 
     return (
       clienteNombre.includes(busqueda.toLowerCase()) ||
@@ -142,7 +154,9 @@ export default function PrestamosPage() {
           <div className='flex justify-center items-center min-h-[400px]'>
             <div className='flex flex-col items-center gap-4'>
               <div className='w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
-              <p className='text-gray-600 font-medium'>Cargando préstamos...</p>
+              <p className='text-gray-600 font-medium'>
+                Cargando financiamientos...
+              </p>
             </div>
           </div>
         </div>
@@ -163,20 +177,21 @@ export default function PrestamosPage() {
                     <span className='text-2xl sm:text-3xl text-white'>💰</span>
                   </div>
                   <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent'>
-                    Gestión de Préstamos
+                    Financiamiento a Cuota
                   </h1>
                 </div>
                 <p className='text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl'>
-                  Administra y da seguimiento a todos los préstamos activos
+                  Administra y da seguimiento a todos los financiamientos
+                  activos
                 </p>
               </div>
               <div className='flex justify-center sm:justify-end'>
                 <Link
-                  href='/prestamos/nuevo'
+                  href='/financiamiento-cuota/nuevo'
                   className='w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
                 >
                   <span className='text-xl'>💰</span>
-                  <span className='hidden sm:inline'>Nuevo Préstamo</span>
+                  <span className='hidden sm:inline'>Nuevo Financiamiento</span>
                   <span className='sm:hidden'>Nuevo</span>
                 </Link>
               </div>
@@ -187,7 +202,10 @@ export default function PrestamosPage() {
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
           {/* Estadísticas */}
           <div className='mb-6 sm:mb-8'>
-            <PrestamosStats prestamos={prestamos} cobros={cobros} />
+            <FinanciamientoStats
+              financiamientos={financiamientos}
+              cobros={cobros}
+            />
           </div>
 
           {/* Filtros y controles */}
@@ -254,28 +272,28 @@ export default function PrestamosPage() {
             </div>
           </div>
 
-          {/* Lista de préstamos */}
-          {prestamosFiltrados.length === 0 ? (
+          {/* Lista de financiamientos */}
+          {financiamientosFiltrados.length === 0 ? (
             <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center'>
               <div className='max-w-md mx-auto'>
                 <span className='text-6xl mb-4 block'>💰</span>
                 <h3 className='text-xl font-semibold text-gray-900 mb-2'>
                   {busqueda || filtroEstado !== "todos"
-                    ? "No se encontraron préstamos"
-                    : "No hay préstamos registrados"}
+                    ? "No se encontraron financiamientos"
+                    : "No hay financiamientos registrados"}
                 </h3>
                 <p className='text-gray-600 mb-6'>
                   {busqueda || filtroEstado !== "todos"
                     ? "Intenta ajustar los filtros de búsqueda"
-                    : "Comienza creando tu primer préstamo en el sistema"}
+                    : "Comienza creando tu primer financiamiento en el sistema"}
                 </p>
                 {!busqueda && filtroEstado === "todos" && (
                   <Link
-                    href='/prestamos/nuevo'
+                    href='/financiamiento-cuota/nuevo'
                     className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
                   >
                     <span>💰</span>
-                    Crear Primer Préstamo
+                    Crear Primer Financiamiento
                   </Link>
                 )}
               </div>
@@ -288,23 +306,31 @@ export default function PrestamosPage() {
                   : "space-y-3 sm:space-y-4"
               }
             >
-              {prestamosFiltrados.map((prestamo, index) => {
-                const clienteNombre = getClienteNombre(prestamo.clienteId);
-                const clienteTelefono = getClienteTelefono(prestamo.clienteId);
-                const productoNombre = getProductoNombre(prestamo.productoId);
-                const cobrosValidos = getCobrosPrestamo(prestamo.id);
+              {financiamientosFiltrados.map((financiamiento, index) => {
+                const clienteNombre = getClienteNombre(
+                  financiamiento.clienteId
+                );
+                const clienteTelefono = getClienteTelefono(
+                  financiamiento.clienteId
+                );
+                const productoNombre = getProductoNombre(
+                  financiamiento.productoId
+                );
+                const cobrosValidos = getCobrosFinanciamiento(
+                  financiamiento.id
+                );
                 const totalCobrado = cobrosValidos.reduce(
                   (acc, cobro) => acc + cobro.monto,
                   0
                 );
-                const montoPendiente = prestamo.monto - totalCobrado;
+                const montoPendiente = financiamiento.monto - totalCobrado;
                 const cuotasAtrasadas = calcularCuotasAtrasadas(
-                  prestamo,
+                  financiamiento,
                   cobrosValidos
                 );
-                const valorCuota = prestamo.monto / prestamo.cuotas;
+                const valorCuota = financiamiento.monto / financiamiento.cuotas;
                 const cuotasPagadas = cobrosValidos.length;
-                const progreso = (totalCobrado / prestamo.monto) * 100;
+                const progreso = (totalCobrado / financiamiento.monto) * 100;
 
                 const estadoInfo =
                   cuotasAtrasadas > 0
@@ -316,7 +342,7 @@ export default function PrestamosPage() {
                 return vistaCards ? (
                   // Vista de tarjetas
                   <div
-                    key={prestamo.id}
+                    key={financiamiento.id}
                     className='bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-200 overflow-hidden group hover:-translate-y-1 transition-all duration-300'
                     style={{
                       animationDelay: `${index * 100}ms`,
@@ -364,7 +390,7 @@ export default function PrestamosPage() {
                             Monto total:
                           </span>
                           <span className='text-sm font-bold text-gray-900'>
-                            ${prestamo.monto.toLocaleString()}
+                            ${financiamiento.monto.toLocaleString()}
                           </span>
                         </div>
 
@@ -386,7 +412,7 @@ export default function PrestamosPage() {
                         <div className='flex items-center justify-between'>
                           <span className='text-sm text-gray-600'>Cuotas:</span>
                           <span className='text-sm font-medium text-gray-900'>
-                            {cuotasPagadas}/{prestamo.cuotas} ($
+                            {cuotasPagadas}/{financiamiento.cuotas} ($
                             {valorCuota.toFixed(2)} c/u)
                           </span>
                         </div>
@@ -406,7 +432,7 @@ export default function PrestamosPage() {
                         <div className='flex items-center justify-between'>
                           <span className='text-sm text-gray-600'>Inicio:</span>
                           <span className='text-sm text-gray-900'>
-                            {formatFecha(prestamo.fechaInicio)}
+                            {formatFecha(financiamiento.fechaInicio)}
                           </span>
                         </div>
                       </div>
@@ -434,7 +460,7 @@ export default function PrestamosPage() {
                       {/* Acciones */}
                       <div className='flex gap-2'>
                         <Link
-                          href={`/prestamos/${prestamo.clienteId}`}
+                          href={`/financiamiento-cuota/${financiamiento.clienteId}`}
                           className='flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-sm'
                         >
                           Ver Detalle
@@ -450,7 +476,7 @@ export default function PrestamosPage() {
                 ) : (
                   // Vista de lista
                   <div
-                    key={prestamo.id}
+                    key={financiamiento.id}
                     className='bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 p-4 group transition-all duration-200'
                   >
                     <div className='flex items-center gap-4'>
@@ -473,13 +499,13 @@ export default function PrestamosPage() {
                             {productoNombre}
                           </p>
                           <p className='text-xs text-gray-500'>
-                            ${prestamo.monto.toLocaleString()}
+                            ${financiamiento.monto.toLocaleString()}
                           </p>
                         </div>
 
                         <div>
                           <p className='text-sm font-medium text-gray-900'>
-                            {cuotasPagadas}/{prestamo.cuotas}
+                            {cuotasPagadas}/{financiamiento.cuotas}
                           </p>
                           <p className='text-xs text-gray-500'>
                             ${valorCuota.toFixed(2)} c/u
@@ -504,7 +530,7 @@ export default function PrestamosPage() {
 
                       <div className='flex gap-2'>
                         <Link
-                          href={`/prestamos/${prestamo.clienteId}`}
+                          href={`/financiamiento-cuota/${financiamiento.clienteId}`}
                           className='px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium'
                         >
                           Ver Detalle

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import HistorialPagos from "@/components/prestamos/HistorialPagos";
-import AbonarCuotaForm from "@/components/prestamos/AbonarCuotaForm";
+import HistorialPagos from "@/components/financiamiento/HistorialPagos";
+import AbonarCuotaForm from "@/components/financiamiento/AbonarCuotaForm";
 
-interface PrestamoCardProps {
-  prestamo: any;
+interface FinanciamientoCardProps {
+  financiamiento: any;
   producto: any;
-  productosDelPrestamo?: any[];
+  productosDelFinanciamiento?: any[];
   abonos: number;
   montoTotal: number;
   montoPendiente: number;
@@ -23,10 +23,10 @@ interface PrestamoCardProps {
   Tooltip: React.FC<{ text: string }>;
 }
 
-const PrestamoCard: React.FC<PrestamoCardProps> = ({
-  prestamo,
+const FinanciamientoCard: React.FC<FinanciamientoCardProps> = ({
+  financiamiento,
   producto,
-  productosDelPrestamo,
+  productosDelFinanciamiento,
   abonos,
   montoTotal,
   montoPendiente,
@@ -50,17 +50,19 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
         {estadoPrincipal}
         <span
           className={`px-2 py-1 rounded text-xs font-semibold ml-2 ${
-            prestamo.estado === "activo"
+            financiamiento.estado === "activo"
               ? "bg-green-100 text-green-800"
-              : prestamo.estado === "completado"
+              : financiamiento.estado === "completado"
               ? "bg-blue-100 text-blue-800"
               : "bg-red-100 text-red-800"
           }`}
         >
-          {prestamo.tipoVenta === "contado" ? "Contado" : prestamo.estado}
+          {financiamiento.tipoVenta === "contado"
+            ? "Contado"
+            : financiamiento.estado}
         </span>
         <span className='ml-2 px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700'>
-          Tipo: {prestamo.tipoVenta === "contado" ? "Contado" : "Cuotas"}
+          Tipo: {financiamiento.tipoVenta === "contado" ? "Contado" : "Cuotas"}
         </span>
       </div>
 
@@ -68,24 +70,27 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
         <div className='flex items-center gap-2 text-gray-700'>
           <span className='font-semibold'>
             📦 Producto
-            {productosDelPrestamo && productosDelPrestamo.length > 1 ? "s" : ""}
+            {productosDelFinanciamiento && productosDelFinanciamiento.length > 1
+              ? "s"
+              : ""}
             :
           </span>
-          {productosDelPrestamo && productosDelPrestamo.length > 0 ? (
+          {productosDelFinanciamiento &&
+          productosDelFinanciamiento.length > 0 ? (
             <div className='flex-1'>
               <span className='text-gray-900'>
-                {productosDelPrestamo.length === 1
-                  ? productosDelPrestamo[0].nombre
-                  : `${productosDelPrestamo.length} productos`}
+                {productosDelFinanciamiento.length === 1
+                  ? productosDelFinanciamiento[0].nombre
+                  : `${productosDelFinanciamiento.length} productos`}
               </span>
-              {productosDelPrestamo.length > 1 && (
+              {productosDelFinanciamiento.length > 1 && (
                 <div className='text-xs text-gray-500 mt-1'>
-                  {productosDelPrestamo
+                  {productosDelFinanciamiento
                     .slice(0, 2)
                     .map((p: any, index: number) => p.nombre)
                     .join(", ")}
-                  {productosDelPrestamo.length > 2 &&
-                    ` y ${productosDelPrestamo.length - 2} más`}
+                  {productosDelFinanciamiento.length > 2 &&
+                    ` y ${productosDelFinanciamiento.length - 2} más`}
                 </div>
               )}
             </div>
@@ -104,37 +109,38 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
       <div className='flex items-center gap-2 text-gray-700'>
         <span className='font-semibold'>📅 Inicio:</span>
         <span className='text-gray-900'>
-          {new Date(prestamo.fechaInicio).toLocaleDateString()}
+          {new Date(financiamiento.fechaInicio).toLocaleDateString()}
         </span>
       </div>
 
-      {prestamo.tipoVenta === "cuotas" && (
+      {financiamiento.tipoVenta === "cuotas" && (
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-3'>
           <div className='flex items-center gap-2 text-gray-700'>
             <span className='font-semibold'>⏳ Monto pendiente:</span>
             <span className='text-blue-600 font-bold'>
               ${montoPendiente.toFixed(2)}
             </span>
-            <Tooltip text='Lo que falta por pagar de este préstamo.' />
+            <Tooltip text='Lo que falta por pagar de este financiamiento.' />
           </div>
           <div className='flex items-center gap-2 text-gray-700'>
             <span className='font-semibold'>⏰ Cuotas atrasadas:</span>
             <span className='text-red-700 font-bold'>{cuotasAtrasadas}</span>
-            <Tooltip text='Cuotas vencidas y no pagadas de este préstamo.' />
+            <Tooltip text='Cuotas vencidas y no pagadas de este financiamiento.' />
           </div>
           <div className='flex items-center gap-2 text-gray-700 sm:col-span-2'>
             <span className='font-semibold'>📋 Cuotas pendientes:</span>
             <span className='text-gray-900 font-semibold'>
               {cuotasPendientes}
             </span>
-            <Tooltip text='Cuotas que faltan por pagar para completar el préstamo.' />
+            <Tooltip text='Cuotas que faltan por pagar para completar el financiamiento.' />
           </div>
         </div>
       )}
 
       {/* Botón de abonar cuota solo para cuotas activas y si hay monto pendiente */}
-      {prestamo.tipoVenta === "cuotas" &&
-        (prestamo.estado === "activo" || prestamo.estado === "atrasado") &&
+      {financiamiento.tipoVenta === "cuotas" &&
+        (financiamiento.estado === "activo" ||
+          financiamiento.estado === "atrasado") &&
         montoPendiente > 0 &&
         cuotasPendientes > 0 && (
           <div className='mt-2'>
@@ -148,8 +154,8 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
             <AbonarCuotaForm
               isOpen={mostrarModalAbono}
               onClose={() => setMostrarModalAbono(false)}
-              montoPrestamo={prestamo.monto}
-              cuotasTotales={prestamo.cuotas}
+              montoFinanciamiento={financiamiento.monto}
+              cuotasTotales={financiamiento.cuotas}
               loading={abonando}
               onSubmit={onAbonarCuota}
               error={
@@ -158,23 +164,23 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
                   : undefined
               }
               numeroCuota={pagos.length + 1}
-              totalCuotas={prestamo.cuotas}
+              totalCuotas={financiamiento.cuotas}
             />
           </div>
         )}
 
-      {/* Mostrar estado pagado si el préstamo está completado o no hay monto/cuotas pendientes */}
-      {prestamo.tipoVenta === "cuotas" &&
-        (prestamo.estado === "completado" ||
+      {/* Mostrar estado pagado si el financiamiento está completado o no hay monto/cuotas pendientes */}
+      {financiamiento.tipoVenta === "cuotas" &&
+        (financiamiento.estado === "completado" ||
           montoPendiente === 0 ||
           cuotasPendientes === 0) && (
           <div className='mt-2 w-full sm:w-auto px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-center'>
-            ✅ Préstamo pagado
+            ✅ Financiamiento pagado
           </div>
         )}
 
       {/* Botón para mostrar/ocultar historial de pagos */}
-      {prestamo.tipoVenta === "cuotas" && (
+      {financiamiento.tipoVenta === "cuotas" && (
         <div className='mt-2 border-t border-gray-100 pt-3'>
           <button
             type='button'
@@ -190,26 +196,23 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
       )}
 
       {/* Detalle de productos múltiples */}
-      {productosDelPrestamo && productosDelPrestamo.length > 1 && (
+      {productosDelFinanciamiento && productosDelFinanciamiento.length > 1 && (
         <div className='mt-4 p-4 bg-gray-50 rounded-lg border'>
           <h4 className='font-semibold text-gray-800 mb-3 flex items-center gap-2'>
-            📋 Detalle de Productos ({productosDelPrestamo.length})
+            📋 Detalle de Productos ({productosDelFinanciamiento.length})
           </h4>
           <div className='space-y-2'>
-            {productosDelPrestamo.map((item: any, index: number) => (
+            {productosDelFinanciamiento.map((item: any, index: number) => (
               <div
                 key={index}
-                className='flex justify-between items-center text-sm bg-white p-3 rounded border'
+                className='flex justify-between items-center text-sm bg-white p-2 rounded border'
               >
-                <div className='flex-1'>
-                  <div className='font-medium text-gray-900'>{item.nombre}</div>
-                  <div className='text-gray-600'>
-                    ${item.precioUnitario.toFixed(2)} c/u
+                <span className='text-gray-800'>{item.nombre}</span>
+                <div className='text-right text-gray-600'>
+                  <div>
+                    {item.cantidad} x ${item.precioUnitario.toFixed(2)}
                   </div>
-                </div>
-                <div className='text-right'>
-                  <div className='font-medium'>Cant: {item.cantidad}</div>
-                  <div className='font-semibold text-indigo-600'>
+                  <div className='font-semibold text-gray-800'>
                     ${item.subtotal.toFixed(2)}
                   </div>
                 </div>
@@ -218,10 +221,8 @@ const PrestamoCard: React.FC<PrestamoCardProps> = ({
           </div>
         </div>
       )}
-
-      {/* Progreso de pagos */}
     </div>
   );
 };
 
-export default PrestamoCard;
+export default FinanciamientoCard;

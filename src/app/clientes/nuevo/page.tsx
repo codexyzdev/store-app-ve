@@ -166,7 +166,7 @@ export default function NuevoClientePage() {
                 <h3 className='font-semibold text-gray-900'>Fácil Acceso</h3>
               </div>
               <p className='text-sm text-gray-600'>
-                Podrás gestionar préstamos inmediatamente después.
+                Podrás gestionar financiamientos inmediatamente después.
               </p>
             </div>
           </div>

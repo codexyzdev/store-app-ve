@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import {
-  prestamosDB,
+  financiamientoDB,
   cobrosDB,
-  Prestamo,
+  FinanciamientoCuota,
   Cobro,
 } from "@/lib/firebase/database";
 
 export function FinancialStats() {
-  const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [financiamientos, setFinanciamientos] = useState<FinanciamientoCuota[]>(
+    []
+  );
   const [cobros, setCobros] = useState<Cobro[]>([]);
   const [loading, setLoading] = useState(true);
   const [animatedValues, setAnimatedValues] = useState<Record<string, number>>(
@@ -17,8 +19,8 @@ export function FinancialStats() {
   );
 
   useEffect(() => {
-    const unsubPrestamos = prestamosDB.suscribir((data) => {
-      setPrestamos(data);
+    const unsubFinanciamientos = financiamientoDB.suscribir((data) => {
+      setFinanciamientos(data);
     });
 
     const unsubCobros = cobrosDB.suscribir((data) => {
@@ -27,7 +29,7 @@ export function FinancialStats() {
     });
 
     return () => {
-      unsubPrestamos();
+      unsubFinanciamientos();
       unsubCobros();
     };
   }, []);
@@ -35,20 +37,24 @@ export function FinancialStats() {
   // Calcular estadísticas
   const totalCobrado = cobros.reduce((sum, cobro) => sum + cobro.monto, 0);
 
-  const prestamosActivos = prestamos.filter(
-    (prestamo) => prestamo.estado === "activo" || prestamo.estado === "atrasado"
+  const financiamientosActivos = financiamientos.filter(
+    (financiamiento) =>
+      financiamiento.estado === "activo" || financiamiento.estado === "atrasado"
   );
 
-  const montoPendiente = prestamosActivos.reduce((sum, prestamo) => {
-    const cobrosDelPrestamo = cobros.filter(
-      (c) => c.prestamoId === prestamo.id
-    );
-    const totalCobradoPrestamo = cobrosDelPrestamo.reduce(
-      (s, c) => s + c.monto,
-      0
-    );
-    return sum + (prestamo.monto - totalCobradoPrestamo);
-  }, 0);
+  const montoPendiente = financiamientosActivos.reduce(
+    (sum, financiamiento) => {
+      const cobrosDelFinanciamiento = cobros.filter(
+        (c) => c.financiamientoId === financiamiento.id
+      );
+      const totalCobradoFinanciamiento = cobrosDelFinanciamiento.reduce(
+        (s, c) => s + c.monto,
+        0
+      );
+      return sum + (financiamiento.monto - totalCobradoFinanciamiento);
+    },
+    0
+  );
 
   // Animación de números
   useEffect(() => {
@@ -137,7 +143,7 @@ export function FinancialStats() {
         <div className='mt-4 flex items-center gap-2'>
           <span className='text-orange-500'>📊</span>
           <span className='text-xs text-gray-500'>
-            De {prestamosActivos.length} préstamos activos
+            De {financiamientosActivos.length} financiamientos activos
           </span>
         </div>
       </div>

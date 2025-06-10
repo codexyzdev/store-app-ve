@@ -2,25 +2,27 @@
 
 import { useState, useEffect } from "react";
 import {
-  prestamosDB,
+  financiamientoDB,
   clientesDB,
   cobrosDB,
-  Prestamo,
+  FinanciamientoCuota,
   Cliente,
   Cobro,
 } from "@/lib/firebase/database";
-import { calcularCuotasAtrasadas } from "@/utils/prestamos";
+import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
 import Link from "next/link";
 
 export default function CobranzaPage() {
-  const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [financiamientos, setFinanciamientos] = useState<FinanciamientoCuota[]>(
+    []
+  );
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cobros, setCobros] = useState<Cobro[]>([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
-    const unsubPrestamos = prestamosDB.suscribir(setPrestamos);
+    const unsubFinanciamientos = financiamientoDB.suscribir(setFinanciamientos);
     const unsubClientes = clientesDB.suscribir(setClientes);
     const unsubCobros = cobrosDB.suscribir
       ? cobrosDB.suscribir(setCobros)
@@ -30,7 +32,7 @@ export default function CobranzaPage() {
     setTimeout(() => setLoading(false), 1000);
 
     return () => {
-      unsubPrestamos();
+      unsubFinanciamientos();
       unsubClientes();
       unsubCobros();
     };
@@ -46,45 +48,48 @@ export default function CobranzaPage() {
     return cliente ? cliente.telefono : "";
   };
 
-  const getCobrosPrestamo = (prestamoId: string) => {
+  const getCobrosFinanciamiento = (financiamientoId: string) => {
     return cobros.filter(
-      (c) => c.prestamoId === prestamoId && c.tipo === "cuota"
+      (c) => c.financiamientoId === financiamientoId && c.tipo === "cuota"
     );
   };
 
-  // Filtrar préstamos con cuotas atrasadas
-  const prestamosAtrasados = prestamos
-    .filter((p) => p.tipoVenta === "cuotas" && p.estado === "activo")
-    .map((prestamo) => {
-      const cobrosPrestamo = getCobrosPrestamo(prestamo.id);
-      const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo, cobrosPrestamo);
-      const clienteNombre = getClienteNombre(prestamo.clienteId);
-      const clienteTelefono = getClienteTelefono(prestamo.clienteId);
+  // Filtrar financiamientos con cuotas atrasadas
+  const financiamientosAtrasados = financiamientos
+    .filter((f) => f.tipoVenta === "cuotas" && f.estado === "activo")
+    .map((financiamiento) => {
+      const cobrosFinanciamiento = getCobrosFinanciamiento(financiamiento.id);
+      const cuotasAtrasadas = calcularCuotasAtrasadas(
+        financiamiento,
+        cobrosFinanciamiento
+      );
+      const clienteNombre = getClienteNombre(financiamiento.clienteId);
+      const clienteTelefono = getClienteTelefono(financiamiento.clienteId);
 
       return {
-        ...prestamo,
+        ...financiamiento,
         cuotasAtrasadas,
         clienteNombre,
         clienteTelefono,
-        cobrosValidos: cobrosPrestamo,
+        cobrosValidos: cobrosFinanciamiento,
       };
     })
-    .filter((p) => p.cuotasAtrasadas > 0)
+    .filter((f) => f.cuotasAtrasadas > 0)
     .filter(
-      (p) =>
+      (f) =>
         busqueda === "" ||
-        p.clienteNombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        p.clienteTelefono.includes(busqueda)
+        f.clienteNombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        f.clienteTelefono.includes(busqueda)
     )
     .sort((a, b) => b.cuotasAtrasadas - a.cuotasAtrasadas);
 
-  const totalAtrasadas = prestamosAtrasados.reduce(
-    (sum, p) => sum + p.cuotasAtrasadas,
+  const totalAtrasadas = financiamientosAtrasados.reduce(
+    (sum, f) => sum + f.cuotasAtrasadas,
     0
   );
-  const montoTotalAtrasado = prestamosAtrasados.reduce((sum, p) => {
-    const valorCuota = p.monto / p.cuotas;
-    return sum + valorCuota * p.cuotasAtrasadas;
+  const montoTotalAtrasado = financiamientosAtrasados.reduce((sum, f) => {
+    const valorCuota = f.monto / f.cuotas;
+    return sum + valorCuota * f.cuotasAtrasadas;
   }, 0);
 
   const formatFecha = (timestamp: number) => {
@@ -104,10 +109,10 @@ export default function CobranzaPage() {
       .toUpperCase();
   };
 
-  const getDiasAtraso = (prestamo: any) => {
+  const getDiasAtraso = (financiamiento: any) => {
     const hoy = new Date();
-    const fechaInicio = new Date(prestamo.fechaInicio);
-    const cuotasPagadas = prestamo.cobrosValidos.length;
+    const fechaInicio = new Date(financiamiento.fechaInicio);
+    const cuotasPagadas = financiamiento.cobrosValidos.length;
     const cuotasDeberianEstarPagadas =
       Math.floor(
         (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 30)
@@ -158,12 +163,12 @@ export default function CobranzaPage() {
                 <p className='text-sm text-gray-600'>Estado General</p>
                 <p
                   className={`font-semibold ${
-                    prestamosAtrasados.length === 0
+                    financiamientosAtrasados.length === 0
                       ? "text-green-600"
                       : "text-red-600"
                   }`}
                 >
-                  {prestamosAtrasados.length === 0
+                  {financiamientosAtrasados.length === 0
                     ? "Al día"
                     : "Requiere atención"}
                 </p>
@@ -180,7 +185,7 @@ export default function CobranzaPage() {
                 </div>
                 <div>
                   <p className='text-2xl font-bold text-red-600'>
-                    {prestamosAtrasados.length}
+                    {financiamientosAtrasados.length}
                   </p>
                   <p className='text-sm text-gray-600'>Clientes con Atraso</p>
                 </div>
@@ -236,14 +241,16 @@ export default function CobranzaPage() {
             </div>
 
             <div className='text-sm text-gray-600'>
-              <span className='font-medium'>{prestamosAtrasados.length}</span>{" "}
+              <span className='font-medium'>
+                {financiamientosAtrasados.length}
+              </span>{" "}
               resultados encontrados
             </div>
           </div>
         </div>
 
         {/* Lista de cobranza */}
-        {prestamosAtrasados.length === 0 ? (
+        {financiamientosAtrasados.length === 0 ? (
           <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center'>
             <div className='max-w-md mx-auto'>
               <span className='text-6xl mb-4 block'>🎉</span>
@@ -254,30 +261,30 @@ export default function CobranzaPage() {
                 Todos los clientes están al día con sus pagos
               </p>
               <Link
-                href='/prestamos'
+                href='/financiamiento-cuota'
                 className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
               >
                 <span>💰</span>
-                Ver Préstamos
+                Ver Financiamientos
               </Link>
             </div>
           </div>
         ) : (
           <div className='space-y-4'>
-            {prestamosAtrasados.map((prestamo, index) => {
-              const valorCuota = prestamo.monto / prestamo.cuotas;
-              const montoAtrasado = valorCuota * prestamo.cuotasAtrasadas;
-              const diasAtraso = getDiasAtraso(prestamo);
+            {financiamientosAtrasados.map((financiamiento, index) => {
+              const valorCuota = financiamiento.monto / financiamiento.cuotas;
+              const montoAtrasado = valorCuota * financiamiento.cuotasAtrasadas;
+              const diasAtraso = getDiasAtraso(financiamiento);
               const severidad =
-                prestamo.cuotasAtrasadas > 2
+                financiamiento.cuotasAtrasadas > 2
                   ? "alta"
-                  : prestamo.cuotasAtrasadas > 1
+                  : financiamiento.cuotasAtrasadas > 1
                   ? "media"
                   : "baja";
 
               return (
                 <div
-                  key={prestamo.id}
+                  key={financiamiento.id}
                   className='bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-200 overflow-hidden group hover:-translate-y-1 transition-all duration-300'
                   style={{
                     animationDelay: `${index * 100}ms`,
@@ -290,15 +297,15 @@ export default function CobranzaPage() {
                   <div className='p-6'>
                     <div className='flex items-center gap-4 mb-4'>
                       <div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg'>
-                        {getInitials(prestamo.clienteNombre)}
+                        {getInitials(financiamiento.clienteNombre)}
                       </div>
 
                       <div className='flex-1 min-w-0'>
                         <h3 className='font-bold text-lg text-gray-900 truncate'>
-                          {prestamo.clienteNombre}
+                          {financiamiento.clienteNombre}
                         </h3>
                         <p className='text-sm text-gray-600'>
-                          📞 {prestamo.clienteTelefono}
+                          📞 {financiamiento.clienteTelefono}
                         </p>
                       </div>
 
@@ -334,7 +341,7 @@ export default function CobranzaPage() {
                           Cuotas Atrasadas
                         </p>
                         <p className='text-xl font-bold text-red-600'>
-                          {prestamo.cuotasAtrasadas}
+                          {financiamiento.cuotasAtrasadas}
                         </p>
                       </div>
                       <div className='text-center p-3 bg-amber-50 rounded-xl'>
@@ -359,10 +366,10 @@ export default function CobranzaPage() {
 
                     <div className='flex flex-col sm:flex-row gap-3'>
                       <Link
-                        href={`/prestamos/${prestamo.clienteId}`}
+                        href={`/financiamiento-cuota/${financiamiento.clienteId}`}
                         className='flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200'
                       >
-                        Ver Préstamo
+                        Ver Financiamiento
                       </Link>
                       <button className='flex-1 bg-green-100 hover:bg-green-200 text-green-700 py-3 px-4 rounded-xl font-medium transition-colors'>
                         📞 Contactar

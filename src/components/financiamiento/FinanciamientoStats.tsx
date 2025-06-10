@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-interface Prestamo {
+interface FinanciamientoCuota {
   id: string;
   clienteId: string;
   monto: number;
@@ -15,46 +15,51 @@ interface Prestamo {
 
 interface Cobro {
   id: string;
-  prestamoId: string;
+  financiamientoId: string;
   monto: number;
   fecha: number;
   tipo: "cuota" | "abono";
   numeroCuota?: number;
 }
 
-interface PrestamosStatsProps {
-  prestamos: Prestamo[];
+interface FinanciamientoStatsProps {
+  financiamientos: FinanciamientoCuota[];
   cobros: Cobro[];
 }
 
-export function PrestamosStats({ prestamos, cobros }: PrestamosStatsProps) {
+export function FinanciamientoStats({
+  financiamientos,
+  cobros,
+}: FinanciamientoStatsProps) {
   const [animatedValues, setAnimatedValues] = useState<Record<string, number>>(
     {}
   );
 
-  // Filtrar solo préstamos a cuotas para las estadísticas
-  const prestamosCuotas = prestamos.filter((p) => p.tipoVenta === "cuotas");
+  // Filtrar solo financiamientos a cuotas para las estadísticas
+  const financiamientosCuotas = financiamientos.filter(
+    (f) => f.tipoVenta === "cuotas"
+  );
 
-  const prestamosActivos = prestamosCuotas.filter(
-    (p) => p.estado === "activo"
+  const financiamientosActivos = financiamientosCuotas.filter(
+    (f) => f.estado === "activo"
   ).length;
-  const prestamosAtrasados = prestamosCuotas.filter(
-    (p) => p.estado === "atrasado"
+  const financiamientosAtrasados = financiamientosCuotas.filter(
+    (f) => f.estado === "atrasado"
   ).length;
-  const prestamosCompletados = prestamosCuotas.filter(
-    (p) => p.estado === "completado"
+  const financiamientosCompletados = financiamientosCuotas.filter(
+    (f) => f.estado === "completado"
   ).length;
 
-  const montoTotal = prestamosCuotas.reduce((sum, p) => sum + p.monto, 0);
+  const montoTotal = financiamientosCuotas.reduce((sum, f) => sum + f.monto, 0);
   const totalCobrado = cobros.reduce((sum, c) => sum + c.monto, 0);
   const montoPendiente = montoTotal - totalCobrado;
 
   // Animación de números
   useEffect(() => {
     const targets = {
-      prestamosActivos,
-      prestamosAtrasados,
-      prestamosCompletados,
+      financiamientosActivos,
+      financiamientosAtrasados,
+      financiamientosCompletados,
       montoTotal,
       totalCobrado,
       montoPendiente,
@@ -73,9 +78,9 @@ export function PrestamosStats({ prestamos, cobros }: PrestamosStatsProps) {
       }, 30);
     });
   }, [
-    prestamosActivos,
-    prestamosAtrasados,
-    prestamosCompletados,
+    financiamientosActivos,
+    financiamientosAtrasados,
+    financiamientosCompletados,
     montoTotal,
     totalCobrado,
     montoPendiente,
@@ -83,8 +88,8 @@ export function PrestamosStats({ prestamos, cobros }: PrestamosStatsProps) {
 
   const stats = [
     {
-      name: "Préstamos Activos",
-      value: (animatedValues.prestamosActivos || 0).toString(),
+      name: "Financiamientos Activos",
+      value: (animatedValues.financiamientosActivos || 0).toString(),
       icon: "💰",
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",
@@ -92,8 +97,8 @@ export function PrestamosStats({ prestamos, cobros }: PrestamosStatsProps) {
       borderColor: "border-blue-200",
     },
     {
-      name: "Préstamos Atrasados",
-      value: (animatedValues.prestamosAtrasados || 0).toString(),
+      name: "Financiamientos Atrasados",
+      value: (animatedValues.financiamientosAtrasados || 0).toString(),
       icon: "⚠️",
       color: "from-red-500 to-red-600",
       bgColor: "bg-red-50",
@@ -102,7 +107,7 @@ export function PrestamosStats({ prestamos, cobros }: PrestamosStatsProps) {
     },
     {
       name: "Completados",
-      value: (animatedValues.prestamosCompletados || 0).toString(),
+      value: (animatedValues.financiamientosCompletados || 0).toString(),
       icon: "✅",
       color: "from-green-500 to-green-600",
       bgColor: "bg-green-50",

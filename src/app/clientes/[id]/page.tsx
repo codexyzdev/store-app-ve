@@ -387,7 +387,7 @@ export default function EditarClientePage({
                   </div>
                   <div className='flex-1 min-w-0'>
                     <p className='text-sm font-medium text-gray-900'>
-                      Préstamo otorgado
+                      Financiamiento otorgado
                     </p>
                     <p className='text-xs text-gray-500'>Hace 1 semana</p>
                   </div>
@@ -421,16 +421,16 @@ export default function EditarClientePage({
 
               <div className='space-y-3'>
                 <Link
-                  href={`/prestamos/${id}`}
+                  href={`/financiamiento-cuota/${id}`}
                   className='w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200'
                 >
                   <span>💳</span>
-                  Ver Préstamos
+                  Ver Financiamientos
                 </Link>
 
                 <button className='w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200'>
                   <span>💰</span>
-                  Nuevo Préstamo
+                  Nuevo Financiamiento
                 </button>
 
                 <button className='w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200'>

@@ -4,21 +4,24 @@ import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { clientesDB, Cliente } from "@/lib/firebase/database";
 import { inventarioDB, Producto } from "@/lib/firebase/database";
-import { prestamosDB, ProductoPrestamo } from "@/lib/firebase/database";
+import {
+  financiamientoDB,
+  ProductoFinanciamiento,
+} from "@/lib/firebase/database";
 import Link from "next/link";
 import Modal from "@/components/Modal";
 import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
 
-export default function NuevoPrestamoPage() {
+export default function NuevoFinanciamientoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [productoSeleccionado, setProductoSeleccionado] =
     useState<Producto | null>(null);
-  const [productosCarrito, setProductosCarrito] = useState<ProductoPrestamo[]>(
-    []
-  );
+  const [productosCarrito, setProductosCarrito] = useState<
+    ProductoFinanciamiento[]
+  >([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const today = new Date();
@@ -112,7 +115,7 @@ export default function NuevoPrestamoPage() {
       );
     } else {
       // Agregar nuevo producto al carrito
-      const nuevoProducto: ProductoPrestamo = {
+      const nuevoProducto: ProductoFinanciamiento = {
         productoId: productoSeleccionado.id,
         cantidad: cantidadProducto,
         precioUnitario: productoSeleccionado.precio,
@@ -207,7 +210,7 @@ export default function NuevoPrestamoPage() {
       ).getTime();
 
       // Crear el préstamo con múltiples productos
-      const prestamoData = {
+      const financiamientoData = {
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
         cuotas:
@@ -228,10 +231,10 @@ export default function NuevoPrestamoPage() {
           }`,
       };
 
-      await prestamosDB.crear(prestamoData);
+      await financiamientoDB.crear(financiamientoData);
       setShowSuccess(true);
       setTimeout(() => {
-        router.push("/prestamos");
+        router.push("/financiamiento-cuota");
       }, 2000);
     } catch (error) {
       if (error instanceof Error) {
@@ -277,16 +280,16 @@ export default function NuevoPrestamoPage() {
               <span className='text-3xl text-white'>✅</span>
             </div>
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>
-              ¡Préstamo Creado!
+              ¡Financiamiento Creado!
             </h2>
             <p className='text-gray-600'>
-              El préstamo ha sido registrado exitosamente en el sistema.
+              El financiamiento ha sido registrado exitosamente en el sistema.
             </p>
           </div>
 
           <div className='flex items-center justify-center gap-2 text-sm text-gray-500'>
             <div className='w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
-            Redirigiendo a la lista de préstamos...
+            Redirigiendo a la lista de financiamientos...
           </div>
         </div>
       </div>
@@ -300,11 +303,11 @@ export default function NuevoPrestamoPage() {
         <div className='mb-8'>
           <div className='flex items-center gap-4 mb-6'>
             <Link
-              href='/prestamos'
+              href='/financiamiento-cuota'
               className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors'
             >
               <span className='text-xl'>←</span>
-              <span className='font-medium'>Volver a Préstamos</span>
+              <span className='font-medium'>Volver a Financiamientos</span>
             </Link>
           </div>
 
@@ -315,10 +318,10 @@ export default function NuevoPrestamoPage() {
               </div>
               <div className='text-left'>
                 <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
-                  Nuevo Préstamo
+                  Nuevo Financiamiento
                 </h1>
                 <p className='text-sm text-gray-600'>
-                  Crea un nuevo préstamo o venta
+                  Crea un nuevo financiamiento o venta
                 </p>
               </div>
             </div>
@@ -369,7 +372,7 @@ export default function NuevoPrestamoPage() {
                 </div>
                 <div className='text-white'>
                   <h2 className='text-xl font-bold mb-1'>
-                    Información del Préstamo
+                    Información del Financiamiento
                   </h2>
                   <p className='text-blue-100'>
                     Completa todos los campos requeridos
@@ -910,7 +913,7 @@ export default function NuevoPrestamoPage() {
                 <div className='flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-gray-200'>
                   <button
                     type='button'
-                    onClick={() => router.push("/prestamos")}
+                    onClick={() => router.push("/financiamiento-cuota")}
                     disabled={loading}
                     className='flex-1 sm:flex-none px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   >
