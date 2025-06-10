@@ -358,91 +358,130 @@ export default function FinanciamientoCuotaPage() {
                   >
                     <div className='p-6'>
                       {/* Header del préstamo */}
-                      <div className='flex items-center gap-4 mb-4'>
-                        <div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg'>
-                          {getInitials(clienteNombre)}
+                      <div className='mb-4'>
+                        {/* Número de control y estado */}
+                        <div className='flex items-center justify-between mb-3'>
+                          {financiamiento.numeroControl && (
+                            <div className='flex items-center gap-2'>
+                              <span className='text-xs text-gray-500 font-medium'>
+                                N° Control:
+                              </span>
+                              <span className='px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-lg text-sm font-bold tracking-wide'>
+                                F-
+                                {financiamiento.numeroControl
+                                  .toString()
+                                  .padStart(3, "0")}
+                              </span>
+                            </div>
+                          )}
+                          <div
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold bg-${estadoInfo.color}-100 text-${estadoInfo.color}-700 border border-${estadoInfo.color}-200`}
+                          >
+                            <span className='mr-1'>{estadoInfo.icon}</span>
+                            {estadoInfo.texto}
+                          </div>
                         </div>
-                        <div className='flex-1 min-w-0'>
-                          <div className='flex items-center gap-2 mb-1'>
-                            <h3 className='font-bold text-lg text-gray-900 truncate'>
+
+                        {/* Cliente info */}
+                        <div className='flex items-center gap-4'>
+                          <div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg'>
+                            {getInitials(clienteNombre)}
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <h3 className='font-bold text-lg text-gray-900 truncate mb-1'>
                               {clienteNombre}
                             </h3>
-                            {financiamiento.numeroControl && (
-                              <span className='px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium'>
-                                #F-{financiamiento.numeroControl}
-                              </span>
-                            )}
+                            <p className='text-sm text-gray-600 flex items-center gap-1'>
+                              <span>📱</span>
+                              {clienteTelefono}
+                            </p>
                           </div>
-                          <p className='text-sm text-gray-600'>
-                            {clienteTelefono}
-                          </p>
-                        </div>
-                        <div
-                          className={`px-3 py-1 rounded-full text-xs font-medium bg-${estadoInfo.color}-100 text-${estadoInfo.color}-700`}
-                        >
-                          <span className='mr-1'>{estadoInfo.icon}</span>
-                          {estadoInfo.texto}
                         </div>
                       </div>
 
                       {/* Información del préstamo */}
                       <div className='space-y-3 mb-6'>
-                        <div className='flex items-center justify-between'>
-                          <span className='text-sm text-gray-600'>
-                            Producto:
-                          </span>
-                          <span className='text-sm font-medium text-gray-900 truncate ml-2'>
+                        <div className='bg-gray-50 rounded-lg p-3'>
+                          <div className='flex items-center justify-between mb-2'>
+                            <span className='text-xs text-gray-500 font-medium uppercase tracking-wide'>
+                              Producto
+                            </span>
+                          </div>
+                          <span className='text-sm font-semibold text-gray-900'>
                             {productoNombre}
                           </span>
                         </div>
 
-                        <div className='flex items-center justify-between'>
-                          <span className='text-sm text-gray-600'>
-                            Monto total:
-                          </span>
-                          <span className='text-sm font-bold text-gray-900'>
-                            ${financiamiento.monto.toLocaleString()}
-                          </span>
-                        </div>
+                        <div className='grid grid-cols-2 gap-3'>
+                          <div className='bg-blue-50 rounded-lg p-3'>
+                            <span className='text-xs text-blue-600 font-medium uppercase tracking-wide block mb-1'>
+                              Monto Total
+                            </span>
+                            <span className='text-lg font-bold text-blue-900'>
+                              ${financiamiento.monto.toLocaleString()}
+                            </span>
+                          </div>
 
-                        <div className='flex items-center justify-between'>
-                          <span className='text-sm text-gray-600'>
-                            Pendiente:
-                          </span>
-                          <span
-                            className={`text-sm font-bold ${
-                              montoPendiente > 0
-                                ? "text-red-600"
-                                : "text-green-600"
-                            }`}
+                          <div
+                            className={`${
+                              montoPendiente > 0 ? "bg-red-50" : "bg-green-50"
+                            } rounded-lg p-3`}
                           >
-                            ${montoPendiente.toLocaleString()}
-                          </span>
+                            <span
+                              className={`text-xs font-medium uppercase tracking-wide block mb-1 ${
+                                montoPendiente > 0
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              Pendiente
+                            </span>
+                            <span
+                              className={`text-lg font-bold ${
+                                montoPendiente > 0
+                                  ? "text-red-900"
+                                  : "text-green-900"
+                              }`}
+                            >
+                              ${montoPendiente.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className='flex items-center justify-between'>
-                          <span className='text-sm text-gray-600'>Cuotas:</span>
-                          <span className='text-sm font-medium text-gray-900'>
-                            {cuotasPagadas}/{financiamiento.cuotas} ($
-                            {valorCuota.toLocaleString()} c/u)
+                        <div className='flex items-center justify-between py-2 border-b border-gray-100'>
+                          <span className='text-sm text-gray-600 flex items-center gap-2'>
+                            <span>📅</span>
+                            Cuotas:
+                          </span>
+                          <span className='text-sm font-semibold text-gray-900'>
+                            {cuotasPagadas}/{financiamiento.cuotas}
+                            <span className='text-xs text-gray-500 ml-1'>
+                              (${valorCuota.toLocaleString()} c/u)
+                            </span>
                           </span>
                         </div>
 
                         {cuotasAtrasadas > 0 && (
-                          <div className='flex items-center justify-between'>
-                            <span className='text-sm text-gray-600'>
-                              Atrasadas:
-                            </span>
-                            <span className='text-sm font-bold text-red-600'>
-                              {cuotasAtrasadas} cuota
-                              {cuotasAtrasadas > 1 ? "s" : ""}
-                            </span>
+                          <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
+                            <div className='flex items-center justify-between'>
+                              <span className='text-sm text-red-700 font-medium flex items-center gap-2'>
+                                <span>⚠️</span>
+                                Cuotas Atrasadas:
+                              </span>
+                              <span className='text-sm font-bold text-red-800 bg-red-100 px-2 py-1 rounded'>
+                                {cuotasAtrasadas} cuota
+                                {cuotasAtrasadas > 1 ? "s" : ""}
+                              </span>
+                            </div>
                           </div>
                         )}
 
-                        <div className='flex items-center justify-between'>
-                          <span className='text-sm text-gray-600'>Inicio:</span>
-                          <span className='text-sm text-gray-900'>
+                        <div className='flex items-center justify-between py-2'>
+                          <span className='text-sm text-gray-600 flex items-center gap-2'>
+                            <span>📅</span>
+                            Inicio:
+                          </span>
+                          <span className='text-sm font-medium text-gray-900'>
                             {formatFecha(financiamiento.fechaInicio)}
                           </span>
                         </div>
@@ -469,18 +508,14 @@ export default function FinanciamientoCuotaPage() {
                       </div>
 
                       {/* Acciones */}
-                      <div className='flex gap-2'>
+                      <div className='pt-2'>
                         <Link
                           href={`/financiamiento-cuota/${financiamiento.clienteId}`}
-                          className='flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-sm'
+                          className='w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm flex items-center justify-center gap-2'
                         >
+                          <span>👁️</span>
                           Ver Detalle
                         </Link>
-                        {montoPendiente > 0 && (
-                          <button className='px-4 py-3 bg-green-100 hover:bg-green-200 text-green-700 rounded-xl transition-colors text-sm font-medium'>
-                            💰 Cobrar
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -502,12 +537,16 @@ export default function FinanciamientoCuotaPage() {
                               {clienteNombre}
                             </h3>
                             {financiamiento.numeroControl && (
-                              <span className='px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium'>
-                                #F-{financiamiento.numeroControl}
+                              <span className='px-2 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded text-xs font-bold tracking-wide'>
+                                F-
+                                {financiamiento.numeroControl
+                                  .toString()
+                                  .padStart(3, "0")}
                               </span>
                             )}
                           </div>
-                          <p className='text-xs text-gray-500'>
+                          <p className='text-xs text-gray-500 flex items-center gap-1'>
+                            <span>📱</span>
                             {clienteTelefono}
                           </p>
                         </div>
@@ -546,18 +585,14 @@ export default function FinanciamientoCuotaPage() {
                         </div>
                       </div>
 
-                      <div className='flex gap-2'>
+                      <div>
                         <Link
                           href={`/financiamiento-cuota/${financiamiento.clienteId}`}
-                          className='px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium'
+                          className='px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center gap-2'
                         >
+                          <span>👁️</span>
                           Ver Detalle
                         </Link>
-                        {montoPendiente > 0 && (
-                          <button className='px-3 py-2 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg transition-colors text-sm'>
-                            💰
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
