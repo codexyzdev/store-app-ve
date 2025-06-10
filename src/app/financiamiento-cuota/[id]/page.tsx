@@ -362,47 +362,14 @@ export default function FinanciamientoClientePage() {
                 </div>
               </div>
 
-              {/* Información adicional colapsable en mobile */}
-              <div className='p-4 sm:p-8'>
-                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8'>
-                  {/* Información básica */}
-                  <div className='space-y-4'>
-                    <h3 className='text-lg font-semibold text-gray-900 flex items-center gap-2'>
-                      <span>📋</span>
-                      Información del Cliente
-                    </h3>
-
-                    <div className='bg-sky-50 rounded-xl p-4 space-y-3'>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-sm font-medium text-gray-600'>
-                          Nombre completo:
-                        </span>
-                        <span className='text-sm font-semibold text-gray-900'>
-                          {cliente.nombre}
-                        </span>
-                      </div>
-
-                      <div className='flex items-center justify-between'>
-                        <span className='text-sm font-medium text-gray-600'>
-                          Teléfono:
-                        </span>
-                        <span className='text-sm font-semibold text-gray-900'>
-                          {cliente.telefono}
-                        </span>
-                      </div>
-
-                      {cliente.cedula && (
-                        <div className='flex items-center justify-between'>
-                          <span className='text-sm font-medium text-gray-600'>
-                            Cédula:
-                          </span>
-                          <span className='text-sm font-semibold text-gray-900'>
-                            {cliente.cedula}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
+              {/* Información adicional - Solo mostrar si hay contenido */}
+              {(cliente.fotoCedulaUrl ||
+                (cliente.direccion &&
+                  esEnlaceGoogleMaps(cliente.direccion) &&
+                  extraerCoordenadas(cliente.direccion))) && (
+                <div className='p-4 sm:p-8'>
+                  {/* Foto de cédula y mapa */}
+                  <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8'>
                     {/* Foto de cédula */}
                     {cliente.fotoCedulaUrl && (
                       <div className='space-y-3'>
@@ -419,33 +386,35 @@ export default function FinanciamientoClientePage() {
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  {/* Mapa */}
-                  {cliente.direccion &&
-                    esEnlaceGoogleMaps(cliente.direccion) &&
-                    (() => {
-                      const coordenadas = extraerCoordenadas(cliente.direccion);
-                      return coordenadas ? (
-                        <div className='space-y-3'>
-                          <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
-                            <span>🗺️</span>
-                            Ubicación del Cliente
-                          </h4>
-                          <div className='bg-sky-50 rounded-xl p-4'>
-                            <div className='h-48 sm:h-64 rounded-lg overflow-hidden'>
-                              <Minimapa
-                                coordenadas={coordenadas}
-                                direccionOriginal={cliente.direccion}
-                                className='w-full h-full'
-                              />
+                    {/* Mapa */}
+                    {cliente.direccion &&
+                      esEnlaceGoogleMaps(cliente.direccion) &&
+                      (() => {
+                        const coordenadas = extraerCoordenadas(
+                          cliente.direccion
+                        );
+                        return coordenadas ? (
+                          <div className='space-y-3'>
+                            <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
+                              <span>🗺️</span>
+                              Ubicación del Cliente
+                            </h4>
+                            <div className='bg-sky-50 rounded-xl p-4'>
+                              <div className='h-48 sm:h-64 rounded-lg overflow-hidden'>
+                                <Minimapa
+                                  coordenadas={coordenadas}
+                                  direccionOriginal={cliente.direccion}
+                                  className='w-full h-full'
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ) : null;
-                    })()}
+                        ) : null;
+                      })()}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         ) : (
