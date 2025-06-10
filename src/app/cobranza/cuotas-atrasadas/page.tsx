@@ -103,7 +103,9 @@ export default function CuotasAtrasadasPage() {
       );
 
       const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobros);
-      const valorCuota = financiamiento.monto / financiamiento.cuotas;
+      const valorCuota = Math.round(
+        financiamiento.monto / financiamiento.cuotas
+      );
       const montoAtrasado = valorCuota * cuotasAtrasadas;
 
       const ultimaCuota =

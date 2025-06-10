@@ -15,6 +15,7 @@ interface ModalPagoCuotaProps {
   valorCuota: number;
   cuotasPendientes: number;
   cuotasAtrasadas: number;
+  cuotasPagadas?: number;
   onPagar: (data: {
     monto: number;
     tipoPago: string;
@@ -32,6 +33,7 @@ export default function ModalPagoCuota({
   valorCuota,
   cuotasPendientes,
   cuotasAtrasadas,
+  cuotasPagadas = 0,
   onPagar,
   cargando = false,
 }: ModalPagoCuotaProps) {
@@ -48,6 +50,10 @@ export default function ModalPagoCuota({
 
   const cuotasAPagar = Math.floor(monto / valorCuota);
   const montoParcial = monto % valorCuota;
+
+  // Calcular qué cuotas específicas se van a pagar
+  const siguienteCuota = cuotasPagadas + 1;
+  const ultimaCuotaAPagar = cuotasPagadas + cuotasAPagar;
 
   // Función para verificar comprobante duplicado
   const verificarComprobante = useCallback(
@@ -188,8 +194,11 @@ export default function ModalPagoCuota({
           <p className='text-gray-600'>
             Valor de cuota:{" "}
             <span className='font-bold text-sky-600'>
-              ${valorCuota.toFixed(2)}
+              ${valorCuota.toLocaleString()}
             </span>
+          </p>
+          <p className='text-sm text-gray-500 mt-1'>
+            Cuotas pagadas: {cuotasPagadas} de {prestamo.cuotas}
           </p>
           {cuotasAtrasadas > 0 && (
             <div className='mt-2 inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium'>
@@ -216,8 +225,10 @@ export default function ModalPagoCuota({
                     : "border-gray-200 hover:border-sky-300"
                 }`}
               >
-                <div className='font-bold'>${valorCuota.toFixed(2)}</div>
-                <div className='text-xs text-gray-600'>1 cuota</div>
+                <div className='font-bold'>${valorCuota.toLocaleString()}</div>
+                <div className='text-xs text-gray-600'>
+                  Cuota #{siguienteCuota}
+                </div>
               </button>
 
               <button
@@ -229,8 +240,12 @@ export default function ModalPagoCuota({
                     : "border-gray-200 hover:border-sky-300"
                 }`}
               >
-                <div className='font-bold'>${(valorCuota * 2).toFixed(2)}</div>
-                <div className='text-xs text-gray-600'>2 cuotas</div>
+                <div className='font-bold'>
+                  ${(valorCuota * 2).toLocaleString()}
+                </div>
+                <div className='text-xs text-gray-600'>
+                  Cuotas #{siguienteCuota}-{siguienteCuota + 1}
+                </div>
               </button>
 
               {cuotasAtrasadas > 0 && (
@@ -244,9 +259,12 @@ export default function ModalPagoCuota({
                   }`}
                 >
                   <div className='font-bold'>
-                    ${(valorCuota * cuotasAtrasadas).toFixed(2)}
+                    ${(valorCuota * cuotasAtrasadas).toLocaleString()}
                   </div>
-                  <div className='text-xs text-red-600'>Cuotas atrasadas</div>
+                  <div className='text-xs text-red-600'>
+                    {cuotasAtrasadas} cuota{cuotasAtrasadas > 1 ? "s" : ""}{" "}
+                    atrasada{cuotasAtrasadas > 1 ? "s" : ""}
+                  </div>
                 </button>
               )}
             </div>
@@ -275,12 +293,18 @@ export default function ModalPagoCuota({
               <div className='text-sm text-gray-600 bg-sky-50 p-3 rounded-lg'>
                 <span className='font-medium'>💡 Este monto cubre:</span>
                 <div className='mt-1'>
-                  • {cuotasAPagar} cuota{cuotasAPagar > 1 ? "s" : ""} completa
-                  {cuotasAPagar > 1 ? "s" : ""}
+                  •{" "}
+                  {cuotasAPagar === 1 ? (
+                    <>Cuota #{siguienteCuota}</>
+                  ) : (
+                    <>
+                      Cuotas #{siguienteCuota} al #{ultimaCuotaAPagar}
+                    </>
+                  )}
                   {montoParcial > 0 && (
                     <span className='text-amber-600'>
                       {" "}
-                      + ${montoParcial.toFixed(2)} de abono parcial
+                      + ${montoParcial.toLocaleString()} de abono parcial
                     </span>
                   )}
                 </div>

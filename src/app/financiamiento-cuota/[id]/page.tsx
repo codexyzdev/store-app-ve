@@ -98,8 +98,8 @@ export default function FinanciamientoClientePage() {
           return acc;
         const valorCuota =
           Number.isFinite(f.monto / f.cuotas) && f.monto > 0 && f.cuotas > 0
-            ? f.monto / f.cuotas
-            : 0.01;
+            ? Math.round(f.monto / f.cuotas)
+            : 1;
         const atrasadas = calcularCuotasAtrasadas(f, cobros);
         return acc + atrasadas * valorCuota;
       },
@@ -178,7 +178,9 @@ export default function FinanciamientoClientePage() {
     setActualizando(true);
 
     try {
-      const valorCuota = financiamiento.monto / financiamiento.cuotas;
+      const valorCuota = Math.round(
+        financiamiento.monto / financiamiento.cuotas
+      );
       const cuotasAPagar = Math.floor(data.monto / valorCuota);
 
       const cobrosExistentes = getCobrosFinanciamiento(financiamientoId).filter(
@@ -539,8 +541,8 @@ export default function FinanciamientoClientePage() {
                         : Number.isFinite(montoTotal / financiamiento.cuotas) &&
                           montoTotal > 0 &&
                           financiamiento.cuotas > 0
-                        ? montoTotal / financiamiento.cuotas
-                        : 0.01;
+                        ? Math.round(montoTotal / financiamiento.cuotas)
+                        : 1;
                     const cuotasAtrasadas = calcularCuotasAtrasadas(
                       financiamiento,
                       getCobrosFinanciamiento(financiamiento.id)
@@ -675,7 +677,7 @@ export default function FinanciamientoClientePage() {
                                           Valor por cuota:
                                         </span>
                                         <span className='text-base sm:text-lg font-bold text-gray-900'>
-                                          ${valorCuota.toFixed(2)}
+                                          ${valorCuota.toLocaleString()}
                                         </span>
                                       </div>
                                     </>
@@ -847,7 +849,9 @@ export default function FinanciamientoClientePage() {
 
       {/* Modales de pago de cuota */}
       {financiamientos.map((financiamiento: FinanciamientoCuota) => {
-        const valorCuota = financiamiento.monto / financiamiento.cuotas;
+        const valorCuota = Math.round(
+          financiamiento.monto / financiamiento.cuotas
+        );
         const cobrosValidos = getCobrosFinanciamiento(financiamiento.id);
         const abonos = cobrosValidos.reduce(
           (acc, cobro) => acc + cobro.monto,
@@ -856,6 +860,7 @@ export default function FinanciamientoClientePage() {
         const montoPendiente = Math.max(0, financiamiento.monto - abonos);
         const cuotasPendientes = Math.ceil(montoPendiente / valorCuota);
         const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobros);
+        const cuotasPagadas = cobrosValidos.length;
 
         return (
           <ModalPagoCuota
@@ -875,6 +880,7 @@ export default function FinanciamientoClientePage() {
             valorCuota={valorCuota}
             cuotasPendientes={cuotasPendientes}
             cuotasAtrasadas={cuotasAtrasadas}
+            cuotasPagadas={cuotasPagadas}
             onPagar={(data) => handlePagarCuota(financiamiento.id, data)}
             cargando={!!abonando[financiamiento.id]}
           />

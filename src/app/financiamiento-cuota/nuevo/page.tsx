@@ -790,10 +790,10 @@ export default function NuevoFinanciamientoPage() {
                             parseFloat(formData.monto) > 0 && (
                               <p className='text-xs text-gray-500 mt-1'>
                                 Valor por cuota: $
-                                {(
+                                {Math.round(
                                   parseFloat(formData.monto) /
-                                  parseInt(formData.cuotas)
-                                ).toFixed(2)}
+                                    parseInt(formData.cuotas)
+                                ).toLocaleString()}
                               </p>
                             )}
                         </div>
@@ -896,10 +896,10 @@ export default function NuevoFinanciamientoPage() {
                             <span className='text-gray-700'>Cuotas:</span>
                             <span className='font-semibold'>
                               {formData.cuotas} de $
-                              {(
+                              {Math.round(
                                 parseFloat(formData.monto) /
-                                parseInt(formData.cuotas)
-                              ).toFixed(2)}
+                                  parseInt(formData.cuotas)
+                              ).toLocaleString()}
                             </span>
                           </div>
                         )}

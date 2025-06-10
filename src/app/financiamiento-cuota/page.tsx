@@ -330,7 +330,9 @@ export default function FinanciamientoCuotaPage() {
                   financiamiento,
                   cobrosValidos
                 );
-                const valorCuota = financiamiento.monto / financiamiento.cuotas;
+                const valorCuota = Math.round(
+                  financiamiento.monto / financiamiento.cuotas
+                );
                 const cuotasPagadas = cobrosValidos.length;
                 const progreso = (totalCobrado / financiamiento.monto) * 100;
 
@@ -422,7 +424,7 @@ export default function FinanciamientoCuotaPage() {
                           <span className='text-sm text-gray-600'>Cuotas:</span>
                           <span className='text-sm font-medium text-gray-900'>
                             {cuotasPagadas}/{financiamiento.cuotas} ($
-                            {valorCuota.toFixed(2)} c/u)
+                            {valorCuota.toLocaleString()} c/u)
                           </span>
                         </div>
 
@@ -524,7 +526,7 @@ export default function FinanciamientoCuotaPage() {
                             {cuotasPagadas}/{financiamiento.cuotas}
                           </p>
                           <p className='text-xs text-gray-500'>
-                            ${valorCuota.toFixed(2)} c/u
+                            ${valorCuota.toLocaleString()} c/u
                           </p>
                         </div>
 
