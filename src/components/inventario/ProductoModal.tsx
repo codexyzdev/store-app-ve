@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Producto } from "@/lib/firebase/database";
+import { ImageUploader } from "./ImageUploader";
 
 interface ProductoModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function ProductoModal({
     stock: 0,
     stockMinimo: 5,
     categoria: "",
+    imagenes: [] as string[],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function ProductoModal({
         stock: producto.stock,
         stockMinimo: producto.stockMinimo || 5,
         categoria: producto.categoria,
+        imagenes: producto.imagenes || [],
       });
     } else {
       setFormData({
@@ -50,6 +53,7 @@ export function ProductoModal({
         stock: 0,
         stockMinimo: 5,
         categoria: "",
+        imagenes: [],
       });
     }
     setError(null);
@@ -283,7 +287,7 @@ export function ProductoModal({
                           name='precio'
                           type='number'
                           min='0'
-                          step='0.01'
+                          step='1'
                           required
                           value={formData.precio === 0 ? "" : formData.precio}
                           onChange={(e) =>
@@ -331,6 +335,22 @@ export function ProductoModal({
                     placeholder='Descripción opcional del producto...'
                   />
                 </div>
+              </div>
+
+              {/* Imágenes del producto */}
+              <div className='bg-purple-50 rounded-xl p-4'>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
+                  <span className='text-xl'>📸</span>
+                  Imágenes del producto
+                </h3>
+
+                <ImageUploader
+                  imagenes={formData.imagenes}
+                  onImagenesChange={(imagenes) =>
+                    handleInputChange("imagenes", imagenes)
+                  }
+                  maxImagenes={5}
+                />
               </div>
 
               {/* Inventario */}

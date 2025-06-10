@@ -15,6 +15,7 @@ interface Producto {
   stockMinimo?: number;
   precio: number;
   descripcion?: string;
+  imagenes?: string[];
 }
 
 interface InventarioCardProps {
@@ -66,9 +67,19 @@ export function InventarioCard({
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-4 flex-1'>
             <div className='flex-shrink-0'>
-              <div className='w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center'>
-                <CubeIcon className='w-6 h-6 text-indigo-600' />
-              </div>
+              {producto.imagenes && producto.imagenes.length > 0 ? (
+                <div className='w-12 h-12 rounded-lg overflow-hidden border border-gray-200'>
+                  <img
+                    src={producto.imagenes[0]}
+                    alt={producto.nombre}
+                    className='w-full h-full object-cover'
+                  />
+                </div>
+              ) : (
+                <div className='w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center'>
+                  <CubeIcon className='w-6 h-6 text-indigo-600' />
+                </div>
+              )}
             </div>
 
             <div className='flex-1 min-w-0'>
@@ -142,13 +153,23 @@ export function InventarioCard({
   return (
     <div className='bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group'>
       <div className='p-6'>
-        {/* Header with status */}
+        {/* Header with image and status */}
         <div className='flex justify-between items-start mb-4'>
           <div className='flex-1'>
             <div className='flex items-center gap-2 mb-2'>
-              <div className='w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center'>
-                <CubeIcon className='w-5 h-5 text-indigo-600' />
-              </div>
+              {producto.imagenes && producto.imagenes.length > 0 ? (
+                <div className='w-10 h-10 rounded-lg overflow-hidden border border-gray-200'>
+                  <img
+                    src={producto.imagenes[0]}
+                    alt={producto.nombre}
+                    className='w-full h-full object-cover'
+                  />
+                </div>
+              ) : (
+                <div className='w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center'>
+                  <CubeIcon className='w-5 h-5 text-indigo-600' />
+                </div>
+              )}
               <span
                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bgColor} ${stockStatus.color} ${stockStatus.borderColor} border`}
               >
@@ -166,6 +187,61 @@ export function InventarioCard({
             </span>
           </div>
         </div>
+
+        {/* Galería de imágenes (vista grid) */}
+        {producto.imagenes && producto.imagenes.length > 0 && (
+          <div className='mb-4'>
+            {producto.imagenes.length === 1 ? (
+              <div className='aspect-square rounded-lg overflow-hidden border border-gray-200'>
+                <img
+                  src={producto.imagenes[0]}
+                  alt={producto.nombre}
+                  className='w-full h-full object-cover'
+                />
+              </div>
+            ) : (
+              <div className='grid grid-cols-2 gap-2'>
+                <div className='aspect-square rounded-lg overflow-hidden border border-gray-200'>
+                  <img
+                    src={producto.imagenes[0]}
+                    alt={`${producto.nombre} - Principal`}
+                    className='w-full h-full object-cover'
+                  />
+                </div>
+                <div className='grid gap-2'>
+                  {producto.imagenes.slice(1, 3).map((imagen, index) => (
+                    <div
+                      key={index}
+                      className='aspect-square rounded-lg overflow-hidden border border-gray-200'
+                    >
+                      <img
+                        src={imagen}
+                        alt={`${producto.nombre} - ${index + 2}`}
+                        className='w-full h-full object-cover'
+                      />
+                    </div>
+                  ))}
+                  {producto.imagenes.length > 3 && (
+                    <div className='aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center relative'>
+                      <img
+                        src={producto.imagenes[3]}
+                        alt={`${producto.nombre} - 4`}
+                        className='w-full h-full object-cover'
+                      />
+                      {producto.imagenes.length > 4 && (
+                        <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+                          <span className='text-white font-bold text-sm'>
+                            +{producto.imagenes.length - 3} más
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Description */}
         {producto.descripcion && (

@@ -73,6 +73,7 @@ export interface Producto {
   stock: number;
   stockMinimo?: number;
   categoria: string;
+  imagenes?: string[]; // URLs de las imágenes del producto (opcional)
   createdAt: number;
   updatedAt: number;
 }

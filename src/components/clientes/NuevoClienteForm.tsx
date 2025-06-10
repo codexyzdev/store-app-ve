@@ -111,8 +111,10 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
         {error && (
           <div className='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm'>
             <div className='flex items-center gap-2'>
-              <span className='text-red-500'>⚠️</span>
+              <span className='text-red-500'>
+
               {error}
+              </span>
             </div>
           </div>
         )}

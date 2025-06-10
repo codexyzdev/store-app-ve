@@ -31,7 +31,7 @@ export function InventarioFilters({
     <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8'>
       <div className='flex items-center justify-between mb-4'>
         <div className='flex items-center gap-2'>
-          <FunnelIcon className='w-5 h-5 text-gray-400' />
+          <span className='text-gray-400 text-lg'>🔍</span>
           <h3 className='text-lg font-medium text-gray-900'>Filtros</h3>
         </div>
         {hasActiveFilters && (
@@ -39,7 +39,7 @@ export function InventarioFilters({
             onClick={onClearFilters}
             className='inline-flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-red-600 transition-colors'
           >
-            <XMarkIcon className='w-4 h-4' />
+            <span className='text-red-500'>✕</span>
             Limpiar filtros
           </button>
         )}
@@ -55,7 +55,9 @@ export function InventarioFilters({
             Buscar productos
           </label>
           <div className='relative'>
-            <MagnifyingGlassIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+            <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg'>
+              🔍
+            </span>
             <input
               id='search'
               type='text'
