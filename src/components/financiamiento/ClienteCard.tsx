@@ -1,12 +1,4 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  Avatar,
-  Typography,
-  Box,
-  Stack,
-} from "@mui/material";
 import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
 import Minimapa from "@/components/maps/Minimapa";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
@@ -19,13 +11,13 @@ export interface ClienteCardProps {
   fotoCedulaUrl?: string;
 }
 
-const ClienteCard: React.FC<ClienteCardProps> = ({
+function ClienteCard({
   nombre,
   telefono,
   direccion,
   cedula,
   fotoCedulaUrl,
-}) => {
+}: ClienteCardProps) {
   const esEnlaceMaps = esEnlaceGoogleMaps(direccion);
   const coordenadas = esEnlaceMaps ? extraerCoordenadas(direccion) : null;
 
@@ -42,201 +34,90 @@ const ClienteCard: React.FC<ClienteCardProps> = ({
   };
 
   return (
-    <Card sx={{ mb: 4, p: 3 }}>
-      <CardContent>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", lg: "row" },
-            alignItems: { xs: "center", lg: "flex-start" },
-            gap: 4,
-          }}
-        >
-          {/* Sección izquierda - Información del cliente */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignItems: "center",
-              gap: 3,
-              flex: 1,
-              width: { xs: "100%", lg: "auto" },
-              minWidth: 0, // Permite que el contenedor se contraiga
-            }}
-          >
-            <Avatar
+    <div className='mb-4 p-6 bg-white shadow-lg rounded-lg border border-gray-200'>
+      <div className='flex flex-col lg:flex-row items-center lg:items-start gap-6'>
+        {/* Sección izquierda - Información del cliente */}
+        <div className='flex flex-col md:flex-row items-center gap-4 flex-1 w-full lg:w-auto min-w-0'>
+          {fotoCedulaUrl ? (
+            <img
               src={fotoCedulaUrl}
               alt='Foto de cédula'
-              sx={{
-                width: { xs: 80, md: 100 },
-                height: { xs: 80, md: 100 },
-                bgcolor: "primary.light",
-                color: "primary.main",
-                fontSize: "2rem",
-                flexShrink: 0,
-              }}
-            >
-              {!fotoCedulaUrl && nombre[0]?.toUpperCase()}
-            </Avatar>
-
-            <Stack spacing={2} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
-              <Typography
-                variant='h5'
-                component='div'
-                color='primary.dark'
-                sx={{
-                  fontWeight: "bold",
-                  textTransform: "capitalize",
-                  textAlign: { xs: "center", md: "left" },
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {nombre}
-              </Typography>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  color: "text.secondary",
-                  justifyContent: { xs: "center", md: "flex-start" },
-                  gap: 1,
-                }}
-              >
-                <Typography component='span' sx={{ flexShrink: 0 }}>
-                  📞
-                </Typography>
-                <Typography
-                  component='span'
-                  sx={{ fontWeight: "medium", flexShrink: 0 }}
-                >
-                  Teléfono:
-                </Typography>
-                <Typography
-                  sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                >
-                  {telefono}
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  color: "text.secondary",
-                  justifyContent: { xs: "center", md: "flex-start" },
-                  gap: 1,
-                  minWidth: 0,
-                }}
-              >
-                <Typography component='span' sx={{ flexShrink: 0 }}>
-                  🏠
-                </Typography>
-                <Typography
-                  component='span'
-                  sx={{ fontWeight: "medium", flexShrink: 0 }}
-                >
-                  Dirección:
-                </Typography>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  {esEnlaceMaps ? (
-                    <button
-                      onClick={abrirEnGoogleMaps}
-                      className='flex items-center gap-1 text-blue-600 hover:text-blue-700 underline transition-colors max-w-full'
-                      title={direccion}
-                    >
-                      <span className='truncate'>
-                        {acortarTexto("Ver ubicación en Google Maps", 25)}
-                      </span>
-                      <ArrowTopRightOnSquareIcon className='w-4 h-4 flex-shrink-0' />
-                    </button>
-                  ) : (
-                    <Typography
-                      sx={{
-                        wordBreak: "break-word",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                      }}
-                      title={direccion}
-                    >
-                      {direccion}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-
-              {cedula && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    color: "text.secondary",
-                    justifyContent: { xs: "center", md: "flex-start" },
-                    gap: 1,
-                  }}
-                >
-                  <Typography component='span' sx={{ flexShrink: 0 }}>
-                    🪪
-                  </Typography>
-                  <Typography
-                    component='span'
-                    sx={{ fontWeight: "medium", flexShrink: 0 }}
-                  >
-                    Cédula:
-                  </Typography>
-                  <Typography
-                    sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                  >
-                    {cedula}
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
-          </Box>
-
-          {/* Sección derecha - Minimapa (solo en desktop y si hay coordenadas) */}
-          {coordenadas && (
-            <Box
-              sx={{
-                display: { xs: "none", lg: "block" },
-                width: "350px",
-                height: "250px",
-                flexShrink: 0,
-              }}
-            >
-              <Minimapa
-                coordenadas={coordenadas}
-                direccionOriginal={direccion}
-                className='w-full h-full'
-              />
-            </Box>
+              className='w-24 h-24 md:w-28 md:h-28 rounded-full object-cover flex-shrink-0 bg-gray-200'
+            />
+          ) : (
+            <div className='w-24 h-24 md:w-28 md:h-28 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-4xl font-bold flex-shrink-0'>
+              {nombre[0]?.toUpperCase()}
+            </div>
           )}
-        </Box>
 
-        {/* Minimapa para móvil (solo si hay coordenadas y está en móvil) */}
+          <div className='flex flex-col space-y-3 flex-1 w-full min-w-0'>
+            <h2 className='text-2xl font-bold text-slate-800 capitalize text-center md:text-left truncate'>
+              {nombre}
+            </h2>
+
+            <div className='flex items-center text-gray-600 justify-center md:justify-start gap-2'>
+              <span className='flex-shrink-0 text-lg'>📞</span>
+              <span className='font-medium flex-shrink-0'>Teléfono:</span>
+              <span className='truncate'>{telefono}</span>
+            </div>
+
+            <div className='flex items-start text-gray-600 justify-center md:justify-start gap-2 min-w-0'>
+              <span className='flex-shrink-0 text-lg pt-1'>🏠</span>
+              <span className='font-medium flex-shrink-0 pt-1'>Dirección:</span>
+              <div className='min-w-0 flex-1'>
+                {esEnlaceMaps ? (
+                  <button
+                    onClick={abrirEnGoogleMaps}
+                    className='flex items-center gap-1 text-blue-600 hover:text-blue-700 underline transition-colors max-w-full text-left'
+                    title={direccion}
+                  >
+                    <span className='truncate'>
+                      Ver ubicación en Google Maps
+                    </span>
+                    <ArrowTopRightOnSquareIcon className='w-4 h-4 flex-shrink-0' />
+                  </button>
+                ) : (
+                  <p className='break-words line-clamp-2' title={direccion}>
+                    {direccion}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {cedula && (
+              <div className='flex items-center text-gray-600 justify-center md:justify-start gap-2'>
+                <span className='flex-shrink-0 text-lg'>🪪</span>
+                <span className='font-medium flex-shrink-0'>Cédula:</span>
+                <span className='truncate'>{cedula}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sección derecha - Minimapa (solo en desktop y si hay coordenadas) */}
         {coordenadas && (
-          <Box
-            sx={{
-              display: { xs: "block", lg: "none" },
-              mt: 3,
-              width: "100%",
-              height: "200px",
-            }}
-          >
+          <div className='hidden lg:block w-[350px] h-[250px] flex-shrink-0 rounded-md overflow-hidden'>
             <Minimapa
               coordenadas={coordenadas}
               direccionOriginal={direccion}
               className='w-full h-full'
             />
-          </Box>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Minimapa para móvil (solo si hay coordenadas y está en móvil) */}
+      {coordenadas && (
+        <div className='block lg:hidden mt-4 w-full h-52 rounded-md overflow-hidden'>
+          <Minimapa
+            coordenadas={coordenadas}
+            direccionOriginal={direccion}
+            className='w-full h-full'
+          />
+        </div>
+      )}
+    </div>
   );
-};
+}
 
 export default ClienteCard;

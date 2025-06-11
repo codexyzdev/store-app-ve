@@ -18,9 +18,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generar-datos": "node pruebas/ejecutar-datos.js",
-    "datos-prueba": "node pruebas/ejecutar-datos.js",
-    "crear-usuarios": "node scripts/crear-usuarios.js"
+    "generar-datos": "tsx pruebas/ejecutar-datos.ts",
+    "datos-prueba": "tsx pruebas/ejecutar-datos.ts",
+    "crear-usuarios": "tsx scripts/crear-usuarios.ts"
   },
   "keywords": [
     "gestión financiera",
@@ -34,12 +34,8 @@
     "firebase"
   ],
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
     "@fontsource-variable/roboto": "^5.2.5",
     "@heroicons/react": "^2.2.0",
-    "@mui/icons-material": "^7.1.1",
-    "@mui/material": "^7.1.1",
     "@tailwindcss/postcss": "^4.1.8",
     "dotenv": "^16.5.0",
     "firebase": "^11.8.1",
@@ -50,12 +46,14 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.1.8",
+    "eslint-config-next": "15.2.3",
     "postcss": "^8",
+    "tsx": "^4.20.1",
     "typescript": "^5"
   }
 }
