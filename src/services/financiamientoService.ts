@@ -7,7 +7,18 @@ export interface PagoData {
   comprobante?: string;
   imagenComprobante?: string;
   fecha?: string;
-  nota?: string;
+  nota?: string; // Completamente opcional - puede no existir en el objeto
+}
+
+// Función utilitaria para limpiar undefined de objetos antes de enviar a Firebase
+function limpiarUndefined(obj: any): any {
+  const resultado: any = {};
+  Object.keys(obj).forEach(key => {
+    if (obj[key] !== undefined && obj[key] !== null) {
+      resultado[key] = obj[key];
+    }
+  });
+  return resultado;
 }
 
 export class FinanciamientoService {
@@ -32,17 +43,37 @@ export class FinanciamientoService {
 
       // Crear cobros
       for (let i = 0; i < cuotasAPagar; i++) {
-        await cobrosDB.crear({
+        // Construir objeto base sin campos opcionales primero
+        const cobroBase = {
           financiamientoId: financiamientoId,
           monto: valorCuota,
-          fecha: data.fecha ? new Date(data.fecha).getTime() : Date.now(),
-          tipo: "cuota",
+          fecha: data.fecha ? 
+            // Usar mediodía para evitar problemas de zona horaria
+            new Date(data.fecha + 'T12:00:00').getTime() : 
+            Date.now(),
+          tipo: "cuota" as const,
           comprobante: data.comprobante || "",
           tipoPago: data.tipoPago,
           imagenComprobante: data.imagenComprobante || "",
-          numeroCuota: cobrosRegulares.length + i + 1,
-          nota: data.nota
-        });
+          numeroCuota: cobrosRegulares.length + i + 1
+        };
+
+        // Solo agregar campos opcionales si tienen valor real
+        const cobroCompleto: any = { ...cobroBase };
+        
+        // Agregar nota solo si el campo existe en el objeto y tiene contenido
+        if ('nota' in data && data.nota && typeof data.nota === 'string') {
+          const notaLimpia = data.nota.trim();
+          if (notaLimpia.length > 0) {
+            cobroCompleto.nota = notaLimpia;
+          }
+        }
+
+        console.log('📋 Datos del cobro antes de enviar a Firebase:', cobroCompleto);
+        console.log('📋 ¿Tiene propiedad nota?', 'nota' in cobroCompleto);
+        console.log('📋 Valor de nota:', cobroCompleto.nota);
+
+        await cobrosDB.crear(cobroCompleto);
       }
 
       // Actualizar estado del financiamiento

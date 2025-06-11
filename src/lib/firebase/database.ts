@@ -219,7 +219,21 @@ export const cobrosDB = {
     const id = newCobroRef.key;
     if (!id) throw new Error('Error al generar ID');
     
-    const nuevoCobro = { ...cobro, id };
+    // Crear nuevo cobro eliminando cualquier campo undefined antes de enviar a Firebase
+    const cobroLimpio: any = {};
+    Object.keys(cobro).forEach(key => {
+      const valor = (cobro as any)[key];
+      if (valor !== undefined && valor !== null) {
+        cobroLimpio[key] = valor;
+      }
+    });
+    
+    const nuevoCobro = { ...cobroLimpio, id };
+    
+    console.log(`🔍 Cobro original recibido:`, cobro);
+    console.log(`🧹 Cobro limpio a enviar:`, nuevoCobro);
+    console.log(`📋 ¿Incluye nota?`, 'nota' in nuevoCobro);
+    
     await set(newCobroRef, nuevoCobro);
     
     console.log(`✅ Cobro creado exitosamente con ID: ${id}`);

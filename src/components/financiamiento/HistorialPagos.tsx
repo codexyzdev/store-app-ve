@@ -432,8 +432,8 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
                         </p>
                         {valorCuota > 0 && (
                           <p className='text-sm text-gray-600'>
-                            {(pago.monto / valorCuota).toFixed(1)} cuota
-                            {pago.monto / valorCuota > 1 ? "s" : ""}
+                            {Math.floor(pago.monto / valorCuota)} cuota
+                            {Math.floor(pago.monto / valorCuota) > 1 ? "s" : ""}
                           </p>
                         )}
                       </div>

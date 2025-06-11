@@ -42,9 +42,11 @@ export default function ModalPagoCuota({
   const [monto, setMonto] = useState<number>(valorCuota);
   const [comprobante, setComprobante] = useState<string>("");
   const [imagenComprobante, setImagenComprobante] = useState<string>("");
-  const [fecha, setFecha] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [fecha, setFecha] = useState<string>(() => {
+    // Asegurar que la fecha de hoy se configure correctamente
+    const hoy = new Date();
+    return hoy.toISOString().split("T")[0];
+  });
   const [verificandoComprobante, setVerificandoComprobante] = useState(false);
   const [comprobanteEsDuplicado, setComprobanteEsDuplicado] = useState(false);
   const [mensajeValidacion, setMensajeValidacion] = useState<string>("");
@@ -127,7 +129,10 @@ export default function ModalPagoCuota({
       setMonto(valorCuota);
       setComprobante("");
       setImagenComprobante("");
-      setFecha(new Date().toISOString().split("T")[0]);
+      setFecha(() => {
+        const hoy = new Date();
+        return hoy.toISOString().split("T")[0];
+      });
       setNota("");
       setComprobanteEsDuplicado(false);
       setMensajeValidacion("");
@@ -180,20 +185,35 @@ export default function ModalPagoCuota({
     }
 
     try {
-      await onPagar({
+      // Crear objeto base sin campos opcionales
+      const pagoDataBase = {
         monto,
         tipoPago,
         comprobante: comprobante.trim(),
         imagenComprobante,
         fecha,
-        nota: nota.trim() || undefined,
-      });
+      };
+
+      // Solo agregar nota si tiene contenido real
+      const notaLimpia = nota.trim();
+      const pagoData =
+        notaLimpia.length > 0
+          ? { ...pagoDataBase, nota: notaLimpia }
+          : pagoDataBase;
+
+      console.log("🚀 Enviando datos de pago:", pagoData);
+      console.log("🚀 ¿Incluye nota?", "nota" in pagoData);
+
+      await onPagar(pagoData);
 
       // Resetear formulario
       setMonto(valorCuota);
       setComprobante("");
       setImagenComprobante("");
-      setFecha(new Date().toISOString().split("T")[0]);
+      setFecha(() => {
+        const hoy = new Date();
+        return hoy.toISOString().split("T")[0];
+      });
       setNota("");
       setComprobanteEsDuplicado(false);
       setMensajeValidacion("");
