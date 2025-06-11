@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Modal from "@/components/Modal";
 import { cobrosDB } from "@/lib/firebase/database";
 
@@ -27,6 +27,18 @@ interface ModalPagoCuotaProps {
   cargando?: boolean;
 }
 
+interface TipoPago {
+  id: string;
+  nombre: string;
+  descripcion: string;
+}
+
+interface ErrorState {
+  mostrar: boolean;
+  mensaje: string;
+  tipo: "error" | "warning" | "success";
+}
+
 export default function ModalPagoCuota({
   isOpen,
   onClose,
@@ -43,21 +55,59 @@ export default function ModalPagoCuota({
   const [comprobante, setComprobante] = useState<string>("");
   const [imagenComprobante, setImagenComprobante] = useState<string>("");
   const [fecha, setFecha] = useState<string>(() => {
-    // Asegurar que la fecha de hoy se configure correctamente
     const hoy = new Date();
     return hoy.toISOString().split("T")[0];
   });
+
+  // Estados de validación
   const [verificandoComprobante, setVerificandoComprobante] = useState(false);
   const [comprobanteEsDuplicado, setComprobanteEsDuplicado] = useState(false);
   const [mensajeValidacion, setMensajeValidacion] = useState<string>("");
   const [nota, setNota] = useState<string>("");
 
+  // Estados de UI
+  const [error, setError] = useState<ErrorState>({
+    mostrar: false,
+    mensaje: "",
+    tipo: "error",
+  });
+  const [procesandoPago, setProcesandoPago] = useState(false);
+  const [pagoExitoso, setPagoExitoso] = useState(false);
+
   const cuotasAPagar = Math.floor(monto / valorCuota);
   const montoParcial = monto % valorCuota;
-
-  // Calcular qué cuotas específicas se van a pagar
   const siguienteCuota = cuotasPagadas + 1;
   const ultimaCuotaAPagar = cuotasPagadas + cuotasAPagar;
+
+  // Helper function para mostrar errores
+  const mostrarError = useCallback(
+    (mensaje: string, tipo: ErrorState["tipo"] = "error") => {
+      setError({ mostrar: true, mensaje, tipo });
+      setTimeout(() => {
+        setError((prev) => ({ ...prev, mostrar: false }));
+      }, 8000);
+    },
+    []
+  );
+
+  // Helper function para resetear formulario
+  const resetearFormulario = useCallback(() => {
+    setMonto(valorCuota);
+    setComprobante("");
+    setImagenComprobante("");
+    setFecha(() => {
+      const hoy = new Date();
+      return hoy.toISOString().split("T")[0];
+    });
+    setNota("");
+    setComprobanteEsDuplicado(false);
+    setMensajeValidacion("");
+    setVerificandoComprobante(false);
+    setTipoPago("efectivo");
+    setError({ mostrar: false, mensaje: "", tipo: "error" });
+    setProcesandoPago(false);
+    setPagoExitoso(false);
+  }, [valorCuota]);
 
   // Función para verificar comprobante duplicado
   const verificarComprobante = useCallback(
@@ -81,6 +131,10 @@ export default function ModalPagoCuota({
           setMensajeValidacion(
             `❌ El número "${numeroComprobante}" ya está registrado en el sistema. Por favor, verifica e ingresa un número diferente.`
           );
+          mostrarError(
+            `🚫 Comprobante duplicado: El número "${numeroComprobante}" ya está registrado. Debes usar un número diferente.`,
+            "error"
+          );
         } else {
           setMensajeValidacion(`✅ Número de comprobante disponible para usar`);
         }
@@ -90,20 +144,24 @@ export default function ModalPagoCuota({
         setMensajeValidacion(
           "⚠️ Error al verificar comprobante. Intenta nuevamente."
         );
+        mostrarError(
+          "Error al verificar comprobante. Intenta nuevamente.",
+          "warning"
+        );
       } finally {
         setVerificandoComprobante(false);
       }
     },
-    [tipoPago]
+    [tipoPago, mostrarError]
   );
 
-  // Verificar comprobante cuando cambie el número o tipo de pago
+  // Verificar comprobante con debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (tipoPago !== "efectivo" && comprobante.trim()) {
         verificarComprobante(comprobante);
       }
-    }, 500); // 500ms debounce - bueno balance entre responsividad y rendimiento
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [comprobante, tipoPago, verificarComprobante]);
@@ -120,72 +178,160 @@ export default function ModalPagoCuota({
   // Limpiar estado cuando se abra/cierre el modal
   useEffect(() => {
     if (isOpen) {
-      // Modal se está abriendo - resetear estados
       setComprobanteEsDuplicado(false);
       setMensajeValidacion("");
       setVerificandoComprobante(false);
+      setError({ mostrar: false, mensaje: "", tipo: "error" });
+      setProcesandoPago(false);
+      setPagoExitoso(false);
     } else {
-      // Modal se está cerrando - limpiar completamente
-      setMonto(valorCuota);
-      setComprobante("");
-      setImagenComprobante("");
-      setFecha(() => {
-        const hoy = new Date();
-        return hoy.toISOString().split("T")[0];
-      });
-      setNota("");
-      setComprobanteEsDuplicado(false);
-      setMensajeValidacion("");
-      setVerificandoComprobante(false);
-      setTipoPago("efectivo");
+      resetearFormulario();
     }
-  }, [isOpen, valorCuota]);
+  }, [isOpen, resetearFormulario]);
 
   const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        mostrarError("La imagen no puede ser mayor a 5MB", "warning");
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagenComprobante(e.target?.result as string);
+      reader.onload = (event) => {
+        setImagenComprobante(event.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const validarFormulario = (): boolean => {
     if (monto <= 0) {
-      alert("El monto debe ser mayor a 0");
-      return;
+      mostrarError("El monto debe ser mayor a 0");
+      return false;
     }
 
     if (tipoPago !== "efectivo" && !comprobante.trim()) {
-      alert("Debes ingresar el número de comprobante");
-      return;
+      mostrarError("Debes ingresar el número de comprobante");
+      return false;
     }
 
     if (tipoPago !== "efectivo" && !imagenComprobante) {
-      alert("Debes adjuntar la imagen del comprobante");
-      return;
+      mostrarError("Debes adjuntar la imagen del comprobante");
+      return false;
     }
 
-    // Validar que no sea un comprobante duplicado
     if (tipoPago !== "efectivo" && comprobanteEsDuplicado) {
-      alert(
-        "❌ El número de comprobante ya está registrado. Por favor, usa un número diferente."
+      mostrarError(
+        `🚫 COMPROBANTE DUPLICADO: El número "${comprobante}" ya está registrado en el sistema. Debes usar un número diferente.`,
+        "error"
       );
+      return false;
+    }
+
+    if (verificandoComprobante) {
+      mostrarError(
+        "⏳ Esperando validación del comprobante. Intenta nuevamente.",
+        "warning"
+      );
+      return false;
+    }
+
+    if (
+      tipoPago !== "efectivo" &&
+      comprobante.trim() &&
+      !mensajeValidacion.includes("✅")
+    ) {
+      mostrarError(
+        "⏳ El comprobante aún no ha sido validado. Espera un momento e intenta nuevamente.",
+        "warning"
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Evitar múltiples envíos
+    if (procesandoPago || pagoExitoso) {
+      console.log("🚫 Pago ya en progreso o completado");
       return;
     }
 
-    // Verificar una vez más si hay validación en progreso
-    if (verificandoComprobante) {
-      alert("⏳ Esperando validación del comprobante. Intenta nuevamente.");
+    console.log("🔥 INICIANDO VALIDACIÓN DE PAGO");
+
+    // VALIDACIÓN CRÍTICA 1: Verificar formulario básico
+    if (!validarFormulario()) {
+      console.error("❌ VALIDACIÓN FALLÓ: Formulario inválido");
       return;
     }
+
+    // VALIDACIÓN CRÍTICA 2: Re-verificar comprobante duplicado JUSTO antes del envío
+    if (tipoPago !== "efectivo" && comprobante.trim()) {
+      setProcesandoPago(true); // Activar loading inmediatamente
+
+      try {
+        console.log("🔍 VERIFICACIÓN FINAL: Comprobante", comprobante.trim());
+        const esDuplicadoFinal = await cobrosDB.verificarComprobanteDuplicado(
+          comprobante.trim()
+        );
+
+        if (esDuplicadoFinal) {
+          console.error(
+            "❌ BLOQUEO CRÍTICO: Comprobante duplicado detectado en verificación final"
+          );
+          setComprobanteEsDuplicado(true);
+          setMensajeValidacion(
+            `❌ COMPROBANTE DUPLICADO: "${comprobante.trim()}" ya existe en el sistema`
+          );
+          mostrarError(
+            `🚫 PAGO BLOQUEADO: El comprobante "${comprobante.trim()}" ya está registrado. El pago NO se procesará.`,
+            "error"
+          );
+          setProcesandoPago(false);
+          return;
+        }
+        console.log("✅ VERIFICACIÓN FINAL: Comprobante disponible");
+      } catch (error) {
+        console.error("❌ ERROR EN VERIFICACIÓN FINAL:", error);
+        mostrarError(
+          "❌ Error al verificar comprobante. Pago bloqueado por seguridad.",
+          "error"
+        );
+        setProcesandoPago(false);
+        return;
+      }
+    } else {
+      setProcesandoPago(true); // Activar loading para pagos en efectivo también
+    }
+
+    // VALIDACIÓN CRÍTICA 3: Estado final antes del envío
+    if (comprobanteEsDuplicado) {
+      console.error("❌ BLOQUEO: Estado de comprobante duplicado activo");
+      mostrarError(
+        "🚫 PAGO BLOQUEADO: Comprobante duplicado detectado. El pago NO se procesará.",
+        "error"
+      );
+      setProcesandoPago(false);
+      return;
+    }
+
+    if (verificandoComprobante) {
+      console.error("❌ BLOQUEO: Verificación en progreso");
+      mostrarError(
+        "⏳ PAGO BLOQUEADO: Verificación en progreso. Espera un momento.",
+        "warning"
+      );
+      setProcesandoPago(false);
+      return;
+    }
+
+    console.log("🚀 INICIANDO PROCESAMIENTO: Todas las validaciones pasaron");
 
     try {
-      // Crear objeto base sin campos opcionales
       const pagoDataBase = {
         monto,
         tipoPago,
@@ -194,37 +340,46 @@ export default function ModalPagoCuota({
         fecha,
       };
 
-      // Solo agregar nota si tiene contenido real
       const notaLimpia = nota.trim();
       const pagoData =
         notaLimpia.length > 0
           ? { ...pagoDataBase, nota: notaLimpia }
           : pagoDataBase;
 
-      console.log("🚀 Enviando datos de pago:", pagoData);
-      console.log("🚀 ¿Incluye nota?", "nota" in pagoData);
-
+      console.log("📤 ENVIANDO PAGO:", pagoData);
       await onPagar(pagoData);
 
-      // Resetear formulario
-      setMonto(valorCuota);
-      setComprobante("");
-      setImagenComprobante("");
-      setFecha(() => {
-        const hoy = new Date();
-        return hoy.toISOString().split("T")[0];
-      });
-      setNota("");
-      setComprobanteEsDuplicado(false);
-      setMensajeValidacion("");
-      onClose();
-    } catch (error) {
-      console.error("Error al procesar pago:", error);
-      // No necesitamos manejar el error aquí, se maneja en el componente padre
+      console.log("✅ PAGO EXITOSO");
+      setPagoExitoso(true);
+      mostrarError("✅ Pago registrado exitosamente", "success");
+
+      // Cerrar modal después de 2 segundos
+      setTimeout(() => {
+        resetearFormulario();
+        onClose();
+      }, 2000);
+    } catch (error: any) {
+      console.error("❌ ERROR AL PROCESAR PAGO:", error);
+      setProcesandoPago(false);
+
+      // Manejo específico de errores de comprobante duplicado
+      if (
+        error?.message?.includes("comprobante") ||
+        error?.message?.includes("duplicado")
+      ) {
+        setComprobanteEsDuplicado(true);
+        setMensajeValidacion(`❌ ${error.message}`);
+        mostrarError(`❌ PAGO RECHAZADO: ${error.message}`, "error");
+      } else {
+        mostrarError(
+          "❌ Error al procesar el pago. Intenta nuevamente.",
+          "error"
+        );
+      }
     }
   };
 
-  const tiposPago = [
+  const tiposPago: TipoPago[] = [
     { id: "efectivo", nombre: "💵 Efectivo", descripcion: "Pago en efectivo" },
     {
       id: "transferencia",
@@ -240,9 +395,57 @@ export default function ModalPagoCuota({
     { id: "otro", nombre: "💳 Otro", descripcion: "Otro método de pago" },
   ];
 
+  // Si el pago fue exitoso, mostrar pantalla de confirmación
+  if (pagoExitoso) {
+    return (
+      <Modal isOpen={isOpen} onClose={() => {}} title=''>
+        <div className='max-w-md mx-auto text-center py-8'>
+          <div className='w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6'>
+            <span className='text-4xl'>✅</span>
+          </div>
+          <h2 className='text-2xl font-bold text-green-700 mb-4'>
+            ¡Pago Registrado!
+          </h2>
+          <p className='text-gray-600 mb-6'>
+            El pago se ha registrado exitosamente en el sistema.
+          </p>
+          <div className='flex items-center justify-center space-x-2'>
+            <div className='w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin'></div>
+            <span className='text-green-600'>Cerrando...</span>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title=''>
       <div className='max-w-2xl mx-auto'>
+        {/* Notificación de Error/Éxito */}
+        {error.mostrar && (
+          <div
+            className={`mb-4 p-4 rounded-xl border-l-4 ${
+              error.tipo === "error"
+                ? "bg-red-50 border-red-500 text-red-700"
+                : error.tipo === "warning"
+                ? "bg-yellow-50 border-yellow-500 text-yellow-700"
+                : "bg-green-50 border-green-500 text-green-700"
+            }`}
+          >
+            <div className='flex items-center justify-between'>
+              <span className='font-medium'>{error.mensaje}</span>
+              <button
+                onClick={() =>
+                  setError((prev) => ({ ...prev, mostrar: false }))
+                }
+                className='text-current hover:opacity-70'
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header del modal */}
         <div className='text-center mb-6'>
           <div className='w-16 h-16 bg-gradient-to-br from-slate-700 to-sky-500 rounded-2xl flex items-center justify-center mx-auto mb-4'>
@@ -251,15 +454,7 @@ export default function ModalPagoCuota({
           <h2 className='text-2xl font-bold text-gray-900 mb-2'>
             Registrar Pago de Cuota
           </h2>
-          <p className='text-gray-600'>
-            Valor de cuota:{" "}
-            <span className='font-bold text-sky-600'>
-              ${valorCuota.toLocaleString()}
-            </span>
-          </p>
-          <p className='text-sm text-gray-500 mt-1'>
-            Cuotas pagadas: {cuotasPagadas} de {prestamo.cuotas}
-          </p>
+
           {cuotasAtrasadas > 0 && (
             <div className='mt-2 inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium'>
               <span>⚠️</span>
@@ -279,7 +474,8 @@ export default function ModalPagoCuota({
               <button
                 type='button'
                 onClick={() => setMonto(valorCuota)}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                disabled={procesandoPago}
+                className={`p-3 rounded-xl border-2 transition-all text-center disabled:opacity-50 ${
                   monto === valorCuota
                     ? "border-sky-500 bg-sky-50 text-sky-700"
                     : "border-gray-200 hover:border-sky-300"
@@ -294,7 +490,8 @@ export default function ModalPagoCuota({
               <button
                 type='button'
                 onClick={() => setMonto(valorCuota * 2)}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                disabled={procesandoPago}
+                className={`p-3 rounded-xl border-2 transition-all text-center disabled:opacity-50 ${
                   monto === valorCuota * 2
                     ? "border-sky-500 bg-sky-50 text-sky-700"
                     : "border-gray-200 hover:border-sky-300"
@@ -312,7 +509,8 @@ export default function ModalPagoCuota({
                 <button
                   type='button'
                   onClick={() => setMonto(valorCuota * cuotasAtrasadas)}
-                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  disabled={procesandoPago}
+                  className={`p-3 rounded-xl border-2 transition-all text-center disabled:opacity-50 ${
                     monto === valorCuota * cuotasAtrasadas
                       ? "border-red-500 bg-red-50 text-red-700"
                       : "border-red-200 hover:border-red-300"
@@ -342,8 +540,11 @@ export default function ModalPagoCuota({
               <input
                 type='number'
                 value={monto}
-                onChange={(e) => setMonto(Number(e.target.value))}
-                className='w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-lg font-bold'
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setMonto(Number(e.target.value))
+                }
+                disabled={procesandoPago}
+                className='w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-lg font-bold disabled:opacity-50 disabled:bg-gray-50'
                 step='0.01'
                 min='0.01'
                 required
@@ -380,8 +581,11 @@ export default function ModalPagoCuota({
             <input
               type='date'
               value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFecha(e.target.value)
+              }
+              disabled={procesandoPago}
+              className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:opacity-50 disabled:bg-gray-50'
               required
             />
           </div>
@@ -394,9 +598,12 @@ export default function ModalPagoCuota({
             </label>
             <textarea
               value={nota}
-              onChange={(e) => setNota(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setNota(e.target.value)
+              }
+              disabled={procesandoPago}
               placeholder='Ej: Cliente reportó pago fallido anterior, situación especial, etc.'
-              className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-none'
+              className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-none disabled:opacity-50 disabled:bg-gray-50'
               rows={3}
               maxLength={500}
             />
@@ -419,7 +626,8 @@ export default function ModalPagoCuota({
                   key={tipo.id}
                   type='button'
                   onClick={() => setTipoPago(tipo.id)}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
+                  disabled={procesandoPago}
+                  className={`p-4 rounded-xl border-2 transition-all text-left disabled:opacity-50 ${
                     tipoPago === tipo.id
                       ? "border-sky-500 bg-sky-50"
                       : "border-gray-200 hover:border-sky-300"
@@ -450,9 +658,12 @@ export default function ModalPagoCuota({
                   <input
                     type='text'
                     value={comprobante}
-                    onChange={(e) => setComprobante(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setComprobante(e.target.value)
+                    }
+                    disabled={procesandoPago}
                     placeholder='Ej: 123456789'
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-colors ${
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-colors disabled:opacity-50 disabled:bg-gray-50 ${
                       comprobanteEsDuplicado
                         ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
                         : mensajeValidacion.includes("✅")
@@ -474,7 +685,8 @@ export default function ModalPagoCuota({
                         setComprobanteEsDuplicado(false);
                         setMensajeValidacion("");
                       }}
-                      className='absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors'
+                      disabled={procesandoPago}
+                      className='absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors disabled:opacity-50'
                       title='Limpiar campo'
                     >
                       ✕
@@ -497,7 +709,8 @@ export default function ModalPagoCuota({
                             setComprobanteEsDuplicado(false);
                             setMensajeValidacion("");
                           }}
-                          className='ml-2 text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded transition-colors'
+                          disabled={procesandoPago}
+                          className='ml-2 text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded transition-colors disabled:opacity-50'
                         >
                           Limpiar
                         </button>
@@ -515,7 +728,8 @@ export default function ModalPagoCuota({
                   type='file'
                   accept='image/*'
                   onChange={handleImagenChange}
-                  className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
+                  disabled={procesandoPago}
+                  className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:opacity-50 disabled:bg-gray-50'
                   required
                 />
                 {imagenComprobante && (
@@ -536,22 +750,28 @@ export default function ModalPagoCuota({
             <button
               type='button'
               onClick={onClose}
-              className='flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors'
-              disabled={cargando}
+              disabled={procesandoPago}
+              className='flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
               Cancelar
             </button>
             <button
               type='submit'
               disabled={
-                cargando || comprobanteEsDuplicado || verificandoComprobante
+                procesandoPago ||
+                cargando ||
+                comprobanteEsDuplicado ||
+                verificandoComprobante ||
+                (tipoPago !== "efectivo" &&
+                  comprobante.trim() &&
+                  !mensajeValidacion.includes("✅"))
               }
               className='flex-1 px-6 py-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
             >
-              {cargando ? (
+              {procesandoPago ? (
                 <>
                   <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                  Procesando...
+                  Procesando pago...
                 </>
               ) : (
                 <>
