@@ -18,23 +18,35 @@ import Modal from "@/components/Modal";
 import CuadriculaCuotas from "@/components/financiamiento/CuadriculaCuotas";
 import PlanPagosPrint from "@/components/financiamiento/PlanPagosPrint";
 import HistorialPagos from "@/components/financiamiento/HistorialPagos";
+import ListaNotas from "@/components/notas/ListaNotas";
 import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
 import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
 import Minimapa from "@/components/maps/Minimapa";
 import ModalPagoCuota from "@/components/financiamiento/ModalPagoCuota";
+import { useFinanciamientos } from "@/hooks/useFinanciamientos";
+import { useClientes } from "@/hooks/useClientes";
+import { useProductos } from "@/hooks/useProductos";
+import {
+  FinanciamientoService,
+  PagoData,
+} from "@/services/financiamientoService";
 
 export default function FinanciamientoClientePage() {
   const router = useRouter();
   const params = useParams();
   const clienteId = params.id as string;
 
+  // Usar los nuevos hooks
+  const { financiamientos, cobros, loading, getCobrosFinanciamiento } =
+    useFinanciamientos();
+  const { clientes, getClienteNombre } = useClientes();
+  const { getProductoNombre } = useProductos();
+
+  // Estados locales
   const [cliente, setCliente] = useState<Cliente | null>(null);
-  const [financiamientos, setFinanciamientos] = useState<FinanciamientoCuota[]>(
-    []
-  );
-  const [cobros, setCobros] = useState<Cobro[]>([]);
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [financiamientosCliente, setFinanciamientosCliente] = useState<
+    FinanciamientoCuota[]
+  >([]);
   const [abonando, setAbonando] = useState<{ [key: string]: boolean }>({});
   const [modalPagoCuotaAbierto, setModalPagoCuotaAbierto] = useState<{
     [key: string]: boolean;
@@ -54,123 +66,73 @@ export default function FinanciamientoClientePage() {
 
   useEffect(() => {
     if (!clienteId) return;
-    clientesDB.obtener(clienteId).then(setCliente);
-    financiamientoDB.suscribir((data) => {
-      setFinanciamientos(data.filter((f) => f.clienteId === clienteId));
-      setLoading(false);
-    });
-    cobrosDB.suscribir(setCobros);
-    inventarioDB.suscribir(setProductos);
-  }, [clienteId]);
+
+    // Obtener cliente directamente del array sin usar funciones del hook
+    const clienteEncontrado = clientes.find((c) => c.id === clienteId) || null;
+    setCliente(clienteEncontrado);
+
+    // Filtrar financiamientos del cliente
+    const financiamientosDelCliente = financiamientos.filter(
+      (f) => f.clienteId === clienteId
+    );
+    setFinanciamientosCliente(financiamientosDelCliente);
+  }, [clienteId, financiamientos, clientes]);
 
   useEffect(() => {
-    // Calcular totales
-    const nuevoTotalPendiente = financiamientos.reduce(
+    // Calcular totales usando el servicio
+    const nuevoTotalPendiente = financiamientosCliente.reduce(
       (acc: number, f: FinanciamientoCuota) => {
         if (
           f.tipoVenta !== "cuotas" ||
           (f.estado !== "activo" && f.estado !== "atrasado")
-        )
+        ) {
           return acc;
-        const abonos = getCobrosFinanciamiento(f.id).reduce(
-          (acc2: number, cobro: Cobro) =>
-            acc2 +
-            (typeof cobro.monto === "number" && !isNaN(cobro.monto)
-              ? cobro.monto
-              : 0),
-          0
+        }
+        const info = FinanciamientoService.calcularInfoFinanciamiento(
+          f,
+          cobros
         );
-        const montoPendiente = Math.max(
-          0,
-          Number.isFinite(f.monto - abonos) ? f.monto - abonos : 0
-        );
-        return acc + montoPendiente;
+        return acc + info.montoPendiente;
       },
       0
     );
 
-    const nuevoTotalCuotasAtrasadas = financiamientos.reduce(
+    const nuevoTotalCuotasAtrasadas = financiamientosCliente.reduce(
       (acc: number, f: FinanciamientoCuota) => {
         if (
           f.tipoVenta !== "cuotas" ||
           (f.estado !== "activo" && f.estado !== "atrasado")
-        )
+        ) {
           return acc;
-        const valorCuota =
-          Number.isFinite(f.monto / f.cuotas) && f.monto > 0 && f.cuotas > 0
-            ? Math.round(f.monto / f.cuotas)
-            : 1;
-        const atrasadas = calcularCuotasAtrasadas(f, cobros);
-        return acc + atrasadas * valorCuota;
+        }
+        const info = FinanciamientoService.calcularInfoFinanciamiento(
+          f,
+          cobros
+        );
+        return acc + info.valorCuota * info.cuotasAtrasadas;
       },
       0
     );
 
     setTotalPendiente(nuevoTotalPendiente);
     setTotalCuotasAtrasadas(nuevoTotalCuotasAtrasadas);
-  }, [financiamientos, productos, cobros]);
-
-  const getProductosFinanciamiento = (financiamiento: FinanciamientoCuota) => {
-    if (financiamiento.productos && financiamiento.productos.length > 0) {
-      return financiamiento.productos.map((p) => {
-        const producto = productos.find((prod) => prod.id === p.productoId);
-        return {
-          ...p,
-          nombre: producto?.nombre || "Producto no encontrado",
-          producto: producto,
-        };
-      });
-    } else {
-      const producto = productos.find(
-        (p) => p.id === financiamiento.productoId
-      );
-      return [
-        {
-          productoId: financiamiento.productoId,
-          cantidad: 1,
-          precioUnitario: producto?.precio || 0,
-          subtotal: producto?.precio || 0,
-          nombre: producto?.nombre || "Producto no encontrado",
-          producto: producto,
-        },
-      ];
-    }
-  };
+  }, [financiamientosCliente, cobros]);
 
   const getProductosNombres = (financiamiento: FinanciamientoCuota) => {
-    const productosDelFinanciamiento =
-      getProductosFinanciamiento(financiamiento);
-    if (productosDelFinanciamiento.length === 1) {
-      return productosDelFinanciamiento[0].nombre;
+    if (financiamiento.productos && financiamiento.productos.length > 0) {
+      const nombres = financiamiento.productos.map((p) =>
+        getProductoNombre(p.productoId)
+      );
+      return nombres.length === 1
+        ? nombres[0]
+        : `${nombres.length} productos: ${nombres.join(", ")}`;
     } else {
-      return `${
-        productosDelFinanciamiento.length
-      } productos: ${productosDelFinanciamiento
-        .map((p) => p.nombre)
-        .join(", ")}`;
+      return getProductoNombre(financiamiento.productoId);
     }
   };
 
-  const getCobrosFinanciamiento = (financiamientoId: string) =>
-    cobros
-      .filter(
-        (c: Cobro) =>
-          c.financiamientoId === financiamientoId &&
-          (c.tipo === "cuota" || c.tipo === "inicial")
-      )
-      .sort((a: Cobro, b: Cobro) => b.fecha - a.fecha);
-
-  const handlePagarCuota = async (
-    financiamientoId: string,
-    data: {
-      monto: number;
-      tipoPago: string;
-      comprobante?: string;
-      imagenComprobante?: string;
-      fecha?: string;
-    }
-  ) => {
-    const financiamiento = financiamientos.find(
+  const handlePagarCuota = async (financiamientoId: string, data: PagoData) => {
+    const financiamiento = financiamientosCliente.find(
       (f) => f.id === financiamientoId
     );
     if (!financiamiento) return;
@@ -179,11 +141,6 @@ export default function FinanciamientoClientePage() {
     setActualizando(true);
 
     try {
-      const valorCuota = Math.round(
-        financiamiento.monto / financiamiento.cuotas
-      );
-      const cuotasAPagar = Math.floor(data.monto / valorCuota);
-
       const cobrosExistentes = getCobrosFinanciamiento(financiamientoId).filter(
         (c: Cobro) =>
           (c.tipo === "cuota" || c.tipo === "inicial") &&
@@ -191,63 +148,23 @@ export default function FinanciamientoClientePage() {
           c.id !== "temp"
       );
 
-      // Separar cobros iniciales de cuotas regulares para numeración correcta
-      const cobrosRegulares = cobrosExistentes.filter(
-        (c) => c.tipo === "cuota"
+      // Usar el servicio para procesar el pago
+      await FinanciamientoService.procesarPagoCuota(
+        financiamientoId,
+        financiamiento,
+        data,
+        cobrosExistentes
       );
-
-      // Crear cobros
-      for (let i = 0; i < cuotasAPagar; i++) {
-        await cobrosDB.crear({
-          financiamientoId: financiamientoId,
-          monto: valorCuota,
-          fecha: data.fecha ? new Date(data.fecha).getTime() : Date.now(),
-          tipo: "cuota",
-          comprobante: data.comprobante || "",
-          tipoPago: data.tipoPago,
-          imagenComprobante: data.imagenComprobante || "",
-          numeroCuota: cobrosRegulares.length + i + 1, // Solo contar cuotas regulares
-        });
-      }
-
-      // Actualizar estado del financiamiento
-      const totalAbonado =
-        (cobrosExistentes.length + cuotasAPagar) * valorCuota;
-      const montoPendiente = Math.max(0, financiamiento.monto - totalAbonado);
-
-      if (montoPendiente <= 0) {
-        await financiamientoDB.actualizar(financiamientoId, {
-          estado: "completado",
-        });
-      } else {
-        const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobros);
-        const nuevoEstado = cuotasAtrasadas > 0 ? "atrasado" : "activo";
-        if (financiamiento.estado !== nuevoEstado) {
-          await financiamientoDB.actualizar(financiamientoId, {
-            estado: nuevoEstado,
-          });
-        }
-      }
     } catch (error) {
       console.error("Error al procesar pago:", error);
 
-      // Mostrar mensaje específico si es error de comprobante duplicado
-      if (
-        error instanceof Error &&
-        error.message.includes("ya está registrado")
-      ) {
-        alert(
-          `❌ Comprobante duplicado: ${error.message}\n\n💡 Sugerencia: Verifica que el número de comprobante no haya sido usado anteriormente o usa un número diferente.`
-        );
+      if (error instanceof Error) {
+        alert(`❌ Error al procesar el pago: ${error.message}`);
       } else {
-        const mensajeError =
-          error instanceof Error ? error.message : "Error desconocido";
         alert(
-          `❌ Error al procesar el pago: ${mensajeError}\n\nPor favor, verifica los datos e intenta nuevamente.`
+          "❌ Error desconocido al procesar el pago. Por favor, verifica los datos e intenta nuevamente."
         );
       }
-
-      // No relanzar el error para evitar errores no capturados en la consola
     } finally {
       setAbonando((prev) => ({ ...prev, [financiamientoId]: false }));
       setActualizando(false);
@@ -508,7 +425,7 @@ export default function FinanciamientoClientePage() {
           </div>
 
           <div className='p-4 sm:p-8'>
-            {financiamientos.length === 0 ? (
+            {financiamientosCliente.length === 0 ? (
               <div className='text-center py-8 sm:py-12'>
                 <div className='w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                   <span className='text-3xl sm:text-4xl text-gray-400'>📭</span>
@@ -530,44 +447,23 @@ export default function FinanciamientoClientePage() {
               </div>
             ) : (
               <div className='space-y-6 sm:space-y-8'>
-                {financiamientos.map(
+                {financiamientosCliente.map(
                   (financiamiento: FinanciamientoCuota, index: number) => {
-                    const productosDelFinanciamiento =
-                      getProductosFinanciamiento(financiamiento);
+                    // Usar el servicio para calcular información
+                    const info =
+                      FinanciamientoService.calcularInfoFinanciamiento(
+                        financiamiento,
+                        cobros
+                      );
+                    const {
+                      cobrosValidos,
+                      valorCuota,
+                      totalCobrado: abonos,
+                      montoPendiente,
+                      cuotasAtrasadas,
+                      progreso,
+                    } = info;
                     const montoTotal = financiamiento.monto;
-                    const cobrosValidos: Cobro[] = getCobrosFinanciamiento(
-                      financiamiento.id
-                    ).filter(
-                      (c: Cobro) =>
-                        (c.tipo === "cuota" || c.tipo === "inicial") &&
-                        !!c.id &&
-                        c.id !== "temp"
-                    );
-                    const abonos = cobrosValidos.reduce(
-                      (acc: number, cobro: Cobro) =>
-                        acc +
-                        (typeof cobro.monto === "number" && !isNaN(cobro.monto)
-                          ? cobro.monto
-                          : 0),
-                      0
-                    );
-                    const montoPendiente = Math.max(0, montoTotal - abonos);
-                    const valorCuota =
-                      financiamiento.tipoVenta === "contado"
-                        ? 0
-                        : Number.isFinite(montoTotal / financiamiento.cuotas) &&
-                          montoTotal > 0 &&
-                          financiamiento.cuotas > 0
-                        ? Math.round(montoTotal / financiamiento.cuotas)
-                        : 1;
-                    const cuotasAtrasadas = calcularCuotasAtrasadas(
-                      financiamiento,
-                      getCobrosFinanciamiento(financiamiento.id)
-                    );
-                    const progreso =
-                      montoPendiente > 0
-                        ? ((montoTotal - montoPendiente) / montoTotal) * 100
-                        : 100;
 
                     const estadoPrincipal =
                       financiamiento.tipoVenta === "contado" ? (
@@ -838,19 +734,30 @@ export default function FinanciamientoClientePage() {
                               )}
                           </div>
 
-                          {/* Historial de Pagos */}
+                          {/* Historial de Pagos y Notas */}
                           {financiamiento.tipoVenta === "cuotas" &&
                             mostrarHistorialPagos[financiamiento.id] && (
-                              <div className='mt-6'>
-                                <HistorialPagos
-                                  pagos={getCobrosFinanciamiento(
-                                    financiamiento.id
-                                  )}
-                                  valorCuota={valorCuota}
-                                  titulo={`Historial de Pagos - ${getProductosNombres(
-                                    financiamiento
-                                  )}`}
-                                />
+                              <div className='mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6'>
+                                <div className='xl:col-span-2'>
+                                  <HistorialPagos
+                                    pagos={getCobrosFinanciamiento(
+                                      financiamiento.id
+                                    )}
+                                    valorCuota={valorCuota}
+                                    titulo={`Historial de Pagos - ${getProductosNombres(
+                                      financiamiento
+                                    )}`}
+                                  />
+                                </div>
+                                <div className='xl:col-span-1'>
+                                  <div className='bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 sm:p-6 border border-amber-200'>
+                                    <ListaNotas
+                                      cobros={getCobrosFinanciamiento(
+                                        financiamiento.id
+                                      )}
+                                    />
+                                  </div>
+                                </div>
                               </div>
                             )}
                         </div>
@@ -865,19 +772,19 @@ export default function FinanciamientoClientePage() {
       </div>
 
       {/* Modales de pago de cuota */}
-      {financiamientos.map((financiamiento: FinanciamientoCuota) => {
-        const valorCuota = Math.round(
-          financiamiento.monto / financiamiento.cuotas
+      {financiamientosCliente.map((financiamiento: FinanciamientoCuota) => {
+        const info = FinanciamientoService.calcularInfoFinanciamiento(
+          financiamiento,
+          cobros
         );
-        const cobrosValidos = getCobrosFinanciamiento(financiamiento.id);
-        const abonos = cobrosValidos.reduce(
-          (acc, cobro) => acc + cobro.monto,
-          0
-        );
-        const montoPendiente = Math.max(0, financiamiento.monto - abonos);
-        const cuotasPendientes = Math.ceil(montoPendiente / valorCuota);
-        const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobros);
-        const cuotasPagadas = cobrosValidos.length;
+        const {
+          valorCuota,
+          cobrosValidos,
+          montoPendiente,
+          cuotasAtrasadas,
+          cuotasPagadas,
+          cuotasPendientes,
+        } = info;
 
         return (
           <ModalPagoCuota
@@ -905,7 +812,7 @@ export default function FinanciamientoClientePage() {
       })}
 
       {/* Modales de impresión */}
-      {financiamientos.map((financiamiento: FinanciamientoCuota) => (
+      {financiamientosCliente.map((financiamiento: FinanciamientoCuota) => (
         <Modal
           key={`print-${financiamiento.id}`}
           isOpen={!!mostrarImpresion[financiamiento.id]}

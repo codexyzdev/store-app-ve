@@ -63,6 +63,7 @@ export interface Cobro {
   comprobante?: string;
   imagenComprobante?: string;
   numeroCuota?: number;
+  nota?: string; // Campo para notas en las cuotas
 }
 
 export interface Producto {

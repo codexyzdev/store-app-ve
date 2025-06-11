@@ -22,6 +22,7 @@ interface ModalPagoCuotaProps {
     comprobante?: string;
     imagenComprobante?: string;
     fecha?: string;
+    nota?: string;
   }) => Promise<void>;
   cargando?: boolean;
 }
@@ -47,6 +48,7 @@ export default function ModalPagoCuota({
   const [verificandoComprobante, setVerificandoComprobante] = useState(false);
   const [comprobanteEsDuplicado, setComprobanteEsDuplicado] = useState(false);
   const [mensajeValidacion, setMensajeValidacion] = useState<string>("");
+  const [nota, setNota] = useState<string>("");
 
   const cuotasAPagar = Math.floor(monto / valorCuota);
   const montoParcial = monto % valorCuota;
@@ -126,6 +128,7 @@ export default function ModalPagoCuota({
       setComprobante("");
       setImagenComprobante("");
       setFecha(new Date().toISOString().split("T")[0]);
+      setNota("");
       setComprobanteEsDuplicado(false);
       setMensajeValidacion("");
       setVerificandoComprobante(false);
@@ -183,6 +186,7 @@ export default function ModalPagoCuota({
         comprobante: comprobante.trim(),
         imagenComprobante,
         fecha,
+        nota: nota.trim() || undefined,
       });
 
       // Resetear formulario
@@ -190,6 +194,7 @@ export default function ModalPagoCuota({
       setComprobante("");
       setImagenComprobante("");
       setFecha(new Date().toISOString().split("T")[0]);
+      setNota("");
       setComprobanteEsDuplicado(false);
       setMensajeValidacion("");
       onClose();
@@ -359,6 +364,28 @@ export default function ModalPagoCuota({
               className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
               required
             />
+          </div>
+
+          {/* Nota del pago (opcional) */}
+          <div className='space-y-2'>
+            <label className='block text-sm font-semibold text-gray-900 flex items-center gap-2'>
+              <span>📝</span>
+              Nota (Opcional)
+            </label>
+            <textarea
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              placeholder='Ej: Cliente reportó pago fallido anterior, situación especial, etc.'
+              className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-none'
+              rows={3}
+              maxLength={500}
+            />
+            <div className='text-xs text-gray-500 flex justify-between'>
+              <span>
+                Útil para recordar situaciones especiales o fallos de pago
+              </span>
+              <span>{nota.length}/500</span>
+            </div>
           </div>
 
           {/* Método de pago */}
