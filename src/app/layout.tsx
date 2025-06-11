@@ -3,8 +3,7 @@ import "@fontsource-variable/roboto";
 import "./globals.css";
 import "../styles/print.css";
 import Header from "@/components/header/Header";
-import { ClerkProvider } from "@clerk/nextjs";
-import { esES } from "@clerk/localizations";
+import { AuthProvider } from "@/hooks/use-auth";
 
 export const metadata: Metadata = {
   title: "Los Tiburones",
@@ -17,13 +16,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider localization={esES}>
-      <html lang='es'>
-        <body>
+    <html lang='es'>
+      <body>
+        <AuthProvider>
           <Header />
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }

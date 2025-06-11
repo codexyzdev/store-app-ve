@@ -1,29 +1,51 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-// Define las rutas protegidas (todas excepto auth)
-const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/clientes(.*)',
-  '/cobranza(.*)',
-  '/inventario(.*)',
-  '/estadisticas(.*)',
-  '/configuracion(.*)',
-  '/financiamiento-cuota(.*)',
-  '/prestamos(.*)', // Mantener para compatibilidad
-  '/api(.*)'  // Proteger todas las rutas de API
-]);
+// Rutas que requieren autenticación
+const protectedRoutes = [
+  '/dashboard',
+  '/clientes', 
+  '/cobranza',
+  '/inventario',
+  '/estadisticas',
+  '/configuracion',
+  '/financiamiento-cuota',
+  '/api'
+]
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
+// Rutas públicas
+const publicRoutes = ['/login', '/']
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // Obtener token de las cookies
+  const authToken = request.cookies.get('auth-token')?.value
+  
+  // Verificar si la ruta es protegida
+  const isProtectedRoute = protectedRoutes.some(route => 
+    pathname.startsWith(route)
+  )
+  
+  // Verificar si la ruta es pública
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route)
+  )
+  
+  // Si es ruta protegida y no hay token, redirigir al login
+  if (isProtectedRoute && !authToken) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
-});
+  
+  // Si está autenticado y trata de acceder al login, redirigir al dashboard
+  if (authToken && pathname === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+  
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

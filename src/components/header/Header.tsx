@@ -1,6 +1,5 @@
 "use client";
 
-import { SignedIn, UserButton } from "@clerk/nextjs";
 import HeaderBackButton from "@/components/header/HeaderBackButton";
 import {
   CalendarDaysIcon,
@@ -12,40 +11,70 @@ import {
   Bars3Icon,
   FolderIcon,
   XMarkIcon,
+  UserCircleIcon,
+  ArrowRightStartOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
+import { logoutUser } from "@/lib/firebase/auth";
 
 export default function Header() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
+  const { userProfile, isAuthenticated } = useAuth();
 
   const navigateTo = (path: string) => {
     router.push(path);
     setIsSidebarOpen(false);
   };
 
-  // Cerrar sidebar al presionar Escape
+  const handleLogout = async () => {
+    const result = await logoutUser();
+    if (result.success) {
+      // Eliminar cookie
+      document.cookie =
+        "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+      router.push("/login");
+    }
+    setShowUserMenu(false);
+  };
+
+  // Cerrar sidebar y menú de usuario al presionar Escape o hacer clic fuera
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsSidebarOpen(false);
+        setShowUserMenu(false);
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest("[data-user-menu]")) {
+        setShowUserMenu(false);
       }
     };
 
     if (isSidebarOpen) {
       document.addEventListener("keydown", handleEscape);
-      // Prevenir scroll del body cuando el sidebar está abierto
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
 
+    if (showUserMenu) {
+      document.addEventListener("click", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+    }
+
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("click", handleClickOutside);
       document.body.style.overflow = "unset";
     };
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, showUserMenu]);
 
   return (
     <>
@@ -63,16 +92,47 @@ export default function Header() {
           </h1>
           <HeaderBackButton />
         </div>
-        <SignedIn>
-          <UserButton
-            appearance={{
-              elements: {
-                userButtonAvatarBox:
-                  "w-10 h-10 border-2 border-white shadow-md",
-              },
-            }}
-          />
-        </SignedIn>
+        {isAuthenticated && userProfile && (
+          <div className='relative' data-user-menu>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className='flex items-center gap-2 p-2 hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/20'
+            >
+              <UserCircleIcon className='w-8 h-8' />
+              <div className='hidden sm:block text-left'>
+                <div className='text-sm font-medium'>
+                  {userProfile.displayName}
+                </div>
+                <div className='text-xs text-sky-100 capitalize'>
+                  {userProfile.role}
+                </div>
+              </div>
+            </button>
+
+            {showUserMenu && (
+              <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50'>
+                <div className='p-4 border-b'>
+                  <div className='text-sm font-medium text-gray-900'>
+                    {userProfile.displayName}
+                  </div>
+                  <div className='text-xs text-gray-500'>
+                    {userProfile.email}
+                  </div>
+                  <div className='text-xs text-sky-600 capitalize'>
+                    {userProfile.role}
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className='w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors'
+                >
+                  <ArrowRightStartOnRectangleIcon className='w-4 h-4' />
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Sidebar */}

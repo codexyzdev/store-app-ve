@@ -76,3 +76,7 @@ logs/
 .vscode/settings.json
 .idea/workspace.xml
 .idea/tasks.xml
+
+README-MIGRACION.md
+scripts/
+pruebas/
