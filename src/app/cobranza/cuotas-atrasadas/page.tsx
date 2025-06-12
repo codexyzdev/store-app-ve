@@ -1,30 +1,37 @@
 "use client";
 
+// React se omite debido a la transformación automática JSX
 import React from "react";
+
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import {
-  useCuotasAtrasadas,
-  FinanciamientoConDatos,
-} from "@/hooks/useCuotasAtrasadas";
-import { useFiltrosCuotas } from "@/hooks/useFiltrosCuotas";
+  setBusqueda,
+  setFiltroSeveridad,
+  setVistaCompacta,
+} from "@/store/slices/cuotasAtrasadasSlice";
+import { useCuotasAtrasadasRedux } from "@/hooks/useCuotasAtrasadasRedux";
+import { useAppDispatch } from "@/store/hooks";
 import { EstadisticasCobranza } from "@/components/cuotas/EstadisticasCobranza";
 import { FiltrosYBusqueda } from "@/components/cuotas/FiltrosYBusqueda";
 import { TarjetaCuotaAtrasada } from "@/components/cuotas/TarjetaCuotaAtrasada";
 import { TablaCompacta } from "@/components/cuotas/TablaCompacta";
+import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadas";
 
 export default function CuotasAtrasadasPage() {
-  const { financiamientosConDatos, estadisticas, loading } =
-    useCuotasAtrasadas();
-
+  const dispatch = useAppDispatch();
   const {
-    busqueda,
-    setBusqueda,
-    filtroSeveridad,
-    setFiltroSeveridad,
-    vistaCompacta,
-    setVistaCompacta,
+    loading,
+    estadisticas,
     financiamientosOrdenados,
-  } = useFiltrosCuotas(financiamientosConDatos);
+    filters: { busqueda, filtroSeveridad, vistaCompacta },
+  } = useCuotasAtrasadasRedux();
+
+  const handleBusqueda = (value: string) => dispatch(setBusqueda(value));
+  const handleFiltroSeveridad = (
+    value: "todos" | "baja" | "media" | "alta" | "critica"
+  ) => dispatch(setFiltroSeveridad(value));
+  const handleVistaCompacta = (value: boolean) =>
+    dispatch(setVistaCompacta(value));
 
   if (loading) {
     return (
@@ -58,11 +65,11 @@ export default function CuotasAtrasadasPage() {
         {/* Controles */}
         <FiltrosYBusqueda
           busqueda={busqueda}
-          setBusqueda={setBusqueda}
+          setBusqueda={handleBusqueda}
           filtroSeveridad={filtroSeveridad}
-          setFiltroSeveridad={setFiltroSeveridad}
+          setFiltroSeveridad={handleFiltroSeveridad}
           vistaCompacta={vistaCompacta}
-          setVistaCompacta={setVistaCompacta}
+          setVistaCompacta={handleVistaCompacta}
         />
 
         {/* Resultados */}
@@ -85,12 +92,9 @@ export default function CuotasAtrasadasPage() {
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {financiamientosOrdenados.map(
               (item: FinanciamientoConDatos, index: number) => (
-                // @ts-ignore - React key prop is handled correctly
-                <TarjetaCuotaAtrasada
-                  key={`tarjeta-${item.id}-${index}`}
-                  item={item}
-                  index={index}
-                />
+                <div key={`tarjeta-${item.id}-${index}`}>
+                  <TarjetaCuotaAtrasada item={item} index={index} />
+                </div>
               )
             )}
           </div>

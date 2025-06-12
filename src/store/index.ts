@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import uiSlice from './slices/uiSlice'
 import clientesSlice from './slices/clientesSlice'
 import financiamientosSlice from './slices/financiamientosSlice'
+import cuotasAtrasadasSlice from './slices/cuotasAtrasadasSlice'
 
 // Importaremos más slices aquí conforme los vayamos creando
 
@@ -10,6 +11,7 @@ export const store = configureStore({
     ui: uiSlice,
     clientes: clientesSlice,
     financiamientos: financiamientosSlice,
+    cuotasAtrasadas: cuotasAtrasadasSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
