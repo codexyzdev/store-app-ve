@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
-import { useClientes } from "@/hooks/useClientes";
 import { Cliente } from "@/lib/firebase/database";
 
 import { FiltrosAvanzados } from "@/components/clientes/FiltrosAvanzados";
@@ -13,18 +12,9 @@ export default function ClientesPage() {
   const [vistaCards, setVistaCards] = useState(true);
   const router = useRouter();
 
-  // Hook Redux (principal)
-  const {
-    clientesFiltrados,
-    loading: reduxLoading,
-    error: reduxError,
-    clientes: reduxClientes,
-    getIniciales,
-  } = useClientesRedux();
-
-  // Hook original (fallback)
-  const { clientes: originalClientes, loading: originalLoading } =
-    useClientes();
+  // Hook Redux como única fuente de verdad
+  const { clientesFiltrados, loading, error, clientes, getIniciales } =
+    useClientesRedux();
 
   const formatFecha = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("es-ES", {
@@ -34,15 +24,12 @@ export default function ClientesPage() {
     });
   };
 
-  // Usar datos Redux como principal, original como fallback
-  const clientesData =
-    reduxClientes.length > 0 ? reduxClientes : originalClientes;
-  const loadingState = reduxLoading && originalLoading;
+  // Usar datos filtrados si existen filtros activos, sino usar todos los clientes
   const clientesParaMostrar =
-    clientesFiltrados.length > 0 ? clientesFiltrados : clientesData;
+    clientesFiltrados.length > 0 ? clientesFiltrados : clientes;
 
   // Loading state
-  if (loadingState && clientesData.length === 0) {
+  if (loading && clientes.length === 0) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
@@ -87,11 +74,11 @@ export default function ClientesPage() {
         </div>
 
         {/* Errores */}
-        {reduxError && (
+        {error && (
           <div className='mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700'>
             <div className='flex items-center gap-2'>
               <span className='text-red-500'>⚠️</span>
-              {reduxError}
+              {error}
             </div>
           </div>
         )}

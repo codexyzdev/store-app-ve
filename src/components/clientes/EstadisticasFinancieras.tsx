@@ -1,11 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  useClientesFinancieros,
-  ClienteFinanciero,
-} from "@/hooks/useClientesFinancieros";
-import { useAppSelector } from "@/store/hooks";
+import { useClientesRedux } from "@/hooks/useClientesRedux";
+import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 
 interface EstadisticaCardProps {
   titulo: string;
@@ -75,74 +72,127 @@ function EstadisticaCard({
 }
 
 export function EstadisticasFinancieras() {
-  const clientes = useAppSelector((state) => state.clientes.clientes);
+  // Hooks Redux optimizados
+  const { clientes, loading: clientesLoading } = useClientesRedux();
   const {
-    clientesFinancieros,
-    loading: loadingFinanciero,
-    estadisticasFinancieras,
-  } = useClientesFinancieros(clientes);
+    financiamientos,
+    cobros,
+    loading: financiamientosLoading,
+  } = useFinanciamientosRedux();
 
-  // Formatear montos
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat("es-VE", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  // Calcular información financiera usando datos de Redux
+  const estadisticasFinancieras = useMemo(() => {
+    if (!clientes.length || !financiamientos.length) {
+      return {
+        totalClientes: clientes.length,
+        clientesActivos: 0,
+        clientesConAtrasos: 0,
+        clientesAlDia: 0,
+        clientesNuevos: clientes.length,
+        totalBalancePendiente: 0,
+        totalFinanciadoHistorico: 0,
+        promedioAtrasos: 0,
+      };
+    }
 
-  // Calcular métricas adicionales
-  const metricas = useMemo(() => {
-    if (!clientesFinancieros.length) return null;
+    const clientesConFinanciamiento = clientes.map((cliente) => {
+      const financiamientosCliente = financiamientos.filter(
+        (f) => f.clienteId === cliente.id
+      );
+      const totalFinanciado = financiamientosCliente.reduce(
+        (sum, f) => sum + f.monto,
+        0
+      );
+      const financiamientosActivos = financiamientosCliente.filter(
+        (f) => f.estado === "activo" || f.estado === "atrasado"
+      ).length;
 
-    const totalClientes = estadisticasFinancieras.totalClientes;
-    const clientesActivos = estadisticasFinancieras.clientesActivos;
-    const clientesConAtrasos = estadisticasFinancieras.clientesConAtrasos;
-    const clientesAlDia = estadisticasFinancieras.clientesAlDia;
+      // Calcular balance pendiente y cuotas atrasadas
+      let balancePendiente = 0;
+      let cuotasAtrasadasTotal = 0;
 
-    // Distribución de riesgo
-    const distribucionRiesgo = clientesFinancieros.reduce((acc, cliente) => {
-      acc[cliente.riesgo] = (acc[cliente.riesgo] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+      financiamientosCliente.forEach((financiamiento) => {
+        const cobrosFinanciamiento = cobros.filter(
+          (c) =>
+            c.financiamientoId === financiamiento.id &&
+            (c.tipo === "cuota" || c.tipo === "inicial")
+        );
 
-    // Distribución de estado financiero
-    const distribucionEstado = clientesFinancieros.reduce((acc, cliente) => {
-      acc[cliente.estadoFinanciero] = (acc[cliente.estadoFinanciero] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+        const totalCobrado = cobrosFinanciamiento.reduce(
+          (sum, c) => sum + c.monto,
+          0
+        );
+        const pendiente = Math.max(0, financiamiento.monto - totalCobrado);
+        balancePendiente += pendiente;
 
-    // Clientes con mayor riesgo (crítico y alto)
-    const clientesRiesgoAlto = clientesFinancieros.filter(
-      (c) => c.riesgo === "critico" || c.riesgo === "alto"
+        if (financiamiento.tipoVenta === "cuotas" && pendiente > 0) {
+          // Calcular cuotas atrasadas básico
+          const fechaActual = Date.now();
+          const fechaInicio = financiamiento.fechaInicio;
+          const semanasTranscurridas = Math.floor(
+            (fechaActual - fechaInicio) / (1000 * 60 * 60 * 24 * 7)
+          );
+          const cuotasEsperadas = Math.max(
+            0,
+            Math.min(semanasTranscurridas, financiamiento.cuotas)
+          );
+          const cuotasPagadas = cobrosFinanciamiento.length;
+          const cuotasAtrasadas = Math.max(0, cuotasEsperadas - cuotasPagadas);
+          cuotasAtrasadasTotal += cuotasAtrasadas;
+        }
+      });
+
+      return {
+        ...cliente,
+        totalFinanciado,
+        financiamientosActivos,
+        balancePendiente,
+        cuotasAtrasadas: cuotasAtrasadasTotal,
+        historialCompleto: totalFinanciado > 0,
+      };
+    });
+
+    const clientesActivos = clientesConFinanciamiento.filter(
+      (c) => c.financiamientosActivos > 0
     ).length;
-
-    // Tasa de recuperación
-    const tasaRecuperacion =
-      totalClientes > 0
-        ? ((clientesActivos - clientesConAtrasos) / clientesActivos) * 100
-        : 100;
+    const clientesConAtrasos = clientesConFinanciamiento.filter(
+      (c) => c.cuotasAtrasadas > 0
+    ).length;
+    const clientesAlDia = clientesConFinanciamiento.filter(
+      (c) => c.financiamientosActivos > 0 && c.cuotasAtrasadas === 0
+    ).length;
+    const clientesNuevos = clientesConFinanciamiento.filter(
+      (c) => !c.historialCompleto
+    ).length;
+    const totalBalancePendiente = clientesConFinanciamiento.reduce(
+      (sum, c) => sum + c.balancePendiente,
+      0
+    );
+    const totalFinanciadoHistorico = clientesConFinanciamiento.reduce(
+      (sum, c) => sum + c.totalFinanciado,
+      0
+    );
+    const promedioAtrasos =
+      clientesConAtrasos > 0
+        ? clientesConFinanciamiento.reduce(
+            (sum, c) => sum + c.cuotasAtrasadas,
+            0
+          ) / clientesConAtrasos
+        : 0;
 
     return {
-      totalClientes,
+      totalClientes: clientes.length,
       clientesActivos,
       clientesConAtrasos,
       clientesAlDia,
-      clientesRiesgoAlto,
-      tasaRecuperacion,
-      distribucionRiesgo,
-      distribucionEstado,
-      porcentajeActivos:
-        totalClientes > 0 ? (clientesActivos / totalClientes) * 100 : 0,
-      porcentajeConAtrasos:
-        clientesActivos > 0 ? (clientesConAtrasos / clientesActivos) * 100 : 0,
-      porcentajeAlDia:
-        clientesActivos > 0 ? (clientesAlDia / clientesActivos) * 100 : 0,
+      clientesNuevos,
+      totalBalancePendiente,
+      totalFinanciadoHistorico,
+      promedioAtrasos,
     };
-  }, [clientesFinancieros, estadisticasFinancieras]);
+  }, [clientes, financiamientos, cobros]);
 
-  if (loadingFinanciero || !metricas) {
+  if (clientesLoading || financiamientosLoading || !estadisticasFinancieras) {
     return (
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
         {[1, 2, 3, 4].map((i) => (
@@ -169,7 +219,7 @@ export function EstadisticasFinancieras() {
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6'>
         <EstadisticaCard
           titulo='Total Clientes'
-          valor={metricas.totalClientes}
+          valor={estadisticasFinancieras.totalClientes}
           descripcion='Clientes registrados'
           icono='👥'
           color='bg-blue-500'
@@ -178,31 +228,51 @@ export function EstadisticasFinancieras() {
 
         <EstadisticaCard
           titulo='Clientes Activos'
-          valor={metricas.clientesActivos}
+          valor={estadisticasFinancieras.clientesActivos}
           descripcion='Con financiamientos activos'
           icono='💼'
           color='bg-green-500'
-          porcentaje={metricas.porcentajeActivos}
+          porcentaje={
+            estadisticasFinancieras.clientesActivos > 0
+              ? (estadisticasFinancieras.clientesActivos /
+                  estadisticasFinancieras.totalClientes) *
+                100
+              : 0
+          }
           trend='up'
         />
 
         <EstadisticaCard
           titulo='Clientes con Atrasos'
-          valor={metricas.clientesConAtrasos}
+          valor={estadisticasFinancieras.clientesConAtrasos}
           descripcion='Requieren seguimiento'
           icono='⚠️'
           color='bg-red-500'
-          porcentaje={metricas.porcentajeConAtrasos}
-          trend={metricas.clientesConAtrasos > 0 ? "down" : "neutral"}
+          porcentaje={
+            estadisticasFinancieras.clientesConAtrasos > 0
+              ? (estadisticasFinancieras.clientesConAtrasos /
+                  estadisticasFinancieras.clientesActivos) *
+                100
+              : 0
+          }
+          trend={
+            estadisticasFinancieras.clientesConAtrasos > 0 ? "down" : "neutral"
+          }
         />
 
         <EstadisticaCard
           titulo='Clientes al Día'
-          valor={metricas.clientesAlDia}
+          valor={estadisticasFinancieras.clientesAlDia}
           descripcion='Pagos puntuales'
           icono='✅'
           color='bg-emerald-500'
-          porcentaje={metricas.porcentajeAlDia}
+          porcentaje={
+            estadisticasFinancieras.clientesAlDia > 0
+              ? (estadisticasFinancieras.clientesAlDia /
+                  estadisticasFinancieras.clientesActivos) *
+                100
+              : 0
+          }
           trend='up'
         />
       </div>
@@ -211,7 +281,7 @@ export function EstadisticasFinancieras() {
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6'>
         <EstadisticaCard
           titulo='Balance Pendiente'
-          valor={formatMoney(estadisticasFinancieras.totalBalancePendiente)}
+          valor={estadisticasFinancieras.totalBalancePendiente}
           descripcion='Total por cobrar'
           icono='💰'
           color='bg-yellow-500'
@@ -219,7 +289,7 @@ export function EstadisticasFinancieras() {
 
         <EstadisticaCard
           titulo='Total Financiado'
-          valor={formatMoney(estadisticasFinancieras.totalFinanciadoHistorico)}
+          valor={estadisticasFinancieras.totalFinanciadoHistorico}
           descripcion='Histórico de financiamientos'
           icono='📊'
           color='bg-purple-500'
@@ -227,17 +297,19 @@ export function EstadisticasFinancieras() {
 
         <EstadisticaCard
           titulo='Tasa de Recuperación'
-          valor={`${metricas.tasaRecuperacion.toFixed(1)}%`}
-          descripcion='Clientes al día vs total'
+          valor={estadisticasFinancieras.promedioAtrasos.toFixed(1)}
+          descripcion='Promedio de atrasos'
           icono='🎯'
           color='bg-indigo-500'
-          porcentaje={metricas.tasaRecuperacion}
+          porcentaje={
+            estadisticasFinancieras.promedioAtrasos > 0
+              ? (estadisticasFinancieras.promedioAtrasos /
+                  estadisticasFinancieras.clientesActivos) *
+                100
+              : 0
+          }
           trend={
-            metricas.tasaRecuperacion > 80
-              ? "up"
-              : metricas.tasaRecuperacion > 60
-              ? "neutral"
-              : "down"
+            estadisticasFinancieras.promedioAtrasos > 0 ? "down" : "neutral"
           }
         />
       </div>

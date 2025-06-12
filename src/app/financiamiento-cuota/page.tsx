@@ -7,7 +7,6 @@ import { FinanciamientoCard } from "@/components/financiamiento/FinanciamientoCa
 import { FinanciamientoListItem } from "@/components/financiamiento/FinanciamientoListItem";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
-import { useFinanciamientoData } from "@/hooks/useFinanciamientoData";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductos } from "@/hooks/useProductos";
 import {
@@ -27,57 +26,38 @@ interface FinanciamientoConDatos {
 }
 
 export default function FinanciamientoCuotaPage() {
-  // Hook Redux (principal)
+  // Hooks Redux como única fuente de verdad
   const {
     financiamientosFiltrados,
     filters,
     estadisticas,
-    loading: reduxLoading,
-    error: reduxError,
-    financiamientos: reduxFinanciamientos,
-    cobros: reduxCobros,
+    loading: financiamientosLoading,
+    error: financiamientosError,
+    financiamientos,
+    cobros,
     setBusqueda,
     setEstado,
-    // clearFilters,
     updateFiltersWithData,
     initialized,
   } = useFinanciamientosRedux();
 
-  // Hooks para clientes y productos
-  const { clientes } = useClientesRedux();
-  const { productos } = useProductos();
-
-  // Hook original (fallback)
-  const {
-    financiamientos: originalFinanciamientos,
-    clientes: originalClientes,
-    productos: originalProductos,
-    cobros: originalCobros,
-    loading: originalLoading,
-    error: originalError,
-  } = useFinanciamientoData();
+  const { clientes, loading: clientesLoading } = useClientesRedux();
+  const { productos, loading: productosLoading } = useProductos();
 
   const [vistaCards, setVistaCards] = useState(true);
 
-  // Determinar qué datos usar (Redux como principal, original como fallback)
-  const financiamientos =
-    reduxFinanciamientos.length > 0
-      ? reduxFinanciamientos
-      : originalFinanciamientos;
-  const cobros = reduxCobros.length > 0 ? reduxCobros : originalCobros;
-  const clientesData = clientes.length > 0 ? clientes : originalClientes;
-  const productosData = productos.length > 0 ? productos : originalProductos;
-  const loadingState = reduxLoading && originalLoading;
-  const errorState = reduxError || originalError;
+  // Estado de carga combinado
+  const loading = financiamientosLoading || clientesLoading || productosLoading;
+  const error = financiamientosError;
 
   // Actualizar filtros cuando cambien los datos
   useEffect(() => {
-    if (clientesData.length > 0 && productosData.length > 0) {
-      updateFiltersWithData(clientesData, productosData);
+    if (clientes.length > 0 && productos.length > 0) {
+      updateFiltersWithData(clientes, productos);
     }
-  }, [clientesData, productosData, updateFiltersWithData]);
+  }, [clientes, productos, updateFiltersWithData]);
 
-  // Usar financiamientos filtrados de Redux si están disponibles, sino filtrar manualmente
+  // Usar financiamientos filtrados de Redux
   const financiamientosParaMostrar =
     initialized && financiamientosFiltrados.length >= 0
       ? financiamientosFiltrados
@@ -86,13 +66,10 @@ export default function FinanciamientoCuotaPage() {
   // Calcular datos para cada financiamiento
   const financiamientosConDatos: FinanciamientoConDatos[] =
     financiamientosParaMostrar.map((financiamiento) => {
-      const clienteInfo = getClienteInfo(
-        financiamiento.clienteId,
-        clientesData
-      );
+      const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
       const productoNombre = getProductoNombre(
         financiamiento.productoId,
-        productosData
+        productos
       );
       const calculado = calcularFinanciamiento(financiamiento, cobros);
 
@@ -105,17 +82,14 @@ export default function FinanciamientoCuotaPage() {
     });
 
   // Manejo de errores
-  if (errorState) {
+  if (error) {
     return (
-      <ErrorMessage
-        message={errorState}
-        onRetry={() => window.location.reload()}
-      />
+      <ErrorMessage message={error} onRetry={() => window.location.reload()} />
     );
   }
 
   // Loading state
-  if (loadingState && financiamientos.length === 0) {
+  if (loading && financiamientos.length === 0) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
