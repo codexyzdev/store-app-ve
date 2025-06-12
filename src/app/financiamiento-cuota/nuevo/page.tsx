@@ -167,7 +167,7 @@ export default function NuevoFinanciamientoPage() {
 
     // Validar que hay productos en el carrito
     if (productosCarrito.length === 0) {
-      alert("Agrega al menos un producto al préstamo.");
+      alert("Agrega al menos un producto al financiamiento.");
       setLoading(false);
       return;
     }
@@ -204,7 +204,7 @@ export default function NuevoFinanciamientoPage() {
         0
       ).getTime();
 
-      // Crear el préstamo con múltiples productos
+      // Crear el financiamiento con múltiples productos
       const financiamientoData = {
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
@@ -220,7 +220,7 @@ export default function NuevoFinanciamientoPage() {
         ...(formData.tipoVenta === "contado" ? { pagado: true } : {}),
         descripcion:
           formData.descripcion ||
-          `Préstamo de ${productosCarrito.length} producto${
+          `Financiamiento de ${productosCarrito.length} producto${
             productosCarrito.length > 1 ? "s" : ""
           }`,
       };
@@ -254,7 +254,9 @@ export default function NuevoFinanciamientoPage() {
         alert("Error: " + error.message);
         console.error(error);
       } else {
-        alert("Error desconocido al crear el préstamo o descontar stock.");
+        alert(
+          "Error desconocido al crear el financiamiento o descontar stock."
+        );
         console.error(error);
       }
     } finally {
@@ -713,7 +715,7 @@ export default function NuevoFinanciamientoPage() {
                   </div>
                 </div>
 
-                {/* Condiciones del préstamo */}
+                {/* Condiciones del financiamiento */}
                 {productosCarrito.length > 0 && (
                   <div className='border-t border-gray-200 pt-8'>
                     <div className='flex items-center gap-2 mb-6'>
@@ -721,7 +723,7 @@ export default function NuevoFinanciamientoPage() {
                         <span className='text-blue-600 font-bold'>3</span>
                       </div>
                       <h3 className='text-lg font-semibold text-gray-900'>
-                        Condiciones del Préstamo
+                        Condiciones del Financiamiento
                       </h3>
                     </div>
 
@@ -879,7 +881,7 @@ export default function NuevoFinanciamientoPage() {
                           })
                         }
                         className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none'
-                        placeholder={`Préstamo de ${
+                        placeholder={`Financiamiento de ${
                           productosCarrito.length
                         } producto${
                           productosCarrito.length > 1 ? "s" : ""
@@ -896,7 +898,9 @@ export default function NuevoFinanciamientoPage() {
                   <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
                     <h3 className='text-lg font-bold text-blue-900 mb-4 flex items-center gap-2'>
                       📋 Resumen del{" "}
-                      {formData.tipoVenta === "contado" ? "Pago" : "Préstamo"}
+                      {formData.tipoVenta === "contado"
+                        ? "Pago"
+                        : "Financiamiento"}
                     </h3>
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
                       <div className='space-y-2'>
@@ -999,7 +1003,7 @@ export default function NuevoFinanciamientoPage() {
                             } producto${
                               productosCarrito.length > 1 ? "s" : ""
                             })`
-                          : `Crear Préstamo (${
+                          : `Crear Financiamiento (${
                               productosCarrito.length
                             } producto${
                               productosCarrito.length > 1 ? "s" : ""

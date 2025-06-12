@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { clientesDB } from "@/lib/firebase/database";
 import { subirImagenCliente } from "@/lib/firebase/storage";
+import { useAppDispatch } from "@/store/hooks";
+import { addCliente } from "@/store/slices/clientesSlice";
 
 interface NuevoClienteFormProps {
   onClienteCreado: (cliente: any) => void;
@@ -11,6 +13,7 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
   onClienteCreado,
   onCancel,
 }) => {
+  const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -41,8 +44,13 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
         createdAt: Date.now(),
       });
       const url = await subirImagenCliente(nuevoCliente.id, fotoCedula);
+      const clienteCompleto = { ...nuevoCliente, fotoCedulaUrl: url };
       await clientesDB.actualizar(nuevoCliente.id, { fotoCedulaUrl: url });
-      onClienteCreado({ ...nuevoCliente, fotoCedulaUrl: url });
+
+      // Actualizar Redux inmediatamente para reflejar el cambio sin esperar la suscripción
+      dispatch(addCliente(clienteCompleto));
+
+      onClienteCreado(clienteCompleto);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al crear el cliente";
@@ -111,10 +119,7 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
         {error && (
           <div className='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm'>
             <div className='flex items-center gap-2'>
-              <span className='text-red-500'>
-
-              {error}
-              </span>
+              <span className='text-red-500'>{error}</span>
             </div>
           </div>
         )}
