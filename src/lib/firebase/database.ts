@@ -141,8 +141,9 @@ export const clientesDB = {
 // Funciones CRUD para Financiamientos
 export const financiamientoDB = {
   async crear(financiamiento: Omit<FinanciamientoCuota, 'id' | 'numeroControl'>) {
-    // Obtener siguiente número de control
-    const numeroControl = await contadoresDB.obtenerSiguiente('financiamientos');
+    // Obtener contador adecuado según tipo de venta
+    const tipoEntidad = financiamiento.tipoVenta === 'contado' ? 'ventasContado' : 'financiamientos';
+    const numeroControl = await contadoresDB.obtenerSiguiente(tipoEntidad as any);
     
     const financiamientosRef = ref(database, 'financiamientos');
     const newFinanciamientoRef = push(financiamientosRef);
@@ -420,7 +421,7 @@ export const inventarioDB = {
 
 // Funciones para manejar contadores autoincrement
 export const contadoresDB = {
-  async obtenerSiguiente(entidad: 'clientes' | 'financiamientos'): Promise<number> {
+  async obtenerSiguiente(entidad: 'clientes' | 'financiamientos' | 'ventasContado'): Promise<number> {
     const contadorRef = ref(database, `contadores/${entidad}`);
     
     try {

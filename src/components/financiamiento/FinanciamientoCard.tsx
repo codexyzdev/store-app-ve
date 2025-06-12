@@ -14,6 +14,7 @@ import {
   formatFecha,
   getInitials,
 } from "@/utils/financiamientoHelpers";
+import { formatNumeroControl } from "@/utils/format";
 
 interface FinanciamientoCardProps {
   financiamiento: FinanciamientoCuota;
@@ -62,8 +63,7 @@ export const FinanciamientoCard = memo(
                     N° Control:
                   </span>
                   <span className='px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-lg text-sm font-bold tracking-wide'>
-                    F-
-                    {financiamiento.numeroControl.toString().padStart(3, "0")}
+                    {formatNumeroControl(financiamiento.numeroControl, "F")}
                   </span>
                 </div>
               )}
