@@ -2,22 +2,28 @@
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { clientesDB, Cliente } from "@/lib/firebase/database";
 import { inventarioDB, Producto } from "@/lib/firebase/database";
 import {
   financiamientoDB,
   ProductoFinanciamiento,
   cobrosDB,
 } from "@/lib/firebase/database";
+import { useClientesRedux } from "@/hooks/useClientesRedux";
+import { useProductos } from "@/hooks/useProductos";
 import Link from "next/link";
 import Modal from "@/components/Modal";
 import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
+import { Cliente } from "@/lib/firebase/database";
 
 export default function NuevoFinanciamientoPage() {
   const router = useRouter();
+
+  // Hooks Redux para datos - ÚNICA FUENTE DE VERDAD
+  const { clientes, loading: clientesLoading } = useClientesRedux();
+  const { productos, loading: productosLoading } = useProductos();
+
+  // Estados locales del formulario solamente
   const [loading, setLoading] = useState(false);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [productos, setProductos] = useState<Producto[]>([]);
   const [productoSeleccionado, setProductoSeleccionado] =
     useState<Producto | null>(null);
   const [productosCarrito, setProductosCarrito] = useState<
@@ -48,19 +54,6 @@ export default function NuevoFinanciamientoPage() {
   const [clienteSeleccionado, setClienteSeleccionado] =
     useState<Cliente | null>(null);
   const [modalNuevoCliente, setModalNuevoCliente] = useState(false);
-
-  useEffect(() => {
-    const unsubscribeClientes = clientesDB.suscribir((clientes) => {
-      setClientes(clientes);
-    });
-    const unsubscribeProductos = inventarioDB.suscribir((productos) => {
-      setProductos(productos);
-    });
-    return () => {
-      unsubscribeClientes();
-      unsubscribeProductos();
-    };
-  }, []);
 
   // Calcular monto total basado en productos del carrito
   useEffect(() => {
@@ -1030,7 +1023,7 @@ export default function NuevoFinanciamientoPage() {
         <NuevoClienteForm
           onClienteCreado={(cliente) => {
             setModalNuevoCliente(false);
-            setClientes((prev) => [...prev, cliente]);
+            // El cliente se agregará automáticamente via Redux
             setClienteSeleccionado(cliente);
             setBusquedaCliente(cliente.nombre);
           }}

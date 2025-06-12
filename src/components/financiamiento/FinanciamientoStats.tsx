@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
+import { FinanciamientosEstadisticas } from "@/store/slices/financiamientosSlice";
 
 interface FinanciamientoCuota {
   id: string;
@@ -26,83 +27,98 @@ interface Cobro {
 interface FinanciamientoStatsProps {
   financiamientos: FinanciamientoCuota[];
   cobros: Cobro[];
+  estadisticasRedux?: FinanciamientosEstadisticas;
 }
 
 export function FinanciamientoStats({
   financiamientos,
   cobros,
+  estadisticasRedux,
 }: FinanciamientoStatsProps) {
   const [animatedValues, setAnimatedValues] = useState<Record<string, number>>(
     {}
   );
 
-  // Filtrar solo financiamientos a cuotas para las estadísticas
-  const financiamientosCuotas = financiamientos.filter(
-    (f) => f.tipoVenta === "cuotas"
-  );
+  // Usar estadísticas de Redux si están disponibles, sino calcular manualmente
+  let financiamientosActivos,
+    financiamientosAtrasados,
+    financiamientosCompletados;
+  let montoTotal, totalCobrado, montoPendiente;
 
-  // Función para obtener cobros de un financiamiento específico
-  const getCobrosFinanciamiento = (financiamientoId: string) => {
-    return cobros.filter(
-      (c) =>
-        c.financiamientoId === financiamientoId &&
-        (c.tipo === "cuota" || c.tipo === "inicial")
+  if (estadisticasRedux) {
+    // Usar estadísticas de Redux (más eficiente y consistente)
+    financiamientosActivos = estadisticasRedux.activos;
+    financiamientosAtrasados = estadisticasRedux.atrasados;
+    financiamientosCompletados = estadisticasRedux.completados;
+    montoTotal = estadisticasRedux.montoTotal;
+    totalCobrado = estadisticasRedux.montoRecaudado;
+    montoPendiente = estadisticasRedux.montoPendiente;
+  } else {
+    // Fallback: calcular manualmente (lógica original)
+    const financiamientosCuotas = financiamientos.filter(
+      (f) => f.tipoVenta === "cuotas"
     );
-  };
 
-  // Calcular estadísticas usando la misma lógica que las tarjetas individuales
-  const financiamientosActivosArray = financiamientosCuotas.filter(
-    (f) => f.estado === "activo" || f.estado === "atrasado"
-  );
-
-  // Separar entre activos y atrasados usando cálculo dinámico
-  const financiamientosAtrasadosArray = financiamientosActivosArray.filter(
-    (f) => {
-      const cuotasAtrasadas = calcularCuotasAtrasadas(
-        f,
-        getCobrosFinanciamiento(f.id)
+    const getCobrosFinanciamiento = (financiamientoId: string) => {
+      return cobros.filter(
+        (c) =>
+          c.financiamientoId === financiamientoId &&
+          (c.tipo === "cuota" || c.tipo === "inicial")
       );
-      return cuotasAtrasadas > 0;
-    }
-  );
+    };
 
-  const financiamientosActivosReales = financiamientosActivosArray.filter(
-    (f) => {
-      const cuotasAtrasadas = calcularCuotasAtrasadas(
-        f,
-        getCobrosFinanciamiento(f.id)
-      );
-      return cuotasAtrasadas === 0;
-    }
-  );
-
-  // Calcular completados basado en si el monto está completamente pagado
-  const financiamientosCompletadosArray = financiamientosCuotas.filter((f) => {
-    const cobrosValidos = getCobrosFinanciamiento(f.id);
-    const totalCobrado = cobrosValidos.reduce(
-      (acc, cobro) => acc + cobro.monto,
-      0
+    const financiamientosActivosArray = financiamientosCuotas.filter(
+      (f) => f.estado === "activo" || f.estado === "atrasado"
     );
-    return totalCobrado >= f.monto;
-  });
 
-  const financiamientosActivos = financiamientosActivosReales.length;
-  const financiamientosAtrasados = financiamientosAtrasadosArray.length;
-  const financiamientosCompletados = financiamientosCompletadosArray.length;
+    const financiamientosAtrasadosArray = financiamientosActivosArray.filter(
+      (f) => {
+        const cuotasAtrasadas = calcularCuotasAtrasadas(
+          f,
+          getCobrosFinanciamiento(f.id)
+        );
+        return cuotasAtrasadas > 0;
+      }
+    );
 
-  const montoTotal = financiamientosCuotas.reduce((sum, f) => sum + f.monto, 0);
+    const financiamientosActivosReales = financiamientosActivosArray.filter(
+      (f) => {
+        const cuotasAtrasadas = calcularCuotasAtrasadas(
+          f,
+          getCobrosFinanciamiento(f.id)
+        );
+        return cuotasAtrasadas === 0;
+      }
+    );
 
-  // Calcular total cobrado solo para financiamientos a cuotas
-  const idsFinanciamientosCuotas = financiamientosCuotas.map((f) => f.id);
-  const totalCobrado = cobros
-    .filter(
-      (c) =>
-        idsFinanciamientosCuotas.includes(c.financiamientoId) &&
-        (c.tipo === "cuota" || c.tipo === "inicial")
-    )
-    .reduce((sum, c) => sum + c.monto, 0);
+    const financiamientosCompletadosArray = financiamientosCuotas.filter(
+      (f) => {
+        const cobrosValidos = getCobrosFinanciamiento(f.id);
+        const totalCobradoItem = cobrosValidos.reduce(
+          (acc, cobro) => acc + cobro.monto,
+          0
+        );
+        return totalCobradoItem >= f.monto;
+      }
+    );
 
-  const montoPendiente = montoTotal - totalCobrado;
+    financiamientosActivos = financiamientosActivosReales.length;
+    financiamientosAtrasados = financiamientosAtrasadosArray.length;
+    financiamientosCompletados = financiamientosCompletadosArray.length;
+
+    montoTotal = financiamientosCuotas.reduce((sum, f) => sum + f.monto, 0);
+
+    const idsFinanciamientosCuotas = financiamientosCuotas.map((f) => f.id);
+    totalCobrado = cobros
+      .filter(
+        (c) =>
+          idsFinanciamientosCuotas.includes(c.financiamientoId) &&
+          (c.tipo === "cuota" || c.tipo === "inicial")
+      )
+      .reduce((sum, c) => sum + c.monto, 0);
+
+    montoPendiente = montoTotal - totalCobrado;
+  }
 
   // Animación de números
   useEffect(() => {

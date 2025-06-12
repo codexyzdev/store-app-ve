@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FinanciamientoStats } from "@/components/financiamiento/FinanciamientoStats";
 import { FinanciamientoCard } from "@/components/financiamiento/FinanciamientoCard";
 import { FinanciamientoListItem } from "@/components/financiamiento/FinanciamientoListItem";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useFinanciamientoData } from "@/hooks/useFinanciamientoData";
+import { useClientesRedux } from "@/hooks/useClientesRedux";
+import { useProductos } from "@/hooks/useProductos";
 import {
-  filtrarFinanciamientos,
   getClienteInfo,
   getProductoNombre,
   calcularFinanciamiento,
@@ -25,30 +27,72 @@ interface FinanciamientoConDatos {
 }
 
 export default function FinanciamientoCuotaPage() {
-  const { financiamientos, clientes, productos, cobros, loading, error } =
-    useFinanciamientoData();
+  // Hook Redux (principal)
+  const {
+    financiamientosFiltrados,
+    filters,
+    estadisticas,
+    loading: reduxLoading,
+    error: reduxError,
+    financiamientos: reduxFinanciamientos,
+    cobros: reduxCobros,
+    setBusqueda,
+    setEstado,
+    // clearFilters,
+    updateFiltersWithData,
+    initialized,
+  } = useFinanciamientosRedux();
 
-  const [busqueda, setBusqueda] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState<string>("todos");
+  // Hooks para clientes y productos
+  const { clientes } = useClientesRedux();
+  const { productos } = useProductos();
+
+  // Hook original (fallback)
+  const {
+    financiamientos: originalFinanciamientos,
+    clientes: originalClientes,
+    productos: originalProductos,
+    cobros: originalCobros,
+    loading: originalLoading,
+    error: originalError,
+  } = useFinanciamientoData();
+
   const [vistaCards, setVistaCards] = useState(true);
 
-  // Calcular financiamientos filtrados
-  const financiamientosFiltrados = filtrarFinanciamientos(
-    financiamientos,
-    busqueda,
-    filtroEstado,
-    clientes,
-    productos,
-    cobros
-  );
+  // Determinar qué datos usar (Redux como principal, original como fallback)
+  const financiamientos =
+    reduxFinanciamientos.length > 0
+      ? reduxFinanciamientos
+      : originalFinanciamientos;
+  const cobros = reduxCobros.length > 0 ? reduxCobros : originalCobros;
+  const clientesData = clientes.length > 0 ? clientes : originalClientes;
+  const productosData = productos.length > 0 ? productos : originalProductos;
+  const loadingState = reduxLoading && originalLoading;
+  const errorState = reduxError || originalError;
+
+  // Actualizar filtros cuando cambien los datos
+  useEffect(() => {
+    if (clientesData.length > 0 && productosData.length > 0) {
+      updateFiltersWithData(clientesData, productosData);
+    }
+  }, [clientesData, productosData, updateFiltersWithData]);
+
+  // Usar financiamientos filtrados de Redux si están disponibles, sino filtrar manualmente
+  const financiamientosParaMostrar =
+    initialized && financiamientosFiltrados.length >= 0
+      ? financiamientosFiltrados
+      : financiamientos;
 
   // Calcular datos para cada financiamiento
   const financiamientosConDatos: FinanciamientoConDatos[] =
-    financiamientosFiltrados.map((financiamiento) => {
-      const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
+    financiamientosParaMostrar.map((financiamiento) => {
+      const clienteInfo = getClienteInfo(
+        financiamiento.clienteId,
+        clientesData
+      );
       const productoNombre = getProductoNombre(
         financiamiento.productoId,
-        productos
+        productosData
       );
       const calculado = calcularFinanciamiento(financiamiento, cobros);
 
@@ -61,14 +105,17 @@ export default function FinanciamientoCuotaPage() {
     });
 
   // Manejo de errores
-  if (error) {
+  if (errorState) {
     return (
-      <ErrorMessage message={error} onRetry={() => window.location.reload()} />
+      <ErrorMessage
+        message={errorState}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
   // Loading state
-  if (loading) {
+  if (loadingState && financiamientos.length === 0) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
@@ -121,11 +168,32 @@ export default function FinanciamientoCuotaPage() {
         </div>
 
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
+          {/* Indicador de Redux */}
+          {initialized && (
+            <div className='mb-4'>
+              <div className='bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3'>
+                <div className='flex items-center gap-3'>
+                  <div className='w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
+                    <span className='text-white text-xs font-bold'>✓</span>
+                  </div>
+                  <span className='text-green-800 font-medium text-sm'>
+                    🚀 Redux Habilitado - Filtros avanzados y estadísticas
+                    optimizadas
+                  </span>
+                  <div className='ml-auto flex items-center gap-1 text-xs text-green-600'>
+                    <span>📊 {financiamientosFiltrados.length} resultados</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Estadísticas */}
           <div className='mb-6 sm:mb-8'>
             <FinanciamientoStats
               financiamientos={financiamientos}
               cobros={cobros}
+              estadisticasRedux={initialized ? estadisticas : undefined}
             />
           </div>
 
@@ -140,7 +208,7 @@ export default function FinanciamientoCuotaPage() {
                   </div>
                   <input
                     type='text'
-                    value={busqueda}
+                    value={filters.busqueda}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setBusqueda(e.target.value)
                     }
@@ -157,9 +225,15 @@ export default function FinanciamientoCuotaPage() {
                 {/* Status Filter */}
                 <div className='flex-1'>
                   <select
-                    value={filtroEstado}
+                    value={filters.estado}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setFiltroEstado(e.target.value)
+                      setEstado(
+                        e.target.value as
+                          | "todos"
+                          | "activo"
+                          | "atrasado"
+                          | "completado"
+                      )
                     }
                     className='w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white'
                   >
@@ -209,16 +283,16 @@ export default function FinanciamientoCuotaPage() {
               <div className='max-w-md mx-auto'>
                 <span className='text-6xl mb-4 block'>💰</span>
                 <h3 className='text-xl font-semibold text-gray-900 mb-2'>
-                  {busqueda || filtroEstado !== "todos"
+                  {filters.busqueda || filters.estado !== "todos"
                     ? "No se encontraron financiamientos"
                     : "No hay financiamientos registrados"}
                 </h3>
                 <p className='text-gray-600 mb-6'>
-                  {busqueda || filtroEstado !== "todos"
+                  {filters.busqueda || filters.estado !== "todos"
                     ? "Intenta ajustar los filtros de búsqueda"
                     : "Comienza creando tu primer financiamiento en el sistema"}
                 </p>
-                {!busqueda && filtroEstado === "todos" && (
+                {!filters.busqueda && filters.estado === "todos" && (
                   <Link
                     href='/financiamiento-cuota/nuevo'
                     className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'

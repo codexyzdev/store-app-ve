@@ -4,27 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
-import {
-  financiamientoDB,
-  FinanciamientoCuota,
-  clientesDB,
-  Cliente,
-  inventarioDB,
-  Producto,
-  cobrosDB,
-  Cobro,
-} from "@/lib/firebase/database";
+import { FinanciamientoCuota, Cliente, Cobro } from "@/lib/firebase/database";
 import Modal from "@/components/Modal";
 import CuadriculaCuotas from "@/components/financiamiento/CuadriculaCuotas";
 import PlanPagosPrint from "@/components/financiamiento/PlanPagosPrint";
 import HistorialPagos from "@/components/financiamiento/HistorialPagos";
 import ListaNotas from "@/components/notas/ListaNotas";
-import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
+
 import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
 import Minimapa from "@/components/maps/Minimapa";
 import ModalPagoCuota from "@/components/financiamiento/ModalPagoCuota";
-import { useFinanciamientos } from "@/hooks/useFinanciamientos";
-import { useClientes } from "@/hooks/useClientes";
+import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
+import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductos } from "@/hooks/useProductos";
 import {
   FinanciamientoService,
@@ -36,13 +27,23 @@ export default function FinanciamientoClientePage() {
   const params = useParams();
   const clienteId = params.id as string;
 
-  // Usar los nuevos hooks
-  const { financiamientos, cobros, loading, getCobrosFinanciamiento } =
-    useFinanciamientos();
-  const { clientes, getClienteNombre } = useClientes();
+  // Hooks Redux para datos - ÚNICA FUENTE DE VERDAD
+  const {
+    financiamientos,
+    cobros,
+    loading: financiamientosLoading,
+    getCobrosFinanciamiento,
+    calcularInfoFinanciamiento,
+  } = useFinanciamientosRedux();
+
+  const {
+    clientes,
+    loading: clientesLoading,
+    getClienteById,
+  } = useClientesRedux();
   const { getProductoNombre } = useProductos();
 
-  // Estados locales
+  // Estados locales solo para UI
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [financiamientosCliente, setFinanciamientosCliente] = useState<
     FinanciamientoCuota[]
@@ -64,22 +65,22 @@ export default function FinanciamientoClientePage() {
   const [totalCuotasAtrasadas, setTotalCuotasAtrasadas] = useState(0);
   const [actualizando, setActualizando] = useState(false);
 
+  // Cargar datos del cliente cuando cambien los datos de Redux
   useEffect(() => {
     if (!clienteId) return;
 
-    // Obtener cliente directamente del array sin usar funciones del hook
-    const clienteEncontrado = clientes.find((c) => c.id === clienteId) || null;
+    const clienteEncontrado = getClienteById(clienteId);
     setCliente(clienteEncontrado);
 
-    // Filtrar financiamientos del cliente
+    // Filtrar financiamientos del cliente usando datos de Redux
     const financiamientosDelCliente = financiamientos.filter(
       (f) => f.clienteId === clienteId
     );
     setFinanciamientosCliente(financiamientosDelCliente);
-  }, [clienteId, financiamientos, clientes]);
+  }, [clienteId, financiamientos, getClienteById]);
 
+  // Calcular totales usando datos de Redux
   useEffect(() => {
-    // Calcular totales usando el servicio
     const nuevoTotalPendiente = financiamientosCliente.reduce(
       (acc: number, f: FinanciamientoCuota) => {
         if (
@@ -88,10 +89,7 @@ export default function FinanciamientoClientePage() {
         ) {
           return acc;
         }
-        const info = FinanciamientoService.calcularInfoFinanciamiento(
-          f,
-          cobros
-        );
+        const info = calcularInfoFinanciamiento(f);
         return acc + info.montoPendiente;
       },
       0
@@ -105,10 +103,7 @@ export default function FinanciamientoClientePage() {
         ) {
           return acc;
         }
-        const info = FinanciamientoService.calcularInfoFinanciamiento(
-          f,
-          cobros
-        );
+        const info = calcularInfoFinanciamiento(f);
         return acc + info.valorCuota * info.cuotasAtrasadas;
       },
       0
@@ -116,7 +111,7 @@ export default function FinanciamientoClientePage() {
 
     setTotalPendiente(nuevoTotalPendiente);
     setTotalCuotasAtrasadas(nuevoTotalCuotasAtrasadas);
-  }, [financiamientosCliente, cobros]);
+  }, [financiamientosCliente, calcularInfoFinanciamiento]);
 
   const getProductosNombres = (financiamiento: FinanciamientoCuota) => {
     if (financiamiento.productos && financiamiento.productos.length > 0) {
@@ -155,6 +150,8 @@ export default function FinanciamientoClientePage() {
         data,
         cobrosExistentes
       );
+
+      // El hook Redux se actualizará automáticamente vía suscripción
     } catch (error) {
       console.error("Error al procesar pago:", error);
 
@@ -185,7 +182,7 @@ export default function FinanciamientoClientePage() {
     setMostrarImpresion((prev) => ({ ...prev, [financiamientoId]: false }));
   };
 
-  if (loading) {
+  if (financiamientosLoading || clientesLoading) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100 flex items-center justify-center'>
         <div className='text-center'>
@@ -450,11 +447,7 @@ export default function FinanciamientoClientePage() {
                 {financiamientosCliente.map(
                   (financiamiento: FinanciamientoCuota, index: number) => {
                     // Usar el servicio para calcular información
-                    const info =
-                      FinanciamientoService.calcularInfoFinanciamiento(
-                        financiamiento,
-                        cobros
-                      );
+                    const info = calcularInfoFinanciamiento(financiamiento);
                     const {
                       cobrosValidos,
                       valorCuota,
@@ -773,10 +766,7 @@ export default function FinanciamientoClientePage() {
 
       {/* Modales de pago de cuota */}
       {financiamientosCliente.map((financiamiento: FinanciamientoCuota) => {
-        const info = FinanciamientoService.calcularInfoFinanciamiento(
-          financiamiento,
-          cobros
-        );
+        const info = calcularInfoFinanciamiento(financiamiento);
         const {
           valorCuota,
           cobrosValidos,
