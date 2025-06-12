@@ -42,11 +42,13 @@ export function LoginForm() {
     setIsLoading(false);
   };
 
-  // Mostrar loading si está verificando auth
+  // Usar la misma estructura de contenedor para resolver problemas de hidratación
   if (authLoading) {
     return (
-      <div className='flex items-center justify-center min-h-[400px]'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600' />
+      <div className='bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/30 overflow-hidden p-8'>
+        <div className='text-center mb-8'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto' />
+        </div>
       </div>
     );
   }
