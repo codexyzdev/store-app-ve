@@ -136,53 +136,87 @@ export default function DashboardPage() {
         {process.env.NODE_ENV === "development" && (
           <div className='mt-8 bg-blue-50 rounded-lg p-6 border border-blue-200'>
             <h3 className='text-lg font-semibold text-blue-800 mb-4'>
-              🚀 Demo Redux - Notificaciones
+              🚀 Funcionalidades Redux Implementadas
             </h3>
-            <div className='flex flex-wrap gap-3'>
-              <button
-                onClick={() =>
-                  showNotification({
-                    type: "success",
-                    message: "¡Operación exitosa!",
-                  })
-                }
-                className='px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors'
-              >
-                Éxito
-              </button>
-              <button
-                onClick={() =>
-                  showNotification({
-                    type: "error",
-                    message: "Error en la operación",
-                  })
-                }
-                className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors'
-              >
-                Error
-              </button>
-              <button
-                onClick={() =>
-                  showNotification({
-                    type: "warning",
-                    message: "Advertencia importante",
-                  })
-                }
-                className='px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors'
-              >
-                Advertencia
-              </button>
-              <button
-                onClick={() =>
-                  showNotification({
-                    type: "info",
-                    message: "Información relevante",
-                  })
-                }
-                className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors'
-              >
-                Info
-              </button>
+
+            {/* Demo de notificaciones */}
+            <div className='mb-6'>
+              <h4 className='text-md font-medium text-blue-700 mb-3'>
+                Sistema de Notificaciones Globales
+              </h4>
+              <div className='flex flex-wrap gap-3'>
+                <button
+                  onClick={() =>
+                    showNotification({
+                      type: "success",
+                      message: "¡Operación exitosa!",
+                    })
+                  }
+                  className='px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors'
+                >
+                  Éxito
+                </button>
+                <button
+                  onClick={() =>
+                    showNotification({
+                      type: "error",
+                      message: "Error en la operación",
+                    })
+                  }
+                  className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors'
+                >
+                  Error
+                </button>
+                <button
+                  onClick={() =>
+                    showNotification({
+                      type: "warning",
+                      message: "Advertencia importante",
+                    })
+                  }
+                  className='px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors'
+                >
+                  Advertencia
+                </button>
+                <button
+                  onClick={() =>
+                    showNotification({
+                      type: "info",
+                      message: "Información relevante",
+                    })
+                  }
+                  className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors'
+                >
+                  Info
+                </button>
+              </div>
+            </div>
+
+            {/* Estado actual de Redux */}
+            <div>
+              <h4 className='text-md font-medium text-blue-700 mb-3'>
+                Estado Actual de Redux
+              </h4>
+              <div className='flex flex-wrap gap-3'>
+                <a
+                  href='/clientes'
+                  className='inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors'
+                >
+                  👥 Clientes Redux (Principal)
+                </a>
+                <span className='px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg'>
+                  ✅ Filtros avanzados
+                </span>
+                <span className='px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg'>
+                  ✅ Estadísticas en tiempo real
+                </span>
+                <span className='px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg'>
+                  ✅ Estado sincronizado
+                </span>
+                <span className='px-3 py-2 bg-blue-100 text-blue-800 text-sm rounded-lg'>
+                  🔄 Migración completa
+                </span>
+              </div>
             </div>
           </div>
         )}

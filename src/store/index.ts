@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import uiSlice from './slices/uiSlice'
+import clientesSlice from './slices/clientesSlice'
 
 // Importaremos más slices aquí conforme los vayamos creando
 
 export const store = configureStore({
   reducer: {
     ui: uiSlice,
+    clientes: clientesSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
