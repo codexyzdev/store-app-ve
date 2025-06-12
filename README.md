@@ -10,7 +10,9 @@
 
 **Sistema completo de gestión de financiamientos, cobranza e inventario**
 
-[🚀 Demo](#demo) • [📖 Documentación](#documentación) • [⚡ Instalación](#instalación) • [🏗️ Arquitectura](#arquitectura)
+⚠️ **PROYECTO PRIVADO** - Software propietario con licencia restringida
+
+[📖 Documentación](#descripción) • [⚡ Instalación](#instalación) • [🏗️ Arquitectura](#arquitectura) • [📄 Licencia](#licencia)
 
 </div>
 
@@ -269,23 +271,35 @@ npm run test:watch   # Tests en modo watch
 - **🖼️ Optimización de Imágenes** - Next.js Image optimization
 - **💾 Caché Inteligente** - Suscripciones Firebase optimizadas
 
-## 🤝 Contribución
+## 🤝 Desarrollo
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+⚠️ **Proyecto Privado** - Este es un software propietario desarrollado para uso específico.
+
+**Para desarrolladores autorizados:**
+
+1. Clona el repositorio (requiere acceso autorizado)
+2. Crea una rama para tu feature (`git checkout -b feature/NuevaFuncionalidad`)
+3. Desarrolla siguiendo las convenciones del proyecto
+4. Commit tus cambios (`git commit -m 'Add: Nueva funcionalidad'`)
+5. Push a la rama (`git push origin feature/NuevaFuncionalidad`)
+6. Solicita revisión del código antes de merge
+
+**Contacto para acceso:** alejandrobaez938@gmail.com
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+Este proyecto está bajo **Licencia Propietaria**. Todos los derechos reservados.
+
+⚠️ **AVISO IMPORTANTE:** Este es un software propietario y confidencial. Su uso, copia, modificación o distribución sin autorización está estrictamente prohibido.
+
+Ver `LICENSE` para términos completos y condiciones de uso.
 
 ## 👨‍💻 Desarrollador
 
-**CodeXYZ Development**
+**Alejandro Baez - CodeXYZ Development**
 
-- 📧 Email: [contacto@codexyz.dev](mailto:contacto@codexyz.dev)
+- 📧 Email: [alejandrobaez938@gmail.com](mailto:alejandrobaez938@gmail.com)
+- 📱 Teléfono: +58412-5146317
 - 🌐 Website: [codexyz.dev](https://codexyz.dev)
 
 ---
