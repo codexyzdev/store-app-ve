@@ -1,7 +1,7 @@
 "use client";
 
 // React se omite debido a la transformación automática JSX
-import React from "react";
+import React, { useState } from "react";
 
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import {
@@ -16,6 +16,8 @@ import { FiltrosYBusqueda } from "@/components/cuotas/FiltrosYBusqueda";
 import { TarjetaCuotaAtrasada } from "@/components/cuotas/TarjetaCuotaAtrasada";
 import { TablaCompacta } from "@/components/cuotas/TablaCompacta";
 import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadas";
+import Modal from "@/components/Modal";
+import CuotasMorosasPrint from "@/components/cuotas/CuotasMorosasPrint";
 
 export default function CuotasAtrasadasPage() {
   const dispatch = useAppDispatch();
@@ -25,6 +27,8 @@ export default function CuotasAtrasadasPage() {
     financiamientosOrdenados,
     filters: { busqueda, filtroSeveridad, vistaCompacta },
   } = useCuotasAtrasadasRedux();
+
+  const [mostrarImpresion, setMostrarImpresion] = useState(false);
 
   const handleBusqueda = (value: string) => dispatch(setBusqueda(value));
   const handleFiltroSeveridad = (
@@ -71,6 +75,20 @@ export default function CuotasAtrasadasPage() {
           vistaCompacta={vistaCompacta}
           setVistaCompacta={handleVistaCompacta}
         />
+
+        {/* Botón imprimir morosos */}
+        {financiamientosOrdenados.length > 0 && (
+          <div className='flex justify-end'>
+            <button
+              type='button'
+              onClick={() => setMostrarImpresion(true)}
+              className='inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+            >
+              <span className='text-xl'>🖨️</span>
+              Imprimir Morosos
+            </button>
+          </div>
+        )}
 
         {/* Resultados */}
         {financiamientosOrdenados.length === 0 ? (
@@ -136,6 +154,63 @@ export default function CuotasAtrasadasPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de impresión */}
+      <Modal
+        isOpen={mostrarImpresion}
+        onClose={() => setMostrarImpresion(false)}
+        title='Imprimir Clientes Morosos'
+      >
+        <div className='print-container'>
+          <div className='no-print mb-4 text-center'>
+            <p className='text-gray-600 mb-3'>
+              Haz clic en "Imprimir" o usa Ctrl+P para imprimir la lista de
+              clientes morosos.
+            </p>
+            <div className='flex gap-2 justify-center'>
+              <button
+                onClick={() => window.print()}
+                className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2'
+              >
+                <span>🖨️</span>
+                Imprimir
+              </button>
+              <button
+                onClick={() => setMostrarImpresion(false)}
+                className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+
+          <CuotasMorosasPrint financiamientos={financiamientosOrdenados} />
+        </div>
+      </Modal>
+
+      {/* Estilos para impresión */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `@media print {
+            .no-print { display: none !important; }
+            .print-container {
+              width: 100% !important;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .fixed.inset-0 > div:first-child { display: none !important; }
+            .cuotas-morosas-print {
+              position: static !important;
+              transform: none !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+              margin: 0 !important;
+              padding: 20px !important;
+            }
+          }`,
+        }}
+      />
 
       {/* Estilos para animaciones */}
       <style jsx>{`
