@@ -17,17 +17,20 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { useUI } from "@/hooks/useUI";
 import { logoutUser } from "@/lib/firebase/auth";
 
 export default function Header() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Estado local para el menú de usuario (mantenemos esto local por ahora)
   const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
   const { userProfile, isAuthenticated } = useAuth();
+  // Estado global para el sidebar usando Redux
+  const { sidebarOpen: isSidebarOpen, toggleSidebar, setSidebarOpen } = useUI();
 
   const navigateTo = (path: string) => {
     router.push(path);
-    setIsSidebarOpen(false);
+    setSidebarOpen(false);
   };
 
   const handleLogout = async () => {
@@ -45,7 +48,7 @@ export default function Header() {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsSidebarOpen(false);
+        setSidebarOpen(false);
         setShowUserMenu(false);
       }
     };
@@ -81,7 +84,7 @@ export default function Header() {
       <header className='sticky top-0 z-40 flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-slate-800 to-sky-500 text-white shadow-lg'>
         <div className='flex items-center gap-4'>
           <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onClick={() => toggleSidebar()}
             className='p-2 hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/20'
             aria-label='Abrir menú de navegación'
           >
@@ -145,7 +148,7 @@ export default function Header() {
         <div className='flex items-center justify-between p-6 border-b bg-gray-50'>
           <h2 className='text-xl font-bold text-gray-800'>Navegación</h2>
           <button
-            onClick={() => setIsSidebarOpen(false)}
+            onClick={() => setSidebarOpen(false)}
             className='p-2 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500'
             aria-label='Cerrar menú'
           >

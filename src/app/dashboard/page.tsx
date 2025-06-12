@@ -2,6 +2,7 @@
 
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useAuth } from "@/hooks/use-auth";
+import { useUI } from "@/hooks/useUI";
 
 export default function DashboardPage() {
   const {
@@ -10,6 +11,8 @@ export default function DashboardPage() {
     canViewReports,
     canManageCollections,
   } = useAuth();
+
+  const { showNotification } = useUI();
 
   return (
     <ProtectedRoute>
@@ -128,6 +131,61 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Demo Redux - Solo en desarrollo */}
+        {process.env.NODE_ENV === "development" && (
+          <div className='mt-8 bg-blue-50 rounded-lg p-6 border border-blue-200'>
+            <h3 className='text-lg font-semibold text-blue-800 mb-4'>
+              🚀 Demo Redux - Notificaciones
+            </h3>
+            <div className='flex flex-wrap gap-3'>
+              <button
+                onClick={() =>
+                  showNotification({
+                    type: "success",
+                    message: "¡Operación exitosa!",
+                  })
+                }
+                className='px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors'
+              >
+                Éxito
+              </button>
+              <button
+                onClick={() =>
+                  showNotification({
+                    type: "error",
+                    message: "Error en la operación",
+                  })
+                }
+                className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors'
+              >
+                Error
+              </button>
+              <button
+                onClick={() =>
+                  showNotification({
+                    type: "warning",
+                    message: "Advertencia importante",
+                  })
+                }
+                className='px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors'
+              >
+                Advertencia
+              </button>
+              <button
+                onClick={() =>
+                  showNotification({
+                    type: "info",
+                    message: "Información relevante",
+                  })
+                }
+                className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors'
+              >
+                Info
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Información del usuario */}
         <div className='mt-8 bg-gray-50 rounded-lg p-6'>

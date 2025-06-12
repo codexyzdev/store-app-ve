@@ -5,6 +5,8 @@ import "./globals.css";
 import "../styles/print.css";
 import Header from "@/components/header/Header";
 import { AuthProvider } from "@/hooks/use-auth";
+import { StoreProvider } from "@/store/StoreProvider";
+import { NotificationCenter } from "@/components/ui/NotificationCenter";
 
 export const metadata: Metadata = {
   title: "Los Tiburones",
@@ -37,12 +39,15 @@ export default function RootLayout({
   return (
     <html lang='es' suppressHydrationWarning>
       <body className='antialiased'>
-        <AuthProvider>
-          <Suspense fallback={<LoadingFallback />}>
-            <Header />
-            <main>{children}</main>
-          </Suspense>
-        </AuthProvider>
+        <StoreProvider>
+          <AuthProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <Header />
+              <main>{children}</main>
+              <NotificationCenter />
+            </Suspense>
+          </AuthProvider>
+        </StoreProvider>
       </body>
     </html>
   );
