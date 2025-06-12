@@ -22,16 +22,27 @@ export default function ListaCobrosPendientes({
   onRegistrarCobro,
   onContactarCliente,
 }: ListaCobrosPendientesProps) {
+  // Filtrar duplicados basados en clienteId y cuota
+  const pendientesUnicos = pendientes.filter(
+    (pendiente, index, array) =>
+      array.findIndex(
+        (p) =>
+          p.clienteId === pendiente.clienteId &&
+          p.cuota === pendiente.cuota &&
+          p.producto === pendiente.producto
+      ) === index
+  );
+
   return (
     <div className='mb-8'>
       <h2 className='text-lg font-semibold mb-4'>Cobros pendientes para hoy</h2>
-      {pendientes.length === 0 ? (
+      {pendientesUnicos.length === 0 ? (
         <div className='text-gray-500'>No hay cobros pendientes para hoy.</div>
       ) : (
         <div className='space-y-4'>
-          {pendientes.map((pendiente) => (
+          {pendientesUnicos.map((pendiente, index) => (
             <div
-              key={pendiente.clienteId + pendiente.cuota}
+              key={`cobro-${pendiente.clienteId}-${pendiente.cuota}-${index}`}
               className='bg-yellow-50 shadow rounded-lg p-4'
             >
               <div className='flex justify-between items-center mb-2'>
