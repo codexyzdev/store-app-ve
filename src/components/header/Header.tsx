@@ -239,7 +239,7 @@ export default function Header() {
       {isSidebarOpen && (
         <div
           className='fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300'
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => setSidebarOpen(false)}
           aria-hidden='true'
         />
       )}
