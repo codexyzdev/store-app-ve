@@ -8,6 +8,8 @@ import {
 import { ProductoModal } from "@/components/inventario/ProductoModal";
 import { InventarioCard } from "@/components/inventario/InventarioCard";
 import { InventarioStatsExpanded } from "@/components/inventario/InventarioStatsExpanded";
+import Modal from "@/components/Modal";
+import InventarioPrint from "@/components/inventario/InventarioPrint";
 
 type ViewMode = "grid" | "list";
 type TabType = "productos" | "categorias" | "proveedores" | "movimientos";
@@ -20,9 +22,11 @@ export default function InventarioPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [mostrarImpresion, setMostrarImpresion] = useState(false);
+  // Producto seleccionado para editar
   const [productoSeleccionado, setProductoSeleccionado] = useState<
     ProductoType | undefined
-  >();
+  >(undefined);
 
   // Estados de UI
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -185,7 +189,25 @@ export default function InventarioPage() {
                 Gestiona tu inventario y categorías
               </p>
             </div>
-            <div className='mt-4 sm:mt-0'>
+            <div className='mt-4 sm:mt-0 flex gap-3'>
+              {/* Botón imprimir */}
+              <button
+                className='inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+                onClick={() => {
+                  setMostrarImpresion(true);
+                  setTimeout(() => {
+                    const originalTitle = document.title;
+                    document.title = "Inventario";
+                    window.print();
+                    document.title = originalTitle;
+                  }, 500);
+                }}
+              >
+                <span className='text-xl'>🖨️</span>
+                Imprimir
+              </button>
+
+              {/* Botón nuevo producto */}
               <button
                 className='inline-flex items-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
                 onClick={() => {
@@ -406,6 +428,62 @@ export default function InventarioPage() {
         onSave={
           productoSeleccionado ? handleEditarProducto : handleCrearProducto
         }
+      />
+
+      {/* Modal de impresión */}
+      <Modal
+        isOpen={mostrarImpresion}
+        onClose={() => setMostrarImpresion(false)}
+        title='Imprimir Inventario'
+      >
+        <div className='print-container'>
+          <div className='no-print mb-4 text-center'>
+            <p className='text-gray-600 mb-3'>
+              Haz clic en "Imprimir" o usa Ctrl+P para imprimir este inventario.
+            </p>
+            <div className='flex gap-2 justify-center'>
+              <button
+                onClick={() => window.print()}
+                className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2'
+              >
+                <span>🖨️</span>
+                Imprimir
+              </button>
+              <button
+                onClick={() => setMostrarImpresion(false)}
+                className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+
+          <InventarioPrint productos={productosFiltrados} />
+        </div>
+      </Modal>
+
+      {/* Estilos para impresión */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `@media print {
+            .no-print { display: none !important; }
+            .print-container {
+              width: 100% !important;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .fixed.inset-0 > div:first-child { display: none !important; }
+            .inventario-print {
+              position: static !important;
+              transform: none !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+              margin: 0 !important;
+              padding: 20px !important;
+            }
+          }`,
+        }}
       />
     </div>
   );
