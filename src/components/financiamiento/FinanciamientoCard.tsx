@@ -1,236 +1,215 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
+import Link from "next/link";
 import HistorialPagos from "@/components/financiamiento/HistorialPagos";
 import AbonarCuotaForm from "@/components/financiamiento/AbonarCuotaForm";
+import {
+  FinanciamientoCuota,
+  Cliente,
+  Producto,
+  Cobro,
+} from "@/lib/firebase/database";
+import {
+  FinanciamientoCalculado,
+  ClienteInfo,
+  formatFecha,
+  getInitials,
+} from "@/utils/financiamientoHelpers";
 
 interface FinanciamientoCardProps {
-  financiamiento: any;
-  producto: any;
-  productosDelFinanciamiento?: any[];
-  abonos: number;
-  montoTotal: number;
-  montoPendiente: number;
-  valorCuota: number;
-  cuotasPendientes: number;
-  cuotasAtrasadas: number;
-  estadoPrincipal: any; // ReactNode fallback
-  mostrarFormularioAbono: boolean;
-  abonando: boolean;
-  montoAbono: number;
-  onMostrarFormularioAbono: () => void;
-  onChangeMontoAbono: (valor: number) => void;
-  onAbonarCuota: (data: any) => Promise<void>;
-  pagos: any[];
-  Tooltip: React.FC<{ text: string }>;
+  financiamiento: FinanciamientoCuota;
+  clienteInfo: ClienteInfo;
+  productoNombre: string;
+  calculado: FinanciamientoCalculado;
+  index: number;
 }
 
-const FinanciamientoCard: React.FC<FinanciamientoCardProps> = ({
-  financiamiento,
-  producto,
-  productosDelFinanciamiento,
-  abonos,
-  montoTotal,
-  montoPendiente,
-  valorCuota,
-  cuotasPendientes,
-  cuotasAtrasadas,
-  estadoPrincipal,
-  abonando,
-  montoAbono,
-  onChangeMontoAbono,
-  onAbonarCuota,
-  pagos,
-  Tooltip,
-}) => {
-  const [mostrarHistorial, setMostrarHistorial] = useState(false);
-  const [mostrarModalAbono, setMostrarModalAbono] = useState(false);
+export const FinanciamientoCard = memo(
+  ({
+    financiamiento,
+    clienteInfo,
+    productoNombre,
+    calculado,
+    index,
+  }: FinanciamientoCardProps) => {
+    const {
+      montoPendiente,
+      cuotasAtrasadas,
+      valorCuota,
+      cuotasPagadas,
+      progreso,
+      estadoInfo,
+    } = calculado;
 
-  return (
-    <div className='p-4 sm:p-6 bg-white rounded-2xl shadow-md border border-gray-200 flex flex-col gap-4 min-h-[220px]'>
-      <div className='flex flex-wrap gap-2 items-center mb-2'>
-        {estadoPrincipal}
-        <span
-          className={`px-2 py-1 rounded text-xs font-semibold ml-2 ${
-            financiamiento.estado === "activo"
-              ? "bg-green-100 text-green-800"
-              : financiamiento.estado === "completado"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {financiamiento.tipoVenta === "contado"
-            ? "Contado"
-            : financiamiento.estado}
-        </span>
-        <span className='ml-2 px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700'>
-          Tipo: {financiamiento.tipoVenta === "contado" ? "Contado" : "Cuotas"}
-        </span>
-      </div>
-
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
-        <div className='flex items-center gap-2 text-gray-700'>
-          <span className='font-semibold'>
-            📦 Producto
-            {productosDelFinanciamiento && productosDelFinanciamiento.length > 1
-              ? "s"
-              : ""}
-            :
-          </span>
-          {productosDelFinanciamiento &&
-          productosDelFinanciamiento.length > 0 ? (
-            <div className='flex-1'>
-              <span className='text-gray-900'>
-                {productosDelFinanciamiento.length === 1
-                  ? productosDelFinanciamiento[0].nombre
-                  : `${productosDelFinanciamiento.length} productos`}
-              </span>
-              {productosDelFinanciamiento.length > 1 && (
-                <div className='text-xs text-gray-500 mt-1'>
-                  {productosDelFinanciamiento
-                    .slice(0, 2)
-                    .map((p: any, index: number) => p.nombre)
-                    .join(", ")}
-                  {productosDelFinanciamiento.length > 2 &&
-                    ` y ${productosDelFinanciamiento.length - 2} más`}
+    return (
+      <div
+        className='bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-200 overflow-hidden group hover:-translate-y-1 transition-all duration-300'
+        style={{
+          animationDelay: `${index * 100}ms`,
+          animationName: "fadeInUp",
+          animationDuration: "0.6s",
+          animationTimingFunction: "ease-out",
+          animationFillMode: "forwards",
+        }}
+      >
+        <div className='p-6'>
+          {/* Header del préstamo */}
+          <div className='mb-4'>
+            {/* Número de control y estado */}
+            <div className='flex items-center justify-between mb-3'>
+              {financiamiento.numeroControl && (
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-gray-500 font-medium'>
+                    N° Control:
+                  </span>
+                  <span className='px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-lg text-sm font-bold tracking-wide'>
+                    F-
+                    {financiamiento.numeroControl.toString().padStart(3, "0")}
+                  </span>
                 </div>
               )}
-            </div>
-          ) : (
-            <span className='text-gray-900'>{producto?.nombre || "-"}</span>
-          )}
-        </div>
-        <div className='flex items-center gap-2 text-gray-700'>
-          <span className='font-semibold'>💵 Monto total:</span>
-          <span className='text-gray-900 font-semibold'>
-            ${montoTotal.toFixed(0)}
-          </span>
-        </div>
-      </div>
-
-      <div className='flex items-center gap-2 text-gray-700'>
-        <span className='font-semibold'>📅 Inicio:</span>
-        <span className='text-gray-900'>
-          {new Date(financiamiento.fechaInicio).toLocaleDateString()}
-        </span>
-      </div>
-
-      {financiamiento.tipoVenta === "cuotas" && (
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-3'>
-          <div className='flex items-center gap-2 text-gray-700'>
-            <span className='font-semibold'>⏳ Monto pendiente:</span>
-            <span className='text-blue-600 font-bold'>
-              ${montoPendiente.toFixed(0)}
-            </span>
-            <Tooltip text='Lo que falta por pagar de este financiamiento.' />
-          </div>
-          <div className='flex items-center gap-2 text-gray-700'>
-            <span className='font-semibold'>⏰ Cuotas atrasadas:</span>
-            <span className='text-red-700 font-bold'>{cuotasAtrasadas}</span>
-            <Tooltip text='Cuotas vencidas y no pagadas de este financiamiento.' />
-          </div>
-          <div className='flex items-center gap-2 text-gray-700 sm:col-span-2'>
-            <span className='font-semibold'>📋 Cuotas pendientes:</span>
-            <span className='text-gray-900 font-semibold'>
-              {cuotasPendientes}
-            </span>
-            <Tooltip text='Cuotas que faltan por pagar para completar el financiamiento.' />
-          </div>
-        </div>
-      )}
-
-      {/* Botón de abonar cuota solo para cuotas activas y si hay monto pendiente */}
-      {financiamiento.tipoVenta === "cuotas" &&
-        (financiamiento.estado === "activo" ||
-          financiamiento.estado === "atrasado") &&
-        montoPendiente > 0 &&
-        cuotasPendientes > 0 && (
-          <div className='mt-2'>
-            <button
-              className='w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition disabled:opacity-50 disabled:cursor-not-allowed text-base font-semibold'
-              onClick={() => setMostrarModalAbono(true)}
-              disabled={abonando}
-            >
-              {abonando ? "Procesando..." : "Abonar cuota"}
-            </button>
-            <AbonarCuotaForm
-              isOpen={mostrarModalAbono}
-              onClose={() => setMostrarModalAbono(false)}
-              montoFinanciamiento={financiamiento.monto}
-              cuotasTotales={financiamiento.cuotas}
-              loading={abonando}
-              onSubmit={onAbonarCuota}
-              error={
-                montoAbono <= 0 || isNaN(montoAbono)
-                  ? "Ingresa un monto válido"
-                  : undefined
-              }
-              numeroCuota={pagos.length + 1}
-              totalCuotas={financiamiento.cuotas}
-            />
-          </div>
-        )}
-
-      {/* Mostrar estado pagado si el financiamiento está completado o no hay monto/cuotas pendientes */}
-      {financiamiento.tipoVenta === "cuotas" &&
-        (financiamiento.estado === "completado" ||
-          montoPendiente === 0 ||
-          cuotasPendientes === 0) && (
-          <div className='mt-2 w-full sm:w-auto px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-center'>
-            ✅ Financiamiento pagado
-          </div>
-        )}
-
-      {/* Botón para mostrar/ocultar historial de pagos */}
-      {financiamiento.tipoVenta === "cuotas" && (
-        <div className='mt-2 border-t border-gray-100 pt-3'>
-          <button
-            type='button'
-            className='text-indigo-600 font-semibold hover:underline focus:outline-none mb-2 text-sm'
-            onClick={() => setMostrarHistorial((v: boolean) => !v)}
-          >
-            {mostrarHistorial
-              ? "Ocultar historial de pagos"
-              : "Ver historial de pagos"}
-          </button>
-          {mostrarHistorial && (
-            <HistorialPagos
-              pagos={pagos}
-              valorCuota={valorCuota}
-              titulo={`Historial de Pagos - ${
-                financiamiento.tipoVenta === "cuotas" ? "Cuotas" : "Contado"
-              }`}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Detalle de productos múltiples */}
-      {productosDelFinanciamiento && productosDelFinanciamiento.length > 1 && (
-        <div className='mt-4 p-4 bg-gray-50 rounded-lg border'>
-          <h4 className='font-semibold text-gray-800 mb-3 flex items-center gap-2'>
-            📋 Detalle de Productos ({productosDelFinanciamiento.length})
-          </h4>
-          <div className='space-y-2'>
-            {productosDelFinanciamiento.map((item: any, index: number) => (
               <div
-                key={index}
-                className='flex justify-between items-center text-sm bg-white p-2 rounded border'
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold bg-${estadoInfo.color}-100 text-${estadoInfo.color}-700 border border-${estadoInfo.color}-200`}
               >
-                <span className='text-gray-800'>{item.nombre}</span>
-                <div className='text-right text-gray-600'>
-                  <div>
-                    {item.cantidad} x ${item.precioUnitario.toFixed(0)}
-                  </div>
-                  <div className='font-semibold text-gray-800'>
-                    ${item.subtotal.toFixed(0)}
-                  </div>
+                <span className='mr-1'>{estadoInfo.icon}</span>
+                {estadoInfo.texto}
+              </div>
+            </div>
+
+            {/* Cliente info */}
+            <div className='flex items-center gap-4'>
+              <div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg'>
+                {getInitials(clienteInfo.nombre)}
+              </div>
+              <div className='flex-1 min-w-0'>
+                <h3 className='font-bold text-lg text-gray-900 truncate mb-1'>
+                  {clienteInfo.nombre}
+                </h3>
+                <p className='text-sm text-gray-600 flex items-center gap-1'>
+                  <span>📱</span>
+                  {clienteInfo.telefono}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Información del préstamo */}
+          <div className='space-y-3 mb-6'>
+            <div className='bg-gray-50 rounded-lg p-3'>
+              <div className='flex items-center justify-between mb-2'>
+                <span className='text-xs text-gray-500 font-medium uppercase tracking-wide'>
+                  Producto
+                </span>
+              </div>
+              <span className='text-sm font-semibold text-gray-900'>
+                {productoNombre}
+              </span>
+            </div>
+
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='bg-blue-50 rounded-lg p-3'>
+                <span className='text-xs text-blue-600 font-medium uppercase tracking-wide block mb-1'>
+                  Monto Total
+                </span>
+                <span className='text-lg font-bold text-blue-900'>
+                  ${financiamiento.monto.toLocaleString()}
+                </span>
+              </div>
+
+              <div
+                className={`${
+                  montoPendiente > 0 ? "bg-red-50" : "bg-green-50"
+                } rounded-lg p-3`}
+              >
+                <span
+                  className={`text-xs font-medium uppercase tracking-wide block mb-1 ${
+                    montoPendiente > 0 ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  Pendiente
+                </span>
+                <span
+                  className={`text-lg font-bold ${
+                    montoPendiente > 0 ? "text-red-900" : "text-green-900"
+                  }`}
+                >
+                  ${montoPendiente.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div className='flex items-center justify-between py-2 border-b border-gray-100'>
+              <span className='text-sm text-gray-600 flex items-center gap-2'>
+                <span>📅</span>
+                Cuotas:
+              </span>
+              <span className='text-sm font-semibold text-gray-900'>
+                {cuotasPagadas}/{financiamiento.cuotas}
+                <span className='text-xs text-gray-500 ml-1'>
+                  (${valorCuota.toLocaleString()} c/u)
+                </span>
+              </span>
+            </div>
+
+            {cuotasAtrasadas > 0 && (
+              <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm text-red-700 font-medium flex items-center gap-2'>
+                    <span>⚠️</span>
+                    Cuotas Atrasadas:
+                  </span>
+                  <span className='text-sm font-bold text-red-800 bg-red-100 px-2 py-1 rounded'>
+                    {cuotasAtrasadas} cuota
+                    {cuotasAtrasadas > 1 ? "s" : ""}
+                  </span>
                 </div>
               </div>
-            ))}
+            )}
+
+            <div className='flex items-center justify-between py-2'>
+              <span className='text-sm text-gray-600 flex items-center gap-2'>
+                <span>📅</span>
+                Inicio:
+              </span>
+              <span className='text-sm font-medium text-gray-900'>
+                {formatFecha(financiamiento.fechaInicio)}
+              </span>
+            </div>
+          </div>
+
+          {/* Barra de progreso */}
+          <div className='mb-6'>
+            <div className='flex justify-between text-sm text-gray-600 mb-2'>
+              <span>Progreso del pago</span>
+              <span>{progreso.toFixed(1)}%</span>
+            </div>
+            <div className='w-full bg-gray-200 rounded-full h-3'>
+              <div
+                className={`h-3 rounded-full transition-all duration-1000 ease-out ${
+                  progreso >= 100
+                    ? "bg-gradient-to-r from-green-500 to-green-600"
+                    : cuotasAtrasadas > 0
+                    ? "bg-gradient-to-r from-red-500 to-red-600"
+                    : "bg-gradient-to-r from-blue-500 to-blue-600"
+                }`}
+                style={{ width: `${Math.min(progreso, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Acciones */}
+          <div className='pt-2'>
+            <Link
+              href={`/financiamiento-cuota/${financiamiento.clienteId}`}
+              className='w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm flex items-center justify-center gap-2'
+            >
+              <span>👁️</span>
+              Ver Detalle
+            </Link>
           </div>
         </div>
-      )}
-    </div>
-  );
-};
+      </div>
+    );
+  }
+);
 
-export default FinanciamientoCard;
+FinanciamientoCard.displayName = "FinanciamientoCard";
