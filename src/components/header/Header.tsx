@@ -13,6 +13,8 @@ import {
   XMarkIcon,
   UserCircleIcon,
   ArrowRightStartOnRectangleIcon,
+  DocumentTextIcon,
+  ArrowsRightLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -223,6 +225,20 @@ export default function Header() {
             >
               <ArchiveBoxIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Inventario</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/facturas")}
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
+            >
+              <DocumentTextIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
+              <span className='font-medium text-sm'>Facturas</span>
+            </button>
+            <button
+              onClick={() => navigateTo("/transacciones")}
+              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
+            >
+              <ArrowsRightLeftIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
+              <span className='font-medium text-sm'>Transacciones</span>
             </button>
             <button
               onClick={() => navigateTo("/estadisticas")}

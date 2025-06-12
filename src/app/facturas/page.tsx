@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductos } from "@/hooks/useProductos";
-import { financiamientoDB, FinanciamientoCuota } from "@/lib/firebase/database";
+import {
+  financiamientoDB,
+  FinanciamientoCuota,
+  ProductoFinanciamiento,
+} from "@/lib/firebase/database";
 import { formatNumeroControl } from "@/utils/format";
 import Modal from "@/components/Modal";
 import FacturaPrint from "@/components/facturas/FacturaPrint";
@@ -17,21 +21,28 @@ export default function FacturasPage() {
     useState<FinanciamientoCuota | null>(null);
   const [mostrarImpresion, setMostrarImpresion] = useState(false);
 
-  // Suscripción a financiamientos al contado
+  // Suscripción a todos los financiamientos para construir la lista de facturas
   useEffect(() => {
     const unsubscribe = financiamientoDB.suscribir((financiamientos) => {
-      const contado = financiamientos.filter((f) => f.tipoVenta === "contado");
-      setFacturas(contado);
+      // 1) Ventas al contado 2) Financiamientos a cuotas que ya se completaron
+      const listaFacturas = financiamientos.filter(
+        (f) => f.tipoVenta === "contado" || f.estado === "completado"
+      );
+      setFacturas(listaFacturas);
     });
     return unsubscribe;
   }, []);
 
-  const facturasFiltradas = useMemo(() => {
-    if (!busqueda.trim()) return facturas;
-    return facturas.filter((f) =>
-      f.numeroControl.toString().includes(busqueda.trim())
-    );
-  }, [busqueda, facturas]);
+  const q = busqueda.trim().toLowerCase();
+  const facturasFiltradas = !q
+    ? facturas
+    : facturas.filter((f: FinanciamientoCuota) => {
+        const cliente = getCliente(f.clienteId);
+        return (
+          f.numeroControl.toString().includes(q) ||
+          (cliente?.nombre.toLowerCase() || "").includes(q)
+        );
+      });
 
   const getCliente = (id: string) => clientes.find((c) => c.id === id);
   const getNombreProducto = (id: string) =>
@@ -52,7 +63,9 @@ export default function FacturasPage() {
             type='number'
             placeholder='Buscar por Nº de venta al contado…'
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setBusqueda(e.target.value)
+            }
             className='w-full pl-10 pr-4 py-4 border border-gray-300 rounded-2xl shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-lg'
           />
         </div>
@@ -62,7 +75,7 @@ export default function FacturasPage() {
         <p className='text-gray-600'>No se encontraron facturas.</p>
       ) : (
         <div className='w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-6'>
-          {facturasFiltradas.map((f) => {
+          {facturasFiltradas.map((f: FinanciamientoCuota) => {
             const cliente = getCliente(f.clienteId);
             return (
               <div
@@ -71,8 +84,13 @@ export default function FacturasPage() {
               >
                 <div>
                   <h3 className='text-lg font-semibold text-emerald-700 mb-2 flex items-center gap-2'>
-                    <span>💵</span> Venta{" "}
-                    {formatNumeroControl(f.numeroControl, "C")}
+                    <span>💵</span>{" "}
+                    {f.tipoVenta === "contado"
+                      ? `Venta ${formatNumeroControl(f.numeroControl, "C")}`
+                      : `Financiamiento ${formatNumeroControl(
+                          f.numeroControl,
+                          "F"
+                        )}`}
                   </h3>
                   <p className='text-sm text-gray-600'>
                     {new Date(f.fechaInicio).toLocaleDateString("es-ES")}
@@ -89,7 +107,7 @@ export default function FacturasPage() {
                     {f.productos && f.productos.length > 0
                       ? f.productos
                           .map(
-                            (p) =>
+                            (p: ProductoFinanciamiento) =>
                               `${getNombreProducto(p.productoId)} x${
                                 p.cantidad
                               }`
