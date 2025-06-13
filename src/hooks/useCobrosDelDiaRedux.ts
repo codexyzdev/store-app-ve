@@ -174,10 +174,9 @@ export function useCobrosDelDiaRedux() {
 
     // Función para recalcular y despachar datos
     const recalcular = () => {
-      if (!clientes.length || !financiamientos.length || !productos.length) {
-        return;
-      }
-
+      // Solo esperar que las colecciones básicas estén inicializadas (no necesariamente con datos)
+      // Esto permite que la página se cargue incluso si no hay datos
+      
       // Filtrar solo los cobros de hoy
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
@@ -218,24 +217,36 @@ export function useCobrosDelDiaRedux() {
     };
 
     // Subscripciones
+    let subscripcionesInicializadas = 0;
+    const totalSubscripciones = 4;
+    
+    const verificarYEjecutar = () => {
+      subscripcionesInicializadas++;
+      if (subscripcionesInicializadas >= totalSubscripciones) {
+        // Todas las suscripciones están inicializadas, ejecutar al menos una vez
+        setTimeout(recalcular, 100); // Pequeño delay para asegurar que los datos estén sincronizados
+      }
+      recalcular();
+    };
+
     const unsubCobros = cobrosDB.suscribir((data) => {
       cobros = data;
-      recalcular();
+      verificarYEjecutar();
     });
 
     const unsubClientes = clientesDB.suscribir((data) => {
       clientes = data;
-      recalcular();
+      verificarYEjecutar();
     });
 
     const unsubFinanciamientos = financiamientoDB.suscribir((data) => {
       financiamientos = data;
-      recalcular();
+      verificarYEjecutar();
     });
 
     const unsubProductos = inventarioDB.suscribir((data) => {
       productos = data;
-      recalcular();
+      verificarYEjecutar();
     });
 
     return () => {
