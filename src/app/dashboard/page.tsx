@@ -68,23 +68,44 @@ export default function DashboardPage() {
             </a>
           </div>
 
-          {/* Tarjeta condicional - Cobranza */}
+          {/* Tarjeta condicional - Cobros del Día */}
           {canManageCollections && (
             <div className='bg-white p-6 rounded-lg shadow-lg border-l-4 border-orange-500'>
               <div className='flex items-center justify-between'>
                 <div>
                   <h3 className='text-lg font-semibold text-gray-800'>
-                    Cobranza
+                    Cobros del Día
                   </h3>
-                  <p className='text-gray-600'>Gestionar cobros</p>
+                  <p className='text-gray-600'>Gestionar cobros diarios</p>
                 </div>
-                <div className='text-3xl text-orange-500'>📊</div>
+                <div className='text-3xl text-orange-500'>📅</div>
               </div>
               <a
-                href='/cobranza'
+                href='/cobros-del-dia'
                 className='mt-4 inline-flex items-center text-orange-600 hover:text-orange-800 font-medium'
               >
-                Ver cobranza →
+                Ver cobros del día →
+              </a>
+            </div>
+          )}
+
+          {/* Tarjeta condicional - Cuotas Atrasadas */}
+          {canManageCollections && (
+            <div className='bg-white p-6 rounded-lg shadow-lg border-l-4 border-red-500'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <h3 className='text-lg font-semibold text-gray-800'>
+                    Cuotas Atrasadas
+                  </h3>
+                  <p className='text-gray-600'>Gestionar cuotas vencidas</p>
+                </div>
+                <div className='text-3xl text-red-500'>⚠️</div>
+              </div>
+              <a
+                href='/cuotas-atrasadas'
+                className='mt-4 inline-flex items-center text-red-600 hover:text-red-800 font-medium'
+              >
+                Ver cuotas atrasadas →
               </a>
             </div>
           )}

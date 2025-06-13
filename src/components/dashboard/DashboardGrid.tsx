@@ -10,14 +10,14 @@ export const DashboardGrid = () => {
         </h2>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <DashboardCard
-            title='Gestión de Cobranza'
+            title='Cobros del Día'
             icon={<span className='text-4xl'>📅</span>}
-            href='/cobranza'
+            href='/cobros-del-dia'
           />
           <DashboardCard
-            title='Cuotas atrasadas'
+            title='Cuotas Atrasadas'
             icon={<span className='text-4xl'>⚠️</span>}
-            href='/cobranza'
+            href='/cuotas-atrasadas'
           />
         </div>
       </div>

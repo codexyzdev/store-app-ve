@@ -176,14 +176,14 @@ export default function Header() {
             </div>
 
             <button
-              onClick={() => navigateTo("/cobranza/cobros-del-dia")}
+              onClick={() => navigateTo("/cobros-del-dia")}
               className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
               <CalendarDaysIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
               <span className='font-medium text-sm'>Cobros del día</span>
             </button>
             <button
-              onClick={() => navigateTo("/cobranza/cuotas-atrasadas")}
+              onClick={() => navigateTo("/cuotas-atrasadas")}
               className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
             >
               <ExclamationCircleIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
