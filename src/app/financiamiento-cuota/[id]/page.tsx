@@ -11,12 +11,13 @@ import PlanPagosPrint from "@/components/financiamiento/PlanPagosPrint";
 import HistorialPagos from "@/components/financiamiento/HistorialPagos";
 import ListaNotas from "@/components/notas/ListaNotas";
 
-import { esEnlaceGoogleMaps, extraerCoordenadas } from "@/utils/maps";
-import Minimapa from "@/components/maps/Minimapa";
 import ModalPagoCuota from "@/components/financiamiento/ModalPagoCuota";
+import ClienteDetalle from "@/components/financiamiento/ClienteDetalle";
+import ResumenFinanciero from "@/components/financiamiento/ResumenFinanciero";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
-import { useProductos } from "@/hooks/useProductos";
+import { useProductosRedux } from "@/hooks/useProductosRedux";
+import { useModalStates } from "@/hooks/useModalStates";
 import {
   FinanciamientoService,
   PagoData,
@@ -30,18 +31,16 @@ export default function FinanciamientoClientePage() {
   // Hooks Redux para datos - ÚNICA FUENTE DE VERDAD
   const {
     financiamientos,
-    cobros,
     loading: financiamientosLoading,
     getCobrosFinanciamiento,
     calcularInfoFinanciamiento,
   } = useFinanciamientosRedux();
 
-  const {
-    clientes,
-    loading: clientesLoading,
-    getClienteById,
-  } = useClientesRedux();
-  const { getProductoNombre } = useProductos();
+  const { loading: clientesLoading, getClienteById } = useClientesRedux();
+  const { getProductoNombre } = useProductosRedux();
+
+  // Hook optimizado para manejo de modales
+  const modals = useModalStates();
 
   // Estados locales solo para UI
   const [cliente, setCliente] = useState<Cliente | null>(null);
@@ -49,18 +48,6 @@ export default function FinanciamientoClientePage() {
     FinanciamientoCuota[]
   >([]);
   const [abonando, setAbonando] = useState<{ [key: string]: boolean }>({});
-  const [modalPagoCuotaAbierto, setModalPagoCuotaAbierto] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [mostrarPlanPago, setMostrarPlanPago] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [mostrarImpresion, setMostrarImpresion] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [mostrarHistorialPagos, setMostrarHistorialPagos] = useState<{
-    [key: string]: boolean;
-  }>({});
   const [totalPendiente, setTotalPendiente] = useState(0);
   const [totalCuotasAtrasadas, setTotalCuotasAtrasadas] = useState(0);
   const [actualizando, setActualizando] = useState(false);
@@ -169,7 +156,7 @@ export default function FinanciamientoClientePage() {
   };
 
   const imprimirPlanPagos = (financiamientoId: string) => {
-    setMostrarImpresion((prev) => ({ ...prev, [financiamientoId]: true }));
+    modals.openModal(`impresion-${financiamientoId}`);
     setTimeout(() => {
       const originalTitle = document.title;
       document.title = `Plan de Pagos - ${cliente?.nombre || "Cliente"}`;
@@ -179,7 +166,7 @@ export default function FinanciamientoClientePage() {
   };
 
   const cerrarImpresion = (financiamientoId: string) => {
-    setMostrarImpresion((prev) => ({ ...prev, [financiamientoId]: false }));
+    modals.closeModal(`impresion-${financiamientoId}`);
   };
 
   if (financiamientosLoading || clientesLoading) {
@@ -230,123 +217,7 @@ export default function FinanciamientoClientePage() {
         {/* Información del cliente optimizada */}
         {cliente ? (
           <div className='mb-6 sm:mb-8'>
-            <div className='bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
-              {/* Header del cliente */}
-              <div className='bg-gradient-to-r from-slate-700 to-sky-500 px-4 sm:px-8 py-4 sm:py-6'>
-                <div className='flex flex-col sm:flex-row items-center sm:items-start gap-4'>
-                  <div className='w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0'>
-                    {cliente.fotoCedulaUrl ? (
-                      <img
-                        src={cliente.fotoCedulaUrl}
-                        alt='Foto de cédula'
-                        className='w-full h-full object-cover'
-                      />
-                    ) : (
-                      <span className='text-2xl sm:text-3xl text-white font-bold'>
-                        {cliente.nombre
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .substring(0, 2)
-                          .toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className='text-white flex-1 text-center sm:text-left'>
-                    <h2 className='text-xl sm:text-2xl font-bold mb-2'>
-                      {cliente.nombre}
-                    </h2>
-                    <div className='flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 text-sm sm:text-base text-sky-100'>
-                      <span className='flex items-center justify-center sm:justify-start gap-2'>
-                        <span>📞</span>
-                        {cliente.telefono}
-                      </span>
-                      {cliente.cedula && (
-                        <span className='flex items-center justify-center sm:justify-start gap-2'>
-                          <span>🆔</span>
-                          {cliente.cedula}
-                        </span>
-                      )}
-                    </div>
-                    {cliente.direccion && (
-                      <div className='mt-2'>
-                        <span className='flex items-center justify-center sm:justify-start gap-2 text-sm text-sky-100'>
-                          <span>📍</span>
-                          {esEnlaceGoogleMaps(cliente.direccion) ? (
-                            <button
-                              onClick={() =>
-                                window.open(cliente.direccion, "_blank")
-                              }
-                              className='underline hover:text-white transition-colors'
-                            >
-                              Ver ubicación en Google Maps
-                            </button>
-                          ) : (
-                            <span className='line-clamp-2'>
-                              {cliente.direccion}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Información adicional - Solo mostrar si hay contenido */}
-              {(cliente.fotoCedulaUrl ||
-                (cliente.direccion &&
-                  esEnlaceGoogleMaps(cliente.direccion) &&
-                  extraerCoordenadas(cliente.direccion))) && (
-                <div className='p-4 sm:p-8'>
-                  {/* Foto de cédula y mapa */}
-                  <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8'>
-                    {/* Foto de cédula */}
-                    {cliente.fotoCedulaUrl && (
-                      <div className='space-y-3'>
-                        <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
-                          <span>🆔</span>
-                          Documento de Identidad
-                        </h4>
-                        <div className='bg-sky-50 rounded-xl p-4'>
-                          <img
-                            src={cliente.fotoCedulaUrl}
-                            alt='Cédula del cliente'
-                            className='w-full max-w-sm mx-auto rounded-lg shadow-sm border border-gray-200'
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mapa */}
-                    {cliente.direccion &&
-                      esEnlaceGoogleMaps(cliente.direccion) &&
-                      (() => {
-                        const coordenadas = extraerCoordenadas(
-                          cliente.direccion
-                        );
-                        return coordenadas ? (
-                          <div className='space-y-3'>
-                            <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
-                              <span>🗺️</span>
-                              Ubicación del Cliente
-                            </h4>
-                            <div className='bg-sky-50 rounded-xl p-4'>
-                              <div className='h-48 sm:h-64 rounded-lg overflow-hidden'>
-                                <Minimapa
-                                  coordenadas={coordenadas}
-                                  direccionOriginal={cliente.direccion}
-                                  className='w-full h-full'
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : null;
-                      })()}
-                  </div>
-                </div>
-              )}
-            </div>
+            <ClienteDetalle cliente={cliente} />
           </div>
         ) : (
           <div className='mb-8 bg-white rounded-2xl shadow-sm p-6 animate-pulse'>
@@ -356,52 +227,11 @@ export default function FinanciamientoClientePage() {
         )}
 
         {/* Resumen financiero mejorado */}
-        <div className='mb-6 sm:mb-8'>
-          {actualizando && (
-            <div className='bg-white rounded-2xl shadow-sm border border-sky-200 p-4 mb-6'>
-              <div className='flex items-center justify-center gap-3'>
-                <div className='w-6 h-6 sm:w-8 sm:h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin'></div>
-                <span className='text-sky-600 font-semibold text-sm sm:text-base'>
-                  Actualizando datos del financiamiento...
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
-            <div className='bg-white rounded-2xl shadow-sm border border-red-100 p-4 sm:p-6'>
-              <div className='flex items-center gap-3 sm:gap-4'>
-                <div className='w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0'>
-                  <span className='text-xl sm:text-2xl text-white'>💰</span>
-                </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-2xl sm:text-3xl font-bold text-red-600 truncate'>
-                    ${totalPendiente.toLocaleString()}
-                  </p>
-                  <p className='text-xs sm:text-sm text-gray-600 font-medium'>
-                    Total Pendiente de Cobro
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className='bg-white rounded-2xl shadow-sm border border-amber-100 p-4 sm:p-6'>
-              <div className='flex items-center gap-3 sm:gap-4'>
-                <div className='w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0'>
-                  <span className='text-xl sm:text-2xl text-white'>⏰</span>
-                </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-2xl sm:text-3xl font-bold text-amber-600 truncate'>
-                    ${totalCuotasAtrasadas.toLocaleString()}
-                  </p>
-                  <p className='text-xs sm:text-sm text-gray-600 font-medium'>
-                    Valor de Cuotas Atrasadas
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ResumenFinanciero
+          totalPendiente={totalPendiente}
+          totalCuotasAtrasadas={totalCuotasAtrasadas}
+          actualizando={actualizando}
+        />
 
         {/* Lista de financiamientos optimizada */}
         <div className='bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
@@ -624,13 +454,8 @@ export default function FinanciamientoClientePage() {
                                   <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3'>
                                     <button
                                       onClick={() => {
-                                        setModalPagoCuotaAbierto(
-                                          (prev: {
-                                            [key: string]: boolean;
-                                          }) => ({
-                                            ...prev,
-                                            [financiamiento.id]: true,
-                                          })
+                                        modals.openModal(
+                                          `pago-${financiamiento.id}`
                                         );
                                       }}
                                       disabled={abonando[financiamiento.id]}
@@ -645,17 +470,17 @@ export default function FinanciamientoClientePage() {
 
                                     <button
                                       onClick={() =>
-                                        setMostrarPlanPago((prev) => ({
-                                          ...prev,
-                                          [financiamiento.id]:
-                                            !prev[financiamiento.id],
-                                        }))
+                                        modals.toggleModal(
+                                          `plan-${financiamiento.id}`
+                                        )
                                       }
                                       className='w-full bg-gradient-to-r from-slate-500 to-slate-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
                                     >
                                       <span>📅</span>
                                       <span className='hidden sm:inline'>
-                                        {mostrarPlanPago[financiamiento.id]
+                                        {modals.isOpen(
+                                          `plan-${financiamiento.id}`
+                                        )
                                           ? "Ocultar"
                                           : "Ver"}{" "}
                                         Plan de Pagos
@@ -665,19 +490,17 @@ export default function FinanciamientoClientePage() {
 
                                     <button
                                       onClick={() =>
-                                        setMostrarHistorialPagos((prev) => ({
-                                          ...prev,
-                                          [financiamiento.id]:
-                                            !prev[financiamiento.id],
-                                        }))
+                                        modals.toggleModal(
+                                          `historial-${financiamiento.id}`
+                                        )
                                       }
                                       className='w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
                                     >
                                       <span>📋</span>
                                       <span className='hidden sm:inline'>
-                                        {mostrarHistorialPagos[
-                                          financiamiento.id
-                                        ]
+                                        {modals.isOpen(
+                                          `historial-${financiamiento.id}`
+                                        )
                                           ? "Ocultar"
                                           : "Ver"}{" "}
                                         Historial de Pagos
@@ -708,7 +531,7 @@ export default function FinanciamientoClientePage() {
 
                             {/* Plan de pagos */}
                             {financiamiento.tipoVenta === "cuotas" &&
-                              mostrarPlanPago[financiamiento.id] && (
+                              modals.isOpen(`plan-${financiamiento.id}`) && (
                                 <div className='xl:col-span-1'>
                                   <div className='bg-gradient-to-r from-sky-50 to-slate-50 rounded-2xl p-4 sm:p-6 border border-sky-200'>
                                     <h4 className='text-base sm:text-lg font-semibold text-sky-800 mb-4 flex items-center gap-2'>
@@ -729,7 +552,7 @@ export default function FinanciamientoClientePage() {
 
                           {/* Historial de Pagos y Notas */}
                           {financiamiento.tipoVenta === "cuotas" &&
-                            mostrarHistorialPagos[financiamiento.id] && (
+                            modals.isOpen(`historial-${financiamiento.id}`) && (
                               <div className='mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6'>
                                 <div className='xl:col-span-2'>
                                   <HistorialPagos
@@ -767,25 +590,14 @@ export default function FinanciamientoClientePage() {
       {/* Modales de pago de cuota */}
       {financiamientosCliente.map((financiamiento: FinanciamientoCuota) => {
         const info = calcularInfoFinanciamiento(financiamiento);
-        const {
-          valorCuota,
-          cobrosValidos,
-          montoPendiente,
-          cuotasAtrasadas,
-          cuotasPagadas,
-          cuotasPendientes,
-        } = info;
+        const { valorCuota, cuotasAtrasadas, cuotasPagadas, cuotasPendientes } =
+          info;
 
         return (
           <ModalPagoCuota
             key={`modal-${financiamiento.id}`}
-            isOpen={!!modalPagoCuotaAbierto[financiamiento.id]}
-            onClose={() =>
-              setModalPagoCuotaAbierto((prev) => ({
-                ...prev,
-                [financiamiento.id]: false,
-              }))
-            }
+            isOpen={modals.isOpen(`pago-${financiamiento.id}`)}
+            onClose={() => modals.closeModal(`pago-${financiamiento.id}`)}
             prestamo={{
               id: financiamiento.id,
               monto: financiamiento.monto,
@@ -805,7 +617,7 @@ export default function FinanciamientoClientePage() {
       {financiamientosCliente.map((financiamiento: FinanciamientoCuota) => (
         <Modal
           key={`print-${financiamiento.id}`}
-          isOpen={!!mostrarImpresion[financiamiento.id]}
+          isOpen={modals.isOpen(`impresion-${financiamiento.id}`)}
           onClose={() => cerrarImpresion(financiamiento.id)}
           title={`Imprimir Plan de Pagos - ${cliente?.nombre || "Cliente"}`}
         >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { FinanciamientoStats } from "@/components/financiamiento/FinanciamientoStats";
 import { FinanciamientoCard } from "@/components/financiamiento/FinanciamientoCard";
@@ -8,7 +8,7 @@ import { FinanciamientoListItem } from "@/components/financiamiento/Financiamien
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
-import { useProductos } from "@/hooks/useProductos";
+import { useProductosRedux } from "@/hooks/useProductosRedux";
 import {
   getClienteInfo,
   getProductoNombre,
@@ -42,7 +42,7 @@ export default function FinanciamientoCuotaPage() {
   } = useFinanciamientosRedux();
 
   const { clientes, loading: clientesLoading } = useClientesRedux();
-  const { productos, loading: productosLoading } = useProductos();
+  const { productos, loading: productosLoading } = useProductosRedux();
 
   const [vistaCards, setVistaCards] = useState(true);
 
@@ -63,9 +63,9 @@ export default function FinanciamientoCuotaPage() {
       ? financiamientosFiltrados
       : financiamientos;
 
-  // Calcular datos para cada financiamiento
-  const financiamientosConDatos: FinanciamientoConDatos[] =
-    financiamientosParaMostrar.map((financiamiento) => {
+  // Calcular datos para cada financiamiento - MEMOIZADO PARA PERFORMANCE
+  const financiamientosConDatos: FinanciamientoConDatos[] = useMemo(() => {
+    return financiamientosParaMostrar.map((financiamiento) => {
       const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
       const productoNombre = getProductoNombre(
         financiamiento.productoId,
@@ -80,6 +80,7 @@ export default function FinanciamientoCuotaPage() {
         calculado,
       };
     });
+  }, [financiamientosParaMostrar, clientes, productos, cobros]);
 
   // Manejo de errores
   if (error) {

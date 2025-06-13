@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Modal from "@/components/Modal";
-import { cobrosDB } from "@/lib/firebase/database";
+import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 
 interface ModalPagoCuotaProps {
   isOpen: boolean;
@@ -50,6 +50,8 @@ export default function ModalPagoCuota({
   onPagar,
   cargando = false,
 }: ModalPagoCuotaProps) {
+  // Hook Redux para verificación de comprobantes
+  const { verificarComprobanteDuplicado } = useFinanciamientosRedux();
   const [tipoPago, setTipoPago] = useState<string>("efectivo");
   const [monto, setMonto] = useState<number>(valorCuota);
   const [comprobante, setComprobante] = useState<string>("");
@@ -123,7 +125,7 @@ export default function ModalPagoCuota({
         setMensajeValidacion("🔍 Verificando número de comprobante...");
 
         try {
-          const esDuplicado = await cobrosDB.verificarComprobanteDuplicado(
+          const esDuplicado = await verificarComprobanteDuplicado(
             comprobante.trim()
           );
           setComprobanteEsDuplicado(esDuplicado);

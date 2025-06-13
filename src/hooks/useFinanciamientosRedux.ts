@@ -225,6 +225,16 @@ export function useFinanciamientosRedux() {
     });
   }, [cobros]);
 
+  // Verificar si un comprobante ya existe
+  const verificarComprobanteDuplicado = useCallback(async (numeroComprobante: string): Promise<boolean> => {
+    try {
+      return await cobrosDB.verificarComprobanteDuplicado(numeroComprobante);
+    } catch (error) {
+      console.error('Error al verificar comprobante duplicado:', error);
+      return false;
+    }
+  }, []);
+
   // Función para limpiar errores
   const clearError = useCallback(() => {
     dispatch(setError(null));
@@ -294,6 +304,7 @@ export function useFinanciamientosRedux() {
     getCobrosFinanciamiento,
     getCobrosPorTipo,
     getCobrosDelDia,
+    verificarComprobanteDuplicado,
 
     // Filtros
     setBusqueda: setBusquedaFilter,
