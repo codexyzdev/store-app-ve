@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
 import {
   inventarioDB,
   Producto as ProductoType,
@@ -10,17 +12,36 @@ import { InventarioCard } from "@/components/inventario/InventarioCard";
 import { InventarioStatsExpanded } from "@/components/inventario/InventarioStatsExpanded";
 import Modal from "@/components/Modal";
 import InventarioPrint from "@/components/inventario/InventarioPrint";
+import {
+  setProductos,
+  setSearchTerm,
+  setFilterCategory,
+  setFilterStock,
+  setSortBy,
+  setSortOrder,
+  setViewMode,
+  eliminarProducto,
+  clearError,
+} from "@/store/inventarioSlice";
 
 type ViewMode = "grid" | "list";
 type TabType = "productos" | "categorias" | "proveedores" | "movimientos";
 
 export default function InventarioPage() {
-  const [productos, setProductos] = useState<ProductoType[]>([]);
-  const [productosFiltrados, setProductosFiltrados] = useState<ProductoType[]>(
-    []
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    productosFiltrados,
+    loading,
+    error,
+    searchTerm,
+    filterCategory,
+    filterStock,
+    sortBy,
+    sortOrder,
+    viewMode,
+    productos,
+  } = useSelector((state: RootState) => state.inventario);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [mostrarImpresion, setMostrarImpresion] = useState(false);
   // Producto seleccionado para editar
@@ -29,116 +50,33 @@ export default function InventarioPage() {
   >(undefined);
 
   // Estados de UI
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTab, setActiveTab] = useState<TabType>("productos");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterStock, setFilterStock] = useState("");
-  const [sortBy, setSortBy] = useState<
-    "nombre" | "stock" | "precio" | "categoria"
-  >("nombre");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     const unsubscribe = inventarioDB.suscribir((productos) => {
-      setProductos(productos);
-      setLoading(false);
+      dispatch(setProductos(productos));
     });
 
     return unsubscribe;
-  }, []);
+  }, [dispatch]);
 
-  // Filtrar y ordenar productos
+  // Limpiar errores después de un tiempo
   useEffect(() => {
-    let filtered = productos.filter((producto) => {
-      const matchesSearch =
-        producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory =
-        !filterCategory || producto.categoria === filterCategory;
-      const matchesStock =
-        !filterStock ||
-        (filterStock === "bajo" &&
-          producto.stock <= (producto.stockMinimo || 5)) ||
-        (filterStock === "normal" &&
-          producto.stock > (producto.stockMinimo || 5)) ||
-        (filterStock === "sin-stock" && producto.stock === 0);
-
-      return matchesSearch && matchesCategory && matchesStock;
-    });
-
-    // Ordenar productos
-    filtered.sort((a, b) => {
-      let aValue, bValue;
-
-      switch (sortBy) {
-        case "nombre":
-          aValue = a.nombre.toLowerCase();
-          bValue = b.nombre.toLowerCase();
-          break;
-        case "stock":
-          aValue = a.stock;
-          bValue = b.stock;
-          break;
-        case "precio":
-          aValue = a.precio;
-          bValue = b.precio;
-          break;
-        case "categoria":
-          aValue = a.categoria.toLowerCase();
-          bValue = b.categoria.toLowerCase();
-          break;
-        default:
-          return 0;
-      }
-
-      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    setProductosFiltrados(filtered);
-  }, [productos, searchTerm, filterCategory, filterStock, sortBy, sortOrder]);
-
-  const handleCrearProducto = async (
-    datos: Omit<ProductoType, "id" | "createdAt" | "updatedAt">
-  ) => {
-    try {
-      await inventarioDB.crear(datos);
-      setModalOpen(false);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al crear el producto"
-      );
-      throw err;
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  };
-
-  const handleEditarProducto = async (
-    datos: Omit<ProductoType, "id" | "createdAt" | "updatedAt">
-  ) => {
-    if (!productoSeleccionado) return;
-
-    try {
-      await inventarioDB.actualizar(productoSeleccionado.id, datos);
-      setModalOpen(false);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al actualizar el producto"
-      );
-      throw err;
-    }
-  };
+  }, [error, dispatch]);
 
   const handleEliminarProducto = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) return;
 
     try {
-      await inventarioDB.eliminar(id);
+      await dispatch(eliminarProducto(id)).unwrap();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar el producto"
-      );
+      console.error("Error al eliminar producto:", err);
     }
   };
 
@@ -154,10 +92,10 @@ export default function InventarioPage() {
 
   const handleSort = (field: typeof sortBy) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      dispatch(setSortOrder(sortOrder === "asc" ? "desc" : "asc"));
     } else {
-      setSortBy(field);
-      setSortOrder("asc");
+      dispatch(setSortBy(field));
+      dispatch(setSortOrder("asc"));
     }
   };
 
@@ -263,7 +201,7 @@ export default function InventarioPage() {
                   type='text'
                   placeholder='Buscar productos...'
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => dispatch(setSearchTerm(e.target.value))}
                   className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
                 />
               </div>
@@ -273,22 +211,25 @@ export default function InventarioPage() {
             <div className='flex gap-3'>
               <select
                 value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
+                onChange={(e) => dispatch(setFilterCategory(e.target.value))}
                 className='px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
               >
                 <option value=''>Todas las categorías</option>
-                {Array.from(new Set(productos.map((p) => p.categoria))).map(
-                  (categoria) => (
-                    <option key={categoria} value={categoria}>
-                      {categoria}
-                    </option>
-                  )
-                )}
+                {Array.from(
+                  new Set(productos.map((p: ProductoType) => p.categoria))
+                ).map((categoria, index) => (
+                  <option
+                    key={`${categoria}-${index}`}
+                    value={categoria as string}
+                  >
+                    {categoria as string}
+                  </option>
+                ))}
               </select>
 
               <select
                 value={filterStock}
-                onChange={(e) => setFilterStock(e.target.value)}
+                onChange={(e) => dispatch(setFilterStock(e.target.value))}
                 className='px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
               >
                 <option value=''>Todo el stock</option>
@@ -300,7 +241,7 @@ export default function InventarioPage() {
               {/* View Mode Toggle */}
               <div className='flex bg-gray-100 rounded-lg p-1'>
                 <button
-                  onClick={() => setViewMode("grid")}
+                  onClick={() => dispatch(setViewMode("grid"))}
                   className={`p-2 rounded-md transition-colors ${
                     viewMode === "grid"
                       ? "bg-white text-indigo-600 shadow-sm"
@@ -310,7 +251,7 @@ export default function InventarioPage() {
                   <span className='text-xl'>📦</span>
                 </button>
                 <button
-                  onClick={() => setViewMode("list")}
+                  onClick={() => dispatch(setViewMode("list"))}
                   className={`p-2 rounded-md transition-colors ${
                     viewMode === "list"
                       ? "bg-white text-indigo-600 shadow-sm"
@@ -401,9 +342,9 @@ export default function InventarioPage() {
                 : "space-y-4"
             }
           >
-            {productosFiltrados.map((producto) => (
+            {productosFiltrados.map((producto: ProductoType, index: number) => (
               <InventarioCard
-                key={producto.id}
+                key={`${producto.id}-${index}`}
                 producto={producto}
                 viewMode={viewMode}
                 onEdit={() => {
@@ -425,9 +366,6 @@ export default function InventarioPage() {
           setProductoSeleccionado(undefined);
         }}
         producto={productoSeleccionado}
-        onSave={
-          productoSeleccionado ? handleEditarProducto : handleCrearProducto
-        }
       />
 
       {/* Modal de impresión */}

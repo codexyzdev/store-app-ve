@@ -4,6 +4,7 @@ import clientesSlice from './slices/clientesSlice'
 import financiamientosSlice from './slices/financiamientosSlice'
 import cuotasAtrasadasSlice from './slices/cuotasAtrasadasSlice'
 import cobrosDelDiaSlice from './slices/cobrosDelDiaSlice'
+import inventarioSlice from './inventarioSlice'
 
 // Importaremos más slices aquí conforme los vayamos creando
 
@@ -14,6 +15,7 @@ export const store = configureStore({
     financiamientos: financiamientosSlice,
     cuotasAtrasadas: cuotasAtrasadasSlice,
     cobrosDelDia: cobrosDelDiaSlice,
+    inventario: inventarioSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

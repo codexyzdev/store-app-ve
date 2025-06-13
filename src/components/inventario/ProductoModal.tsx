@@ -1,22 +1,27 @@
 import { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Producto } from "@/lib/firebase/database";
 import { ImageUploader } from "./ImageUploader";
+import { crearProducto, actualizarProducto } from "@/store/inventarioSlice";
+import { subirImagenesProducto } from "@/lib/firebase/storage";
+import { AppDispatch, RootState } from "@/store";
 
 interface ProductoModalProps {
   isOpen: boolean;
   onClose: () => void;
   producto?: Producto;
-  onSave: (
-    producto: Omit<Producto, "id" | "createdAt" | "updatedAt">
-  ) => Promise<void>;
 }
 
 export function ProductoModal({
   isOpen,
   onClose,
   producto,
-  onSave,
 }: ProductoModalProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector(
+    (state: RootState) => state.inventario
+  );
+
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -26,8 +31,6 @@ export function ProductoModal({
     categoria: "",
     imagenes: [] as string[],
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -56,7 +59,6 @@ export function ProductoModal({
         imagenes: [],
       });
     }
-    setError(null);
     setValidationErrors({});
   }, [producto, isOpen]);
 
@@ -119,19 +121,82 @@ export function ProductoModal({
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      await onSave(formData);
-      onClose();
+      // Si estamos creando un producto nuevo y hay imágenes temporales (base64)
+      if (!producto) {
+        const imagenesTemporales = formData.imagenes.filter((img) =>
+          img.startsWith("data:")
+        );
+        if (imagenesTemporales.length > 0) {
+          // Crear el producto primero para obtener el ID
+          const nuevoProducto = await dispatch(
+            crearProducto({
+              ...formData,
+              imagenes: [], // Sin imágenes por ahora
+            })
+          ).unwrap();
+
+          // Cerrar la modal inmediatamente después de crear el producto
+          onClose();
+
+          // Procesar imágenes en segundo plano
+          try {
+            // Convertir las imágenes base64 a archivos y subirlas
+            const archivos: File[] = [];
+            for (const base64 of imagenesTemporales) {
+              const archivo = await base64ToFile(base64, "imagen.jpg");
+              archivos.push(archivo);
+            }
+
+            // Subir las imágenes a Firebase Storage
+            const urlsImagenes = await subirImagenesProducto(
+              nuevoProducto.id,
+              archivos
+            );
+
+            // Actualizar el producto con las URLs de las imágenes
+            await dispatch(
+              actualizarProducto({
+                id: nuevoProducto.id,
+                datos: { ...formData, imagenes: urlsImagenes },
+              })
+            );
+          } catch (imageError) {
+            console.error("Error al procesar imágenes:", imageError);
+            // Las imágenes fallaron pero el producto ya se creó
+            // Podrías mostrar una notificación aquí si tienes un sistema de notificaciones
+          }
+        } else {
+          // No hay imágenes temporales, crear producto normalmente
+          await dispatch(crearProducto(formData));
+          onClose();
+        }
+      } else {
+        // Estamos editando un producto existente
+        await dispatch(
+          actualizarProducto({
+            id: producto.id,
+            datos: formData,
+          })
+        );
+        onClose();
+      }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al guardar el producto"
-      );
-    } finally {
-      setLoading(false);
+      console.error("Error al guardar producto:", err);
+      // No cerrar la modal si hay error en la creación inicial
     }
+  };
+
+  // Función helper para convertir base64 a File
+  const base64ToFile = (base64: string, filename: string): Promise<File> => {
+    return new Promise((resolve) => {
+      fetch(base64)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const file = new File([blob], filename, { type: blob.type });
+          resolve(file);
+        });
+    });
   };
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -198,299 +263,209 @@ export function ProductoModal({
               </div>
             )}
 
-            <div className='grid grid-cols-1 gap-6'>
-              {/* Información básica */}
-              <div className='bg-gray-50 rounded-xl p-4'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
-                  <span className='text-xl'>ℹ️</span>
-                  Información básica
-                </h3>
-
-                <div className='grid grid-cols-1 gap-4'>
-                  {/* Nombre */}
-                  <div>
-                    <label
-                      htmlFor='nombre'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Nombre del producto *
-                    </label>
-                    <input
-                      id='nombre'
-                      name='nombre'
-                      type='text'
-                      required
-                      ref={nombreInputRef}
-                      value={formData.nombre}
-                      onChange={(e) =>
-                        handleInputChange("nombre", e.target.value)
-                      }
-                      className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-colors ${
-                        validationErrors.nombre
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                      }`}
-                      placeholder='Ej: iPhone 14 Pro Max'
-                    />
-                    {validationErrors.nombre && (
-                      <p className='mt-1 text-xs text-red-600'>
-                        {validationErrors.nombre}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Categoría y Precio en una fila */}
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    <div>
-                      <label
-                        htmlFor='categoria'
-                        className='block text-sm font-medium text-gray-700 mb-2'
-                      >
-                        Categoría *
-                      </label>
-                      <input
-                        id='categoria'
-                        name='categoria'
-                        type='text'
-                        required
-                        value={formData.categoria}
-                        onChange={(e) =>
-                          handleInputChange("categoria", e.target.value)
-                        }
-                        className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-colors ${
-                          validationErrors.categoria
-                            ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                            : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                        }`}
-                        placeholder='Ej: Electrónicos'
-                      />
-                      {validationErrors.categoria && (
-                        <p className='mt-1 text-xs text-red-600'>
-                          {validationErrors.categoria}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor='precio'
-                        className='block text-sm font-medium text-gray-700 mb-2'
-                      >
-                        Precio *
-                      </label>
-                      <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                          <span className='text-gray-500 text-sm'>$</span>
-                        </div>
-                        <input
-                          id='precio'
-                          name='precio'
-                          type='number'
-                          min='0'
-                          step='1'
-                          required
-                          value={formData.precio === 0 ? "" : formData.precio}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "precio",
-                              e.target.value === ""
-                                ? 0
-                                : parseFloat(e.target.value)
-                            )
-                          }
-                          className={`w-full rounded-xl border pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 transition-colors ${
-                            validationErrors.precio
-                              ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                              : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                          }`}
-                          placeholder='0.00'
-                        />
-                      </div>
-                      {validationErrors.precio && (
-                        <p className='mt-1 text-xs text-red-600'>
-                          {validationErrors.precio}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+            {/* Información básica */}
+            <div className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                {/* Nombre */}
+                <div className='md:col-span-2'>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                    Nombre del producto *
+                  </label>
+                  <input
+                    ref={nombreInputRef}
+                    type='text'
+                    value={formData.nombre}
+                    onChange={(e) =>
+                      handleInputChange("nombre", e.target.value)
+                    }
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      validationErrors.nombre
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    placeholder='Ej: iPhone 14 Pro Max'
+                  />
+                  {validationErrors.nombre && (
+                    <p className='mt-1 text-sm text-red-600'>
+                      {validationErrors.nombre}
+                    </p>
+                  )}
                 </div>
 
-                {/* Descripción */}
-                <div className='mt-4'>
-                  <label
-                    htmlFor='descripcion'
-                    className='block text-sm font-medium text-gray-700 mb-2'
-                  >
-                    Descripción
+                {/* Categoría */}
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                    Categoría *
                   </label>
-                  <textarea
-                    id='descripcion'
-                    name='descripcion'
-                    value={formData.descripcion}
+                  <select
+                    value={formData.categoria}
                     onChange={(e) =>
-                      handleInputChange("descripcion", e.target.value)
+                      handleInputChange("categoria", e.target.value)
                     }
-                    className='w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none'
-                    rows={2}
-                    placeholder='Descripción opcional del producto...'
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      validationErrors.categoria
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <option value=''>Seleccionar categoría</option>
+                    <option value='Electrónicos'>Electrónicos</option>
+                    <option value='Ropa'>Ropa</option>
+                    <option value='Hogar'>Hogar</option>
+                    <option value='Deportes'>Deportes</option>
+                    <option value='Libros'>Libros</option>
+                    <option value='Juguetes'>Juguetes</option>
+                    <option value='Automóviles'>Automóviles</option>
+                    <option value='Salud'>Salud</option>
+                    <option value='Belleza'>Belleza</option>
+                    <option value='Otros'>Otros</option>
+                  </select>
+                  {validationErrors.categoria && (
+                    <p className='mt-1 text-sm text-red-600'>
+                      {validationErrors.categoria}
+                    </p>
+                  )}
+                </div>
+
+                {/* Precio */}
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                    Precio *
+                  </label>
+                  <div className='relative'>
+                    <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                      <span className='text-gray-500 sm:text-sm'>$</span>
+                    </div>
+                    <input
+                      type='number'
+                      step='1'
+                      min='0'
+                      value={formData.precio === 0 ? "" : formData.precio}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "precio",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
+                      className={`w-full pl-7 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                        validationErrors.precio
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300"
+                      }`}
+                      placeholder='0.00'
+                    />
+                  </div>
+                  {validationErrors.precio && (
+                    <p className='mt-1 text-sm text-red-600'>
+                      {validationErrors.precio}
+                    </p>
+                  )}
+                </div>
+
+                {/* Stock */}
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                    Stock actual *
+                  </label>
+                  <input
+                    type='number'
+                    min='0'
+                    value={formData.stock}
+                    onChange={(e) =>
+                      handleInputChange("stock", parseInt(e.target.value) || 0)
+                    }
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      validationErrors.stock
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    placeholder='0'
                   />
+                  {validationErrors.stock && (
+                    <p className='mt-1 text-sm text-red-600'>
+                      {validationErrors.stock}
+                    </p>
+                  )}
+                </div>
+
+                {/* Stock mínimo */}
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                    Stock mínimo
+                  </label>
+                  <input
+                    type='number'
+                    min='0'
+                    value={formData.stockMinimo}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "stockMinimo",
+                        parseInt(e.target.value) || 0
+                      )
+                    }
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                      validationErrors.stockMinimo
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    placeholder='5'
+                  />
+                  {validationErrors.stockMinimo && (
+                    <p className='mt-1 text-sm text-red-600'>
+                      {validationErrors.stockMinimo}
+                    </p>
+                  )}
+                  <p className='mt-1 text-xs text-gray-500'>
+                    Alerta cuando el stock esté por debajo de este valor
+                  </p>
                 </div>
               </div>
 
-              {/* Imágenes del producto */}
-              <div className='bg-purple-50 rounded-xl p-4'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
-                  <span className='text-xl'>📸</span>
-                  Imágenes del producto
-                </h3>
-
-                <ImageUploader
-                  imagenes={formData.imagenes}
-                  onImagenesChange={(imagenes) =>
-                    handleInputChange("imagenes", imagenes)
+              {/* Descripción */}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Descripción
+                </label>
+                <textarea
+                  value={formData.descripcion}
+                  onChange={(e) =>
+                    handleInputChange("descripcion", e.target.value)
                   }
-                  maxImagenes={5}
+                  rows={3}
+                  className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none'
+                  placeholder='Descripción detallada del producto...'
                 />
               </div>
 
-              {/* Inventario */}
-              <div className='bg-blue-50 rounded-xl p-4'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
-                  <span className='text-xl'>📊</span>
-                  Control de inventario
-                </h3>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  {/* Stock actual */}
-                  <div>
-                    <label
-                      htmlFor='stock'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Stock actual *
-                    </label>
-                    <input
-                      id='stock'
-                      name='stock'
-                      type='number'
-                      min='0'
-                      required
-                      value={formData.stock === 0 ? "" : formData.stock}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "stock",
-                          e.target.value === "" ? 0 : parseInt(e.target.value)
-                        )
-                      }
-                      className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-colors ${
-                        validationErrors.stock
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                      }`}
-                      placeholder='0'
-                    />
-                    {validationErrors.stock && (
-                      <p className='mt-1 text-xs text-red-600'>
-                        {validationErrors.stock}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Stock mínimo */}
-                  <div>
-                    <label
-                      htmlFor='stockMinimo'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Stock mínimo
-                    </label>
-                    <input
-                      id='stockMinimo'
-                      name='stockMinimo'
-                      type='number'
-                      min='0'
-                      value={
-                        formData.stockMinimo === 0 ? "" : formData.stockMinimo
-                      }
-                      onChange={(e) =>
-                        handleInputChange(
-                          "stockMinimo",
-                          e.target.value === "" ? 0 : parseInt(e.target.value)
-                        )
-                      }
-                      className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-colors ${
-                        validationErrors.stockMinimo
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                      }`}
-                      placeholder='5'
-                    />
-                    <p className='mt-1 text-xs text-gray-500'>
-                      Se alertará cuando el stock baje de este nivel
-                    </p>
-                    {validationErrors.stockMinimo && (
-                      <p className='mt-1 text-xs text-red-600'>
-                        {validationErrors.stockMinimo}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Indicador de estado del stock */}
-                {formData.stock > 0 && (
-                  <div className='mt-4 p-4 bg-white rounded-lg border border-blue-200'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium text-gray-700'>
-                        Estado del stock:
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                          formData.stock === 0
-                            ? "bg-red-100 text-red-700"
-                            : formData.stock <= formData.stockMinimo
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {formData.stock === 0
-                          ? "🔴 Sin stock"
-                          : formData.stock <= formData.stockMinimo
-                          ? "🟡 Stock bajo"
-                          : "🟢 Stock normal"}
-                      </span>
-                    </div>
-                    {formData.precio > 0 && (
-                      <div className='mt-2 pt-2 border-t border-blue-200'>
-                        <span className='text-sm text-gray-600'>
-                          Valor total del inventario:
-                          <span className='font-semibold text-indigo-600 ml-1'>
-                            $
-                            {(
-                              formData.stock * formData.precio
-                            ).toLocaleString()}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* Imágenes */}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Imágenes del producto
+                </label>
+                <ImageUploader
+                  imagenes={formData.imagenes}
+                  onImagenesChange={(imagenes) =>
+                    setFormData((prev) => ({ ...prev, imagenes }))
+                  }
+                  productoId={producto?.id}
+                  maxImagenes={5}
+                />
               </div>
             </div>
 
-            {/* Botones de acción */}
-            <div className='flex flex-col sm:flex-row gap-3 pt-6 mt-6 border-t border-gray-200'>
+            {/* Botones */}
+            <div className='flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200'>
               <button
                 type='button'
                 onClick={onClose}
-                className='flex-1 sm:flex-initial px-6 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors'
-                disabled={loading}
+                className='px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium transition-colors'
               >
                 Cancelar
               </button>
               <button
                 type='submit'
                 disabled={loading}
-                className='flex-1 px-6 py-3 border border-transparent rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2'
+                className='px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
               >
                 {loading ? (
                   <>
@@ -498,7 +473,10 @@ export function ProductoModal({
                     Guardando...
                   </>
                 ) : (
-                  <>💾 {producto ? "Actualizar" : "Crear"} Producto</>
+                  <>
+                    <span className='text-lg'>💾</span>
+                    {producto ? "Actualizar" : "Crear"} Producto
+                  </>
                 )}
               </button>
             </div>

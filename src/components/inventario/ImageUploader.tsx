@@ -1,14 +1,21 @@
 import { useState, useRef } from "react";
+import {
+  subirImagenesProducto,
+  eliminarImagenProducto,
+  redimensionarImagen,
+} from "@/lib/firebase/storage";
 
 interface ImageUploaderProps {
   imagenes: string[];
   onImagenesChange: (imagenes: string[]) => void;
+  productoId?: string;
   maxImagenes?: number;
 }
 
 export function ImageUploader({
   imagenes,
   onImagenesChange,
+  productoId,
   maxImagenes = 5,
 }: ImageUploaderProps) {
   const [subiendo, setSubiendo] = useState(false);
@@ -42,9 +49,25 @@ export function ImageUploader({
           continue;
         }
 
-        // Convertir a base64 para almacenar en Firebase Realtime Database
-        const base64 = await convertToBase64(file);
-        nuevasImagenes.push(base64);
+        try {
+          // Redimensionar imagen para optimizar
+          const archivoRedimensionado = await redimensionarImagen(file);
+
+          if (productoId) {
+            // Si tenemos un ID de producto, subir a Firebase Storage
+            const url = await subirImagenesProducto(productoId, [
+              archivoRedimensionado,
+            ]);
+            nuevasImagenes.push(...url);
+          } else {
+            // Si no tenemos ID, usar base64 temporal (para vista previa)
+            const base64 = await convertToBase64(archivoRedimensionado);
+            nuevasImagenes.push(base64);
+          }
+        } catch (error) {
+          console.error(`Error al procesar ${file.name}:`, error);
+          alert(`Error al procesar ${file.name}`);
+        }
       }
 
       if (nuevasImagenes.length > 0) {
@@ -71,7 +94,18 @@ export function ImageUploader({
     });
   };
 
-  const eliminarImagen = (index: number) => {
+  const eliminarImagen = async (index: number) => {
+    const imagenUrl = imagenes[index];
+
+    // Si la imagen está en Firebase Storage (no es base64), eliminarla
+    if (imagenUrl.startsWith("https://") && imagenUrl.includes("firebase")) {
+      try {
+        await eliminarImagenProducto(imagenUrl);
+      } catch (error) {
+        console.error("Error al eliminar imagen de Firebase:", error);
+      }
+    }
+
     const nuevasImagenes = imagenes.filter((_, i) => i !== index);
     onImagenesChange(nuevasImagenes);
   };
@@ -109,6 +143,12 @@ export function ImageUploader({
         <span className='text-xs text-gray-500'>
           {imagenes.length}/{maxImagenes} imágenes
         </span>
+
+        {!productoId && (
+          <span className='text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded'>
+            Las imágenes se guardarán al crear el producto
+          </span>
+        )}
       </div>
 
       <input
@@ -134,6 +174,12 @@ export function ImageUploader({
                   src={imagen}
                   alt={`Producto ${index + 1}`}
                   className='w-full h-full object-cover'
+                  onError={(e) => {
+                    // Si la imagen no carga, mostrar placeholder
+                    const target = e.target as HTMLImageElement;
+                    target.src =
+                      'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f3f4f6"/><text x="50" y="50" font-family="Arial" font-size="12" fill="%236b7280" text-anchor="middle" dominant-baseline="middle">Sin imagen</text></svg>';
+                  }}
                 />
               </div>
 
@@ -180,6 +226,9 @@ export function ImageUploader({
                   Principal
                 </div>
               )}
+
+              {/* Indicador si es imagen temporal */}
+             
             </div>
           ))}
         </div>
@@ -189,8 +238,10 @@ export function ImageUploader({
       <div className='text-xs text-gray-500 space-y-1'>
         <p>• Formatos soportados: JPG, PNG, GIF, WebP</p>
         <p>• Tamaño máximo por imagen: 5MB</p>
+        <p>• Las imágenes se optimizan automáticamente</p>
         <p>• La primera imagen será la imagen principal del producto</p>
         <p>• Puedes reordenar las imágenes con las flechas</p>
+        
       </div>
     </div>
   );
