@@ -1,5 +1,4 @@
 import React from "react";
-import { Prestamo } from "@/lib/firebase/database";
 
 interface CobroPendiente {
   clienteId: string;

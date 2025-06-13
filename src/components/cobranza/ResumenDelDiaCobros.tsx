@@ -1,9 +1,9 @@
 import React from "react";
-import { Cobro, Prestamo } from "@/lib/firebase/database";
+import { Cobro, FinanciamientoCuota } from "@/lib/firebase/database";
 
 interface ResumenDelDiaCobrosProps {
   cobros: Cobro[];
-  prestamos: Prestamo[];
+  prestamos: FinanciamientoCuota[];
 }
 
 export default function ResumenDelDiaCobros({
@@ -30,7 +30,7 @@ export default function ResumenDelDiaCobros({
         if (fechaCuota.getTime() === hoy.getTime()) {
           // ¿Ya se pagó esta cuota?
           const cobrosPrestamo = cobros.filter(
-            (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+            (c) => c.financiamientoId === prestamo.id && c.tipo === "cuota"
           );
           if (cobrosPrestamo.length <= i) {
             montoPendiente += prestamo.monto / prestamo.cuotas;

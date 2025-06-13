@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Prestamo, Cliente, Cobro } from "@/lib/firebase/database";
+import { FinanciamientoCuota, Cliente, Cobro } from "@/lib/firebase/database";
 
 interface PlanPagosPrintProps {
-  prestamo: Prestamo;
+  prestamo: FinanciamientoCuota;
   cliente: Cliente;
   cobros: Cobro[];
   valorCuota: number;

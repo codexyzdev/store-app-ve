@@ -1,20 +1,28 @@
-import { Prestamo, Cliente, Producto, Cobro } from "@/lib/firebase/database";
+import {
+  FinanciamientoCuota,
+  Cliente,
+  Producto,
+  Cobro,
+} from "@/lib/firebase/database";
 import ResumenCliente from "./ResumenCliente";
 import EstadoPrestamo from "./EstadoPrestamo";
 
-interface GrupoPrestamos {
+interface GrupoFinanciamientos {
   clienteId: string;
   nombre: string;
   cedula: string;
-  prestamos: Prestamo[];
+  financiamientos: FinanciamientoCuota[];
 }
 
-interface TablaPrestamosProps {
-  prestamosAgrupados: GrupoPrestamos[];
+interface TablaFinanciamientosProps {
+  prestamosAgrupados: GrupoFinanciamientos[];
   productos: Producto[];
   cobros: Cobro[];
-  calcularCuotasAtrasadas: (prestamo: Prestamo, cobros: Cobro[]) => number;
-  getUltimaCuota: (prestamoId: string) => Cobro | null;
+  calcularCuotasAtrasadas: (
+    fin: FinanciamientoCuota,
+    cobros: Cobro[]
+  ) => number;
+  getUltimaCuota: (financiamientoId: string) => Cobro | null;
 }
 
 export default function TablaPrestamos({
@@ -23,7 +31,7 @@ export default function TablaPrestamos({
   cobros,
   calcularCuotasAtrasadas,
   getUltimaCuota,
-}: TablaPrestamosProps) {
+}: TablaFinanciamientosProps) {
   return (
     <div className='bg-white shadow rounded-lg overflow-x-auto hidden lg:block'>
       <table className='min-w-full divide-y divide-gray-200'>
@@ -61,7 +69,7 @@ export default function TablaPrestamos({
             </tr>
           ) : (
             prestamosAgrupados.map((grupo) => {
-              const prestamosPendientes = grupo.prestamos.filter(
+              const prestamosPendientes = grupo.financiamientos.filter(
                 (p) =>
                   (p.estado === "activo" || p.estado === "atrasado") &&
                   p.cuotas > 0
@@ -69,7 +77,11 @@ export default function TablaPrestamos({
               const prestamosActivos = prestamosPendientes;
               const totalPendiente = prestamosPendientes.reduce((sum, p) => {
                 const abonos = cobros
-                  .filter((c) => c.prestamoId === p.id && c.tipo === "cuota")
+                  .filter(
+                    (c) =>
+                      c.financiamientoId === p.id &&
+                      (c.tipo === "cuota" || c.tipo === "inicial")
+                  )
                   .reduce(
                     (acc2, cobro) =>
                       acc2 +
@@ -85,13 +97,16 @@ export default function TablaPrestamos({
                 return sum + montoPendiente;
               }, 0);
 
-              const ultimoPago = grupo.prestamos.reduce((ultimo, prestamo) => {
-                const ultimaCuota = getUltimaCuota(prestamo.id);
-                if (!ultimaCuota) return ultimo;
-                return !ultimo || ultimaCuota.fecha > ultimo.fecha
-                  ? ultimaCuota
-                  : ultimo;
-              }, null as Cobro | null);
+              const ultimoPago = grupo.financiamientos.reduce(
+                (ultimo, prestamo) => {
+                  const ultimaCuota = getUltimaCuota(prestamo.id);
+                  if (!ultimaCuota) return ultimo;
+                  return !ultimo || ultimaCuota.fecha > ultimo.fecha
+                    ? ultimaCuota
+                    : ultimo;
+                },
+                null as Cobro | null
+              );
 
               const totalCuotasVencidas = prestamosPendientes.reduce(
                 (sum, p) => sum + calcularCuotasAtrasadas(p, cobros),
@@ -103,7 +118,7 @@ export default function TablaPrestamos({
                   key={grupo.clienteId}
                   className='hover:bg-indigo-50 transition-colors duration-150 cursor-pointer'
                   onClick={() =>
-                    (window.location.href = `/prestamos/${grupo.clienteId}`)
+                    (window.location.href = `/financiamiento-cuota/${grupo.clienteId}`)
                   }
                 >
                   <td className='px-4 py-4'>
@@ -113,7 +128,7 @@ export default function TablaPrestamos({
                     />
                   </td>
                   <td className='px-4 py-4 text-sm text-gray-900'>
-                    {grupo.prestamos.length}
+                    {grupo.financiamientos.length}
                   </td>
                   <td className='px-4 py-4 text-sm text-gray-900'>
                     {prestamosActivos.length}
@@ -142,7 +157,8 @@ export default function TablaPrestamos({
                       const cobrosPrestamo = cobros
                         .filter(
                           (c) =>
-                            c.prestamoId === prestamo.id && c.tipo === "cuota"
+                            c.financiamientoId === prestamo.id &&
+                            (c.tipo === "cuota" || c.tipo === "inicial")
                         )
                         .sort((a, b) => b.fecha - a.fecha);
                       let semanasPagadas = cobrosPrestamo.length;

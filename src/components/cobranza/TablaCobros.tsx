@@ -1,5 +1,4 @@
 import React from "react";
-import { Prestamo } from "@/lib/firebase/database";
 
 interface GrupoCobros {
   clienteId: string;
@@ -10,13 +9,9 @@ interface GrupoCobros {
 
 interface TablaCobrosProps {
   cobrosAgrupados: GrupoCobros[];
-  prestamos: Prestamo[];
 }
 
-export default function TablaCobros({
-  cobrosAgrupados,
-  prestamos,
-}: TablaCobrosProps) {
+export default function TablaCobros({ cobrosAgrupados }: TablaCobrosProps) {
   return (
     <div className='overflow-x-auto'>
       <table className='min-w-full divide-y divide-gray-200'>

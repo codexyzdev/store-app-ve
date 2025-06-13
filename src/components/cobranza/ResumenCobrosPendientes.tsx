@@ -1,9 +1,9 @@
 import React from "react";
-import { Prestamo, Cobro } from "@/lib/firebase/database";
-import { calcularCuotasAtrasadas } from "@/utils/prestamos";
+import { FinanciamientoCuota, Cobro } from "@/lib/firebase/database";
+import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
 
 interface ResumenCobrosPendientesProps {
-  prestamos: Prestamo[];
+  prestamos: FinanciamientoCuota[];
   cobros: Cobro[];
 }
 
@@ -26,7 +26,7 @@ export default function ResumenCobrosPendientes({
     const cuotasAtrasadas = calcularCuotasAtrasadas(prestamo, cobros);
 
     return {
-      prestamoId: prestamo.id,
+      financiamientoId: prestamo.id,
       clienteId: prestamo.clienteId,
       cuotasAtrasadas,
       montoCuota: prestamo.monto / prestamo.cuotas,

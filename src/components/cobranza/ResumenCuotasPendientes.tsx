@@ -1,9 +1,13 @@
 import React from "react";
-import { Prestamo, Producto, Cliente } from "@/lib/firebase/database";
+import {
+  FinanciamientoCuota,
+  Producto,
+  Cliente,
+} from "@/lib/firebase/database";
 import Link from "next/link";
 
 interface ResumenCuotasPendientesProps {
-  prestamos: Prestamo[];
+  prestamos: FinanciamientoCuota[];
   productos: Producto[];
   clientes: Cliente[];
   cobros: import("@/lib/firebase/database").Cobro[];
@@ -56,7 +60,7 @@ export default function ResumenCuotasPendientes({
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
         {prestamosConCuotasPendientes.map((prestamo) => {
           const cobrosPrestamo = cobros.filter(
-            (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+            (c) => c.financiamientoId === prestamo.id && c.tipo === "cuota"
           );
           const cuotaActual = cobrosPrestamo.length + 1;
           const montoCuota = prestamo.monto / prestamo.cuotas;

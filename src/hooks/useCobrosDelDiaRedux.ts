@@ -41,7 +41,7 @@ export function useCobrosDelDiaRedux() {
 
     // Función para contar pagos realizados de un financiamiento
     const contarPagosRealizados = (financiamientoId: string) => {
-      return cobros.filter(c => c.financiamientoId === financiamientoId && c.tipo === 'cuota').length;
+      return cobros.filter(c => c.financiamientoId === financiamientoId && (c.tipo === 'cuota' || c.tipo === 'inicial')).length;
     };
 
     // Función para calcular cobros pendientes para hoy con información detallada
@@ -116,34 +116,8 @@ export function useCobrosDelDiaRedux() {
             (f: FinanciamientoCuota) => f.id === cobro.financiamientoId
           );
           
-          // Si no encontramos el financiamiento, intentar buscar en préstamos legacy
           if (!financiamiento) {
-            console.warn(
-              `⚠️ No se encontró financiamiento para cobro ${cobro.id}. Esto puede ser un cobro huérfano o de datos legacy.`
-            );
-            // Aún así, intentemos mostrar el cobro buscando por prestamoId si existe
-            const prestamoLegacy = financiamientos.find(
-              (f) => f.id === (cobro as any).prestamoId
-            );
-            if (prestamoLegacy) {
-              const cliente = getCliente(prestamoLegacy.clienteId);
-              if (cliente) {
-                const clienteId = prestamoLegacy.clienteId;
-                if (!acc[clienteId]) {
-                  acc[clienteId] = {
-                    clienteId,
-                    nombre: cliente.nombre,
-                    cedula: cliente.cedula,
-                    telefono: cliente.telefono,
-                    direccion: cliente.direccion,
-                    cobros: [],
-                    totalCobrado: 0,
-                  };
-                }
-                acc[clienteId].cobros.push(cobro);
-                acc[clienteId].totalCobrado += cobro.monto;
-              }
-            }
+            console.warn(`⚠️ Cobro ${cobro.id} sin financiamiento asociado`);
             return acc;
           }
 
@@ -203,7 +177,6 @@ export function useCobrosDelDiaRedux() {
         console.log(`Cobro ${idx + 1}:`, {
           id: cobro.id,
           financiamientoId: cobro.financiamientoId,
-          prestamoId: (cobro as any).prestamoId,
           monto: cobro.monto,
           tipo: cobro.tipo,
           fecha: new Date(cobro.fecha).toLocaleDateString(),

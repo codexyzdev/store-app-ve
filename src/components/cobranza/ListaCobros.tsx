@@ -1,5 +1,4 @@
 import React from "react";
-import { Prestamo } from "@/lib/firebase/database";
 
 interface GrupoCobros {
   clienteId: string;
@@ -10,13 +9,9 @@ interface GrupoCobros {
 
 interface ListaCobrosProps {
   cobrosAgrupados: GrupoCobros[];
-  prestamos: Prestamo[];
 }
 
-export default function ListaCobros({
-  cobrosAgrupados,
-  prestamos,
-}: ListaCobrosProps) {
+export default function ListaCobros({ cobrosAgrupados }: ListaCobrosProps) {
   return (
     <div className='mt-6 space-y-4'>
       {cobrosAgrupados.map((grupo) => (

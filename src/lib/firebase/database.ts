@@ -12,7 +12,9 @@ import {
   off,
   DataSnapshot,
   push,
-  runTransaction
+  runTransaction,
+  startAt,
+  endAt
 } from 'firebase/database';
 
 // Tipos de datos
@@ -41,10 +43,6 @@ export interface FinanciamientoCuota {
   pagado?: boolean; // solo para contado
   descripcion?: string;
 }
-
-// Alias para compatibilidad con código existente
-export type Prestamo = FinanciamientoCuota;
-export type ProductoPrestamo = ProductoFinanciamiento;
 
 export interface ProductoFinanciamiento {
   productoId: string;
@@ -208,11 +206,36 @@ export const financiamientoDB = {
     );
 
     return unsubscribe;
+  },
+
+  /**
+   * Calcula el saldo pendiente de un financiamiento
+   * y actualiza su estado a "completado" cuando el saldo llegue a 0.
+   * Devuelve el saldo pendiente calculado.
+   */
+  async calcularSaldoPendiente(id: string): Promise<number> {
+    // Obtener financiamiento
+    const financiamiento = await this.obtener(id);
+    if (!financiamiento) throw new Error('Financiamiento no encontrado');
+
+    // Obtener cobros relacionados (solo cuota o abono)
+    const cobrosRelacionados = await cobrosDB.obtenerPorFinanciamiento(id);
+    const montoPagado = cobrosRelacionados
+      ? Object.values(cobrosRelacionados)
+          .filter(c => c.tipo === 'cuota' || c.tipo === 'abono' || c.tipo === 'inicial')
+          .reduce((total, c) => total + c.monto, 0)
+      : 0;
+
+    const saldoPendiente = financiamiento.monto - montoPagado;
+
+    // Si ya está pagado y no está marcado como completado, actualizar estado
+    if (saldoPendiente <= 0 && financiamiento.estado !== 'completado') {
+      await this.actualizar(id, { estado: 'completado' });
+    }
+
+    return saldoPendiente < 0 ? 0 : saldoPendiente;
   }
 };
-
-// Mantener funciones de préstamos para compatibilidad con datos existentes
-export const prestamosDB = financiamientoDB;
 
 // Funciones CRUD para Cobros
 export const cobrosDB = {
@@ -257,6 +280,16 @@ export const cobrosDB = {
     await set(newCobroRef, nuevoCobro);
     
     console.log(`✅ Cobro creado exitosamente con ID: ${id}`);
+
+    // Recalcular saldo del financiamiento asociado (si aplica)
+    try {
+      if (cobro.financiamientoId) {
+        await financiamientoDB.calcularSaldoPendiente(cobro.financiamientoId);
+      }
+    } catch (err) {
+      console.error('Error al recalcular saldo del financiamiento:', err);
+    }
+
     return nuevoCobro;
   },
 
@@ -269,12 +302,14 @@ export const cobrosDB = {
   async obtenerCobrosDelDia() {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const timestampHoy = hoy.getTime();
+    const inicioDia = hoy.getTime();
+    const finDia = inicioDia + 24 * 60 * 60 * 1000 - 1;
 
     const cobrosQuery = query(
       ref(database, 'cobros'),
       orderByChild('fecha'),
-      equalTo(timestampHoy)
+      startAt(inicioDia),
+      endAt(finDia)
     );
     const snapshot = await get(cobrosQuery);
     return snapshot.val() as Record<string, Cobro>;
@@ -305,12 +340,14 @@ export const cobrosDB = {
   suscribirCobrosDelDia(callback: (cobros: Cobro[]) => void) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const timestampHoy = hoy.getTime();
+    const inicioDia = hoy.getTime();
+    const finDia = inicioDia + 24 * 60 * 60 * 1000 - 1;
 
     const cobrosQuery = query(
       ref(database, 'cobros'),
       orderByChild('fecha'),
-      equalTo(timestampHoy)
+      startAt(inicioDia),
+      endAt(finDia)
     );
 
     onValue(cobrosQuery, (snapshot) => {
@@ -374,6 +411,20 @@ export const cobrosDB = {
       // En caso de error, ser conservador y retornar false para no bloquear
       return false;
     }
+  },
+
+  // Obtener cobros por financiamiento
+  async obtenerPorFinanciamiento(financiamientoId: string) {
+    // Intentar primero con la nueva clave
+    const cobrosQueryFin = query(
+      ref(database, 'cobros'),
+      orderByChild('financiamientoId'),
+      equalTo(financiamientoId)
+    );
+    const snapFin = await get(cobrosQueryFin);
+    let resultados: Record<string, Cobro> = snapFin.val() || {};
+
+    return resultados;
   }
 };
 

@@ -1,20 +1,23 @@
-import { Prestamo, Producto, Cobro } from "@/lib/firebase/database";
+import { FinanciamientoCuota, Producto, Cobro } from "@/lib/firebase/database";
 import ResumenCliente from "./ResumenCliente";
 import EstadoPrestamo from "./EstadoPrestamo";
 
-interface GrupoPrestamos {
+interface GrupoFinanciamientos {
   clienteId: string;
   nombre: string;
   cedula: string;
-  prestamos: Prestamo[];
+  financiamientos: FinanciamientoCuota[];
 }
 
-interface ListaPrestamosProps {
-  prestamosAgrupados: GrupoPrestamos[];
+interface ListaFinanciamientosProps {
+  prestamosAgrupados: GrupoFinanciamientos[];
   productos: Producto[];
   cobros: Cobro[];
-  calcularCuotasAtrasadas: (prestamo: Prestamo, cobros: Cobro[]) => number;
-  getUltimaCuota: (prestamoId: string) => Cobro | null;
+  calcularCuotasAtrasadas: (
+    fin: FinanciamientoCuota,
+    cobros: Cobro[]
+  ) => number;
+  getUltimaCuota: (financiamientoId: string) => Cobro | null;
 }
 
 export default function ListaPrestamos({
@@ -23,7 +26,7 @@ export default function ListaPrestamos({
   cobros,
   calcularCuotasAtrasadas,
   getUltimaCuota,
-}: ListaPrestamosProps) {
+}: ListaFinanciamientosProps) {
   return (
     <div className='lg:hidden space-y-4'>
       {prestamosAgrupados.length === 0 ? (
@@ -32,7 +35,7 @@ export default function ListaPrestamos({
         </div>
       ) : (
         prestamosAgrupados.map((grupo) => {
-          const prestamosPendientes = grupo.prestamos.filter(
+          const prestamosPendientes = grupo.financiamientos.filter(
             (p) =>
               (p.estado === "activo" || p.estado === "atrasado") && p.cuotas > 0
           );
@@ -47,7 +50,7 @@ export default function ListaPrestamos({
               key={grupo.clienteId}
               className='bg-white shadow-md rounded-xl p-4 sm:p-5 flex flex-col gap-3 border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-[0.99]'
               onClick={() =>
-                (window.location.href = `/prestamos/${grupo.clienteId}`)
+                (window.location.href = `/financiamiento-cuota/${grupo.clienteId}`)
               }
             >
               <div className='flex items-center gap-3 mb-1'>
@@ -60,7 +63,7 @@ export default function ListaPrestamos({
                     Total Financiamientos:
                   </span>
                   <span className='text-gray-900 font-medium'>
-                    {grupo.prestamos.length}
+                    {grupo.financiamientos.length}
                   </span>
                 </div>
                 <div className='flex justify-between sm:flex-col sm:justify-start'>
@@ -84,7 +87,9 @@ export default function ListaPrestamos({
                       .reduce((sum, p) => {
                         const abonos = cobros
                           .filter(
-                            (c) => c.prestamoId === p.id && c.tipo === "cuota"
+                            (c) =>
+                              c.financiamientoId === p.id &&
+                              (c.tipo === "cuota" || c.tipo === "inicial")
                           )
                           .reduce(
                             (acc2, cobro) =>
@@ -112,7 +117,7 @@ export default function ListaPrestamos({
                   </span>
                   <span className='text-gray-900 font-medium'>
                     {(() => {
-                      const ultimoPago = grupo.prestamos.reduce(
+                      const ultimoPago = grupo.financiamientos.reduce(
                         (ultimo, prestamo) => {
                           const ultimaCuota = getUltimaCuota(prestamo.id);
                           if (!ultimaCuota) return ultimo;
@@ -151,7 +156,8 @@ export default function ListaPrestamos({
                       const cobrosPrestamo = cobros
                         .filter(
                           (c) =>
-                            c.prestamoId === prestamo.id && c.tipo === "cuota"
+                            c.financiamientoId === prestamo.id &&
+                            (c.tipo === "cuota" || c.tipo === "inicial")
                         )
                         .sort((a, b) => b.fecha - a.fecha);
                       let semanasPagadas = cobrosPrestamo.length;
