@@ -2,14 +2,10 @@
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { inventarioDB, Producto } from "@/lib/firebase/database";
-import {
-  financiamientoDB,
-  ProductoFinanciamiento,
-  cobrosDB,
-} from "@/lib/firebase/database";
+import { Producto, ProductoFinanciamiento } from "@/lib/firebase/database";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
-import { useProductos } from "@/hooks/useProductos";
+import { useProductosRedux } from "@/hooks/useProductosRedux";
+import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import Link from "next/link";
 import Modal from "@/components/Modal";
 import NuevoClienteForm from "@/components/clientes/NuevoClienteForm";
@@ -20,7 +16,12 @@ export default function NuevoFinanciamientoPage() {
 
   // Hooks Redux para datos - ÚNICA FUENTE DE VERDAD
   const { clientes, loading: clientesLoading } = useClientesRedux();
-  const { productos, loading: productosLoading } = useProductos();
+  const {
+    productos,
+    loading: productosLoading,
+    actualizarStock,
+  } = useProductosRedux();
+  const { crearFinanciamiento, crearCobro } = useFinanciamientosRedux();
 
   // Estados locales del formulario solamente
   const [loading, setLoading] = useState(false);
@@ -187,9 +188,9 @@ export default function NuevoFinanciamientoPage() {
     }
 
     try {
-      // Descontar stock de todos los productos
+      // Descontar stock de todos los productos usando Redux
       for (const item of productosCarrito) {
-        await inventarioDB.actualizarStock(item.productoId, -item.cantidad);
+        await actualizarStock(item.productoId, -item.cantidad);
       }
 
       // Parsear fecha de inicio como local (no UTC)
@@ -225,9 +226,7 @@ export default function NuevoFinanciamientoPage() {
           }`,
       };
 
-      const nuevoFinanciamiento = await financiamientoDB.crear(
-        financiamientoData
-      );
+      const nuevoFinanciamiento = await crearFinanciamiento(financiamientoData);
 
       // Si hay cuotas iniciales, crear cobros para las últimas cuotas
       if (formData.tipoVenta === "cuotas" && cuotasIniciales > 0) {
@@ -235,7 +234,7 @@ export default function NuevoFinanciamientoPage() {
 
         for (let i = 0; i < cuotasIniciales; i++) {
           const numeroCuota = 15 - i; // Últimas cuotas: 15, 14, 13...
-          await cobrosDB.crear({
+          await crearCobro({
             financiamientoId: nuevoFinanciamiento.id,
             monto: Math.round(valorCuota),
             fecha: fechaInicio,
