@@ -10,6 +10,7 @@ import {
 import { ProductoModal } from "@/components/inventario/ProductoModal";
 import { InventarioCard } from "@/components/inventario/InventarioCard";
 import { InventarioStatsExpanded } from "@/components/inventario/InventarioStatsExpanded";
+import { InventarioFilters } from "@/components/inventario/InventarioFilters";
 import Modal from "@/components/Modal";
 import InventarioPrint from "@/components/inventario/InventarioPrint";
 import {
@@ -90,14 +91,25 @@ export default function InventarioPage() {
     },
   ];
 
-  const handleSort = (field: typeof sortBy) => {
+  const handleSort = (field: string) => {
     if (sortBy === field) {
       dispatch(setSortOrder(sortOrder === "asc" ? "desc" : "asc"));
     } else {
-      dispatch(setSortBy(field));
+      dispatch(setSortBy(field as typeof sortBy));
       dispatch(setSortOrder("asc"));
     }
   };
+
+  const handleClearFilters = () => {
+    dispatch(setSearchTerm(""));
+    dispatch(setFilterCategory(""));
+    dispatch(setFilterStock(""));
+  };
+
+  // Obtener categorías únicas
+  const categories = Array.from(
+    new Set(productos.map((p: ProductoType) => p.categoria))
+  ) as string[];
 
   if (loading) {
     return (
@@ -188,111 +200,22 @@ export default function InventarioPage() {
         {/* Stats */}
         <InventarioStatsExpanded productos={productos} />
 
-        {/* Filters and Search */}
-        <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8'>
-          <div className='flex flex-col lg:flex-row gap-4'>
-            {/* Search */}
-            <div className='flex-1'>
-              <div className='relative'>
-                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                  <span className='text-gray-400 text-lg'>🔍</span>
-                </div>
-                <input
-                  type='text'
-                  placeholder='Buscar productos...'
-                  value={searchTerm}
-                  onChange={(e) => dispatch(setSearchTerm(e.target.value))}
-                  className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
-                />
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className='flex gap-3'>
-              <select
-                value={filterCategory}
-                onChange={(e) => dispatch(setFilterCategory(e.target.value))}
-                className='px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
-              >
-                <option value=''>Todas las categorías</option>
-                {Array.from(
-                  new Set(productos.map((p: ProductoType) => p.categoria))
-                ).map((categoria, index) => (
-                  <option
-                    key={`${categoria}-${index}`}
-                    value={categoria as string}
-                  >
-                    {categoria as string}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filterStock}
-                onChange={(e) => dispatch(setFilterStock(e.target.value))}
-                className='px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
-              >
-                <option value=''>Todo el stock</option>
-                <option value='bajo'>Stock bajo</option>
-                <option value='normal'>Stock normal</option>
-                <option value='sin-stock'>Sin stock</option>
-              </select>
-
-              {/* View Mode Toggle */}
-              <div className='flex bg-gray-100 rounded-lg p-1'>
-                <button
-                  onClick={() => dispatch(setViewMode("grid"))}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <span className='text-xl'>📦</span>
-                </button>
-                <button
-                  onClick={() => dispatch(setViewMode("list"))}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === "list"
-                      ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <span className='text-xl'>🏷️</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className='flex gap-2 mt-4 flex-wrap'>
-            <span className='text-sm text-gray-600 py-2'>Ordenar por:</span>
-            {[
-              { key: "nombre", label: "Nombre" },
-              { key: "stock", label: "Stock" },
-              { key: "precio", label: "Precio" },
-              { key: "categoria", label: "Categoría" },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => handleSort(key as typeof sortBy)}
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  sortBy === key
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {label}
-                {sortBy === key &&
-                  (sortOrder === "asc" ? (
-                    <span className='text-xl'>🔼</span>
-                  ) : (
-                    <span className='text-xl'>🔽</span>
-                  ))}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Filtros */}
+        <InventarioFilters
+          searchTerm={searchTerm}
+          onSearchChange={(term) => dispatch(setSearchTerm(term))}
+          filterCategory={filterCategory}
+          onCategoryChange={(category) => dispatch(setFilterCategory(category))}
+          filterStock={filterStock}
+          onStockChange={(stock) => dispatch(setFilterStock(stock))}
+          categories={categories}
+          onClearFilters={handleClearFilters}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => dispatch(setViewMode(mode))}
+        />
 
         {/* Error Message */}
         {error && (

@@ -1,15 +1,5 @@
 import { useState } from "react";
-import {
-  PencilIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  CubeIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PhotoIcon,
-} from "@heroicons/react/24/outline";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 interface Producto {
   id: string;
@@ -29,361 +19,607 @@ interface InventarioCardProps {
   onDelete: () => void;
 }
 
-export function InventarioCard({
-  producto,
-  viewMode,
-  onEdit,
-  onDelete,
-}: InventarioCardProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+// Modal para ver imágenes
+function ImageModal({
+  isOpen,
+  onClose,
+  imagenes,
+  productName,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  imagenes: string[];
+  productName: string;
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const getStockStatus = () => {
-    if (producto.stock === 0) {
-      return {
-        color: "text-red-600",
-        bgColor: "bg-red-50",
-        borderColor: "border-red-200",
-        icon: XCircleIcon,
-        label: "Sin stock",
-      };
-    } else if (producto.stock <= (producto.stockMinimo || 5)) {
-      return {
-        color: "text-yellow-600",
-        bgColor: "bg-yellow-50",
-        borderColor: "border-yellow-200",
-        icon: ExclamationTriangleIcon,
-        label: "Stock bajo",
-      };
-    } else {
-      return {
-        color: "text-green-600",
-        bgColor: "bg-green-50",
-        borderColor: "border-green-200",
-        icon: CheckCircleIcon,
-        label: "Stock normal",
-      };
-    }
-  };
+  if (!isOpen || !imagenes || imagenes.length === 0) return null;
 
-  const stockStatus = getStockStatus();
-  const hasImages = producto.imagenes && producto.imagenes.length > 0;
-
-  // Funciones para navegación de imágenes
   const nextImage = () => {
-    if (hasImages && producto.imagenes!.length > 1) {
-      setCurrentImageIndex((prev) =>
-        prev === producto.imagenes!.length - 1 ? 0 : prev + 1
-      );
-    }
+    setCurrentIndex((prev) => (prev + 1) % imagenes.length);
   };
 
   const prevImage = () => {
-    if (hasImages && producto.imagenes!.length > 1) {
-      setCurrentImageIndex((prev) =>
-        prev === 0 ? producto.imagenes!.length - 1 : prev - 1
-      );
-    }
+    setCurrentIndex((prev) => (prev - 1 + imagenes.length) % imagenes.length);
   };
 
-  // Componente de carrusel de imágenes
-  const ImageCarousel = ({ isListView = false }: { isListView?: boolean }) => {
-    if (!hasImages) {
-      return (
-        <div
-          className={`${
-            isListView ? "w-12 h-12" : "aspect-square"
-          } bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border border-gray-200`}
-        >
-          <PhotoIcon
-            className={`${
-              isListView ? "w-4 h-4" : "w-8 h-8"
-            } text-gray-400 mb-1`}
-          />
-          {!isListView && (
-            <span className='text-xs text-gray-500 font-medium'>
-              Sin imágenes
-            </span>
-          )}
-        </div>
-      );
-    }
-
-    if (isListView) {
-      return (
-        <div className='w-12 h-12 rounded-lg overflow-hidden border border-gray-200'>
-          <img
-            src={producto.imagenes[0]}
-            alt={producto.nombre}
-            className='w-full h-full object-cover'
-          />
-        </div>
-      );
-    }
-
-    // Grid view con carrusel
-    if (producto.imagenes.length === 1) {
-      return (
-        <div className='aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50'>
-          <img
-            src={producto.imagenes[0]}
-            alt={producto.nombre}
-            className='w-full h-full object-cover'
-          />
-        </div>
-      );
-    }
-
-    // Carrusel para múltiples imágenes
-    const currentImages = producto.imagenes.slice(
-      currentImageIndex,
-      currentImageIndex + 2
-    );
-    if (currentImages.length === 1) {
-      currentImages.push(producto.imagenes[0]); // Circular
-    }
-
-    return (
-      <div className='relative'>
-        <div className='grid grid-cols-2 gap-2 mb-2'>
-          {currentImages.map((imagen, index) => (
-            <div
-              key={`${currentImageIndex}-${index}`}
-              className='aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50'
-            >
-              <img
-                src={imagen}
-                alt={`${producto.nombre} - ${currentImageIndex + index + 1}`}
-                className='w-full h-full object-cover'
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Controles de navegación */}
-        {producto.imagenes.length > 2 && (
-          <>
-            <div className='flex justify-between items-center'>
-              <button
-                onClick={prevImage}
-                className='flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 transition-colors'
-                title='Imagen anterior'
-              >
-                <ChevronLeftIcon className='w-4 h-4 text-gray-600' />
-              </button>
-
-              <div className='flex gap-1'>
-                {Array.from({
-                  length: Math.ceil(producto.imagenes.length / 2),
-                }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      Math.floor(currentImageIndex / 2) === index
-                        ? "bg-indigo-500"
-                        : "bg-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={nextImage}
-                className='flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 transition-colors'
-                title='Siguiente imagen'
-              >
-                <ChevronRightIcon className='w-4 h-4 text-gray-600' />
-              </button>
-            </div>
-
-            {/* Contador de imágenes */}
-            <div className='text-center mt-2'>
-              <span className='text-xs text-gray-500 bg-white px-2 py-1 rounded-full border'>
-                {currentImageIndex + 1}-
-                {Math.min(currentImageIndex + 2, producto.imagenes.length)} de{" "}
-                {producto.imagenes.length}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
-    );
+  const goToImage = (index: number) => {
+    setCurrentIndex(index);
   };
 
-  if (viewMode === "list") {
-    return (
-      <div className='bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 p-6'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center space-x-4 flex-1'>
-            <div className='flex-shrink-0'>
-              <ImageCarousel isListView={true} />
-            </div>
+  return (
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
+      <div className='relative max-w-4xl max-h-full w-full bg-white rounded-xl overflow-hidden'>
+        {/* Header */}
+        <div className='flex items-center justify-between p-4 border-b border-gray-200'>
+          <h3 className='text-lg font-semibold text-gray-900 truncate'>
+            {productName}
+          </h3>
+          <button
+            onClick={onClose}
+            className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+          >
+            <span className='text-xl text-gray-500'>✕</span>
+          </button>
+        </div>
 
-            <div className='flex-1 min-w-0'>
-              <div className='flex items-center gap-3'>
-                <h3 className='text-lg font-semibold text-gray-900 truncate'>
-                  {producto.nombre}
-                </h3>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bgColor} ${stockStatus.color} ${stockStatus.borderColor} border`}
-                >
-                  <stockStatus.icon className='w-3 h-3' />
-                  {stockStatus.label}
-                </span>
-              </div>
-              <div className='mt-1 flex items-center gap-4 text-sm text-gray-500'>
-                <span className='bg-gray-100 px-2 py-1 rounded-md'>
-                  {producto.categoria}
-                </span>
-                {producto.descripcion && (
-                  <span className='truncate max-w-xs'>
-                    {producto.descripcion}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className='flex items-center gap-6 text-right'>
-              <div>
-                <p className='text-sm text-gray-500'>Stock</p>
-                <p className={`text-lg font-semibold ${stockStatus.color}`}>
-                  {producto.stock}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Precio</p>
-                <p className='text-lg font-semibold text-gray-900'>
-                  ${producto.precio.toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Valor Total</p>
-                <p className='text-lg font-semibold text-indigo-600'>
-                  ${(producto.stock * producto.precio).toLocaleString()}
-                </p>
-              </div>
-            </div>
+        {/* Imagen principal */}
+        <div className='relative bg-gray-50'>
+          <div className='aspect-video sm:aspect-square lg:aspect-video max-h-96 sm:max-h-[500px] flex items-center justify-center'>
+            <img
+              src={imagenes[currentIndex]}
+              alt={`${productName} - ${currentIndex + 1}`}
+              className='max-w-full max-h-full object-contain'
+            />
           </div>
 
-          <div className='flex items-center gap-2 ml-4'>
-            <button
-              onClick={onEdit}
-              className='p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors'
-              title='Editar producto'
-            >
-              <PencilIcon className='w-5 h-5' />
-            </button>
-            <button
-              onClick={onDelete}
-              className='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
-              title='Eliminar producto'
-            >
-              <TrashIcon className='w-5 h-5' />
-            </button>
+          {/* Controles de navegación - Solo si hay más de una imagen */}
+          {imagenes.length > 1 && (
+            <>
+              {/* Botones anterior/siguiente */}
+              <button
+                onClick={prevImage}
+                className='absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-lg transition-all'
+              >
+                <span className='text-xl text-gray-700'>←</span>
+              </button>
+              <button
+                onClick={nextImage}
+                className='absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-lg transition-all'
+              >
+                <span className='text-xl text-gray-700'>→</span>
+              </button>
+
+              {/* Contador */}
+              <div className='absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm'>
+                {currentIndex + 1} / {imagenes.length}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Miniaturas - Solo si hay más de una imagen */}
+        {imagenes.length > 1 && (
+          <div className='p-4 border-t border-gray-200'>
+            <div className='flex gap-2 overflow-x-auto pb-2'>
+              {imagenes.map((imagen, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToImage(index)}
+                  className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                    index === currentIndex
+                      ? "border-indigo-500 ring-2 ring-indigo-200"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <img
+                    src={imagen}
+                    alt={`${productName} - miniatura ${index + 1}`}
+                    className='w-full h-full object-cover'
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Gestos táctiles para móvil */}
+        <div
+          className='absolute inset-0 sm:hidden'
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            const startX = touch.clientX;
+
+            const handleTouchEnd = (endEvent: TouchEvent) => {
+              const endTouch = endEvent.changedTouches[0];
+              const endX = endTouch.clientX;
+              const diff = startX - endX;
+
+              if (Math.abs(diff) > 50) {
+                // Mínimo 50px de deslizamiento
+                if (diff > 0) {
+                  nextImage();
+                } else {
+                  prevImage();
+                }
+              }
+
+              document.removeEventListener("touchend", handleTouchEnd);
+            };
+
+            document.addEventListener("touchend", handleTouchEnd);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Hook personalizado para el estado del stock
+function useStockStatus(stock: number, stockMinimo?: number) {
+  if (stock === 0) {
+    return {
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+      borderColor: "border-red-200",
+      icon: "🚫",
+      label: "Sin stock",
+    };
+  } else if (stock <= (stockMinimo || 5)) {
+    return {
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
+      borderColor: "border-yellow-200",
+      icon: "⚠️",
+      label: "Stock bajo",
+    };
+  } else {
+    return {
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200",
+      icon: "✅",
+      label: "Stock normal",
+    };
+  }
+}
+
+// Componente para el badge de stock
+function StockBadge({
+  stockStatus,
+  compact = false,
+}: {
+  stockStatus: ReturnType<typeof useStockStatus>;
+  compact?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bgColor} ${stockStatus.color} ${stockStatus.borderColor} border flex-shrink-0`}
+    >
+      <span>{stockStatus.icon}</span>
+      {!compact && (
+        <>
+          <span className='whitespace-nowrap'>
+            Stock {stockStatus.label.toLowerCase()}
+          </span>
+        </>
+      )}
+      {compact && (
+        <span className='whitespace-nowrap'>{stockStatus.label}</span>
+      )}
+    </span>
+  );
+}
+
+// Componente para mostrar imagen del producto
+function ProductImage({
+  imagenes,
+  nombre,
+  size = "normal",
+  onClick,
+}: {
+  imagenes?: string[];
+  nombre: string;
+  size?: "small" | "normal" | "large";
+  onClick?: () => void;
+}) {
+  const sizeClasses = {
+    small: "w-12 h-12",
+    normal: "w-16 h-16",
+    large: "aspect-square",
+  };
+
+  const iconSizes = {
+    small: "text-lg",
+    normal: "text-xl",
+    large: "text-3xl",
+  };
+
+  const hasImages = imagenes && imagenes.length > 0;
+  const isClickable = hasImages && onClick;
+
+  if (!hasImages) {
+    return (
+      <div
+        className={`${sizeClasses[size]} bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border border-gray-200`}
+      >
+        <span className={`${iconSizes[size]} text-gray-400`}>📦</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`${
+        sizeClasses[size]
+      } rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 ${
+        isClickable
+          ? "cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+          : ""
+      }`}
+      onClick={onClick}
+      title={isClickable ? "Click para ver imágenes" : undefined}
+    >
+      <img
+        src={imagenes[0]}
+        alt={nombre}
+        className='w-full h-full object-cover'
+      />
+      {/* Indicador de múltiples imágenes */}
+      {imagenes.length > 1 && (
+        <div className='absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded'>
+          +{imagenes.length - 1}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para los botones de acción
+function ActionButtons({
+  onEdit,
+  onDelete,
+  compact = false,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+  compact?: boolean;
+}) {
+  if (compact) {
+    return (
+      <div className='flex items-center gap-1'>
+        <button
+          onClick={onEdit}
+          className='p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors'
+          title='Editar producto'
+        >
+          <PencilSquareIcon className='w-4 h-4' />
+        </button>
+        <button
+          onClick={onDelete}
+          className='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+          title='Eliminar producto'
+        >
+          <TrashIcon className='w-4 h-4' />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex gap-2'>
+      <button
+        onClick={onEdit}
+        className='flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors'
+      >
+        <PencilSquareIcon className='w-4 h-4' />
+        <span className='hidden sm:inline'>Editar</span>
+      </button>
+      <button
+        onClick={onDelete}
+        className='flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors'
+      >
+        <TrashIcon className='w-4 h-4' />
+        <span className='hidden sm:inline'>Eliminar</span>
+      </button>
+    </div>
+  );
+}
+
+// Componente para mostrar estadísticas del producto
+function ProductStats({
+  stock,
+  precio,
+  stockStatus,
+  layout = "horizontal",
+}: {
+  stock: number;
+  precio: number;
+  stockStatus: ReturnType<typeof useStockStatus>;
+  layout?: "horizontal" | "grid";
+}) {
+  const valorTotal = stock * precio;
+
+  if (layout === "grid") {
+    return (
+      <div className='space-y-3'>
+        <div className='grid grid-cols-2 gap-3'>
+          <div className='text-center p-3 bg-gray-50 rounded-lg'>
+            <p className='text-xs text-gray-500 mb-1'>Stock</p>
+            <p className={`text-lg font-bold ${stockStatus.color}`}>{stock}</p>
+          </div>
+          <div className='text-center p-3 bg-gray-50 rounded-lg'>
+            <p className='text-xs text-gray-500 mb-1'>Precio</p>
+            <p className='text-lg font-bold text-gray-900'>
+              ${precio.toLocaleString()}
+            </p>
+          </div>
+        </div>
+        <div className='p-3 bg-indigo-50 rounded-lg border border-indigo-100'>
+          <div className='flex justify-between items-center'>
+            <span className='text-sm font-medium text-indigo-700'>
+              Valor Total
+            </span>
+            <span className='text-lg font-bold text-indigo-600'>
+              ${valorTotal.toLocaleString()}
+            </span>
           </div>
         </div>
       </div>
     );
   }
 
-  // Grid view mejorado
   return (
-    <div className='bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group h-full'>
-      <div className='p-6 flex flex-col h-full'>
-        {/* Header con información básica */}
-        <div className='flex justify-between items-start mb-4'>
-          <div className='flex-1'>
-            <div className='flex items-center gap-2 mb-3'>
-              <div className='w-10 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0'>
-                {hasImages ? (
-                  <img
-                    src={producto.imagenes[0]}
-                    alt={producto.nombre}
-                    className='w-full h-full object-cover'
-                  />
-                ) : (
-                  <div className='w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center'>
-                    <CubeIcon className='w-5 h-5 text-gray-400' />
-                  </div>
-                )}
-              </div>
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bgColor} ${stockStatus.color} ${stockStatus.borderColor} border`}
+    <div className='flex items-center gap-4 text-right'>
+      <div className='min-w-[60px]'>
+        <p className='text-sm text-gray-500'>Stock</p>
+        <p className={`text-lg font-semibold ${stockStatus.color}`}>{stock}</p>
+      </div>
+      <div className='min-w-[80px]'>
+        <p className='text-sm text-gray-500'>Precio</p>
+        <p className='text-lg font-semibold text-gray-900'>
+          ${precio.toLocaleString()}
+        </p>
+      </div>
+      <div className='min-w-[100px]'>
+        <p className='text-sm text-gray-500'>Valor Total</p>
+        <p className='text-lg font-semibold text-indigo-600'>
+          ${valorTotal.toLocaleString()}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Vista en lista
+function ListView({
+  producto,
+  stockStatus,
+  onEdit,
+  onDelete,
+  onImageClick,
+}: {
+  producto: Producto;
+  stockStatus: ReturnType<typeof useStockStatus>;
+  onEdit: () => void;
+  onDelete: () => void;
+  onImageClick: () => void;
+}) {
+  return (
+    <div className='bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 p-4 sm:p-6'>
+      <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+        {/* Información principal */}
+        <div className='flex items-start sm:items-center space-x-4 flex-1 min-w-0'>
+          <ProductImage
+            imagenes={producto.imagenes}
+            nombre={producto.nombre}
+            size='small'
+            onClick={onImageClick}
+          />
+
+          <div className='flex-1 min-w-0'>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2'>
+              <h3
+                className='text-base sm:text-lg font-semibold text-gray-900 truncate'
+                title={producto.nombre}
               >
-                <stockStatus.icon className='w-3 h-3' />
-                {stockStatus.label}
-              </span>
+                {producto.nombre}
+              </h3>
+              <StockBadge stockStatus={stockStatus} />
             </div>
 
-            <h3 className='text-lg font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]'>
-              {producto.nombre}
-            </h3>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm'>
+              <span className='bg-gray-100 px-2 py-1 rounded-md text-xs font-medium flex-shrink-0'>
+                {producto.categoria}
+              </span>
+              {producto.descripcion && (
+                <span
+                  className='text-xs sm:text-sm text-gray-500 truncate max-w-xs lg:max-w-md'
+                  title={producto.descripcion}
+                >
+                  {producto.descripcion.length > 80
+                    ? producto.descripcion.substring(0, 80) + "..."
+                    : producto.descripcion}
+                </span>
+              )}
+            </div>
+          </div>
 
-            <span className='inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-medium'>
-              {producto.categoria}
-            </span>
+          {/* Stats desktop */}
+          <div className='hidden lg:block'>
+            <ProductStats
+              stock={producto.stock}
+              precio={producto.precio}
+              stockStatus={stockStatus}
+              layout='horizontal'
+            />
           </div>
         </div>
 
-        {/* Carrusel de imágenes */}
-        <div className='mb-4 flex-shrink-0'>
-          <ImageCarousel />
+        {/* Stats móvil */}
+        <div className='lg:hidden grid grid-cols-3 gap-2 text-center'>
+          <div className='p-2 bg-gray-50 rounded-lg'>
+            <p className='text-xs text-gray-500'>Stock</p>
+            <p className={`text-sm font-bold ${stockStatus.color}`}>
+              {producto.stock}
+            </p>
+          </div>
+          <div className='p-2 bg-gray-50 rounded-lg'>
+            <p className='text-xs text-gray-500'>Precio</p>
+            <p className='text-sm font-bold text-gray-900'>
+              ${producto.precio.toLocaleString()}
+            </p>
+          </div>
+          <div className='p-2 bg-indigo-50 rounded-lg'>
+            <p className='text-xs text-indigo-600'>Total</p>
+            <p className='text-sm font-bold text-indigo-600'>
+              ${(producto.stock * producto.precio).toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <ActionButtons onEdit={onEdit} onDelete={onDelete} compact />
+      </div>
+    </div>
+  );
+}
+
+// Vista en cuadrícula
+function GridView({
+  producto,
+  stockStatus,
+  onEdit,
+  onDelete,
+  onImageClick,
+}: {
+  producto: Producto;
+  stockStatus: ReturnType<typeof useStockStatus>;
+  onEdit: () => void;
+  onDelete: () => void;
+  onImageClick: () => void;
+}) {
+  return (
+    <div className='bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group h-full'>
+      <div className='p-4 lg:p-6 flex flex-col h-full'>
+        {/* Header */}
+        <div className='flex justify-between items-start mb-4'>
+          <div className='flex items-center gap-3 flex-1 min-w-0'>
+            <ProductImage
+              imagenes={producto.imagenes}
+              nombre={producto.nombre}
+              size='normal'
+              onClick={onImageClick}
+            />
+          </div>
+          <StockBadge stockStatus={stockStatus} />
+        </div>
+
+        {/* Título y categoría */}
+        <div className='mb-4'>
+          <h3
+            className='text-lg font-semibold text-gray-900 mb-2 leading-tight min-h-[3rem] overflow-hidden'
+            title={producto.nombre}
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {producto.nombre}
+          </h3>
+          <span className='inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-medium'>
+            {producto.categoria}
+          </span>
         </div>
 
         {/* Descripción */}
         {producto.descripcion && (
-          <p className='text-sm text-gray-600 mb-4 line-clamp-2 min-h-[2.5rem]'>
-            {producto.descripcion}
-          </p>
+          <div className='mb-4 h-12 flex-shrink-0'>
+            <p
+              className='text-sm text-gray-600 leading-tight overflow-hidden'
+              title={producto.descripcion}
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+              }}
+            >
+              {producto.descripcion}
+            </p>
+          </div>
         )}
 
-        {/* Stats - Flex grow para empujar los botones al final */}
-        <div className='flex-grow'>
-          <div className='grid grid-cols-2 gap-4 mb-4'>
-            <div className='text-center p-3 bg-gray-50 rounded-lg'>
-              <p className='text-xs text-gray-500 mb-1'>Stock</p>
-              <p className={`text-xl font-bold ${stockStatus.color}`}>
-                {producto.stock}
-              </p>
-            </div>
-            <div className='text-center p-3 bg-gray-50 rounded-lg'>
-              <p className='text-xs text-gray-500 mb-1'>Precio</p>
-              <p className='text-xl font-bold text-gray-900'>
-                ${producto.precio.toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          {/* Valor total */}
-          <div className='mb-6'>
-            <div className='flex justify-between items-center p-3 bg-indigo-50 rounded-lg border border-indigo-100'>
-              <span className='text-sm font-medium text-indigo-700'>
-                Valor Total
-              </span>
-              <span className='text-lg font-bold text-indigo-600'>
-                ${(producto.stock * producto.precio).toLocaleString()}
-              </span>
-            </div>
-          </div>
+        {/* Stats */}
+        <div className='flex-grow mb-4'>
+          <ProductStats
+            stock={producto.stock}
+            precio={producto.precio}
+            stockStatus={stockStatus}
+            layout='grid'
+          />
         </div>
 
-        {/* Actions - Siempre al final */}
-        <div className='flex gap-2 mt-auto'>
-          <button
-            onClick={onEdit}
-            className='flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors'
-          >
-            <PencilIcon className='w-4 h-4' />
-            Editar
-          </button>
-          <button
-            onClick={onDelete}
-            className='flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors'
-          >
-            <TrashIcon className='w-4 h-4' />
-            Eliminar
-          </button>
+        {/* Acciones */}
+        <div className='mt-auto'>
+          <ActionButtons onEdit={onEdit} onDelete={onDelete} />
         </div>
       </div>
     </div>
+  );
+}
+
+// Componente principal
+export function InventarioCard({
+  producto,
+  viewMode,
+  onEdit,
+  onDelete,
+}: InventarioCardProps) {
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const stockStatus = useStockStatus(producto.stock, producto.stockMinimo);
+
+  const handleImageClick = () => {
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      setIsImageModalOpen(true);
+    }
+  };
+
+  if (viewMode === "list") {
+    return (
+      <>
+        <ListView
+          producto={producto}
+          stockStatus={stockStatus}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onImageClick={handleImageClick}
+        />
+        <ImageModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          imagenes={producto.imagenes || []}
+          productName={producto.nombre}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <GridView
+        producto={producto}
+        stockStatus={stockStatus}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onImageClick={handleImageClick}
+      />
+      <ImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        imagenes={producto.imagenes || []}
+        productName={producto.nombre}
+      />
+    </>
   );
 }
