@@ -310,7 +310,7 @@ function ProductImage({
     <div
       className={`${
         sizeClasses[size]
-      } rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 ${
+      } rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 relative ${
         isClickable
           ? "cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
           : ""
@@ -323,9 +323,9 @@ function ProductImage({
         alt={nombre}
         className='w-full h-full object-cover'
       />
-      {/* Indicador de múltiples imágenes */}
+      {/* Indicador de múltiples imágenes - solo si hay más de una imagen */}
       {imagenes.length > 1 && (
-        <div className='absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded'>
+        <div className='absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1 py-0.5 rounded shadow-sm'>
           +{imagenes.length - 1}
         </div>
       )}
@@ -638,6 +638,7 @@ export function InventarioCard({
   const stockStatus = useStockStatus(producto.stock, producto.stockMinimo);
 
   const handleImageClick = () => {
+    // Solo abrir modal si hay imágenes
     if (producto.imagenes && producto.imagenes.length > 0) {
       setIsImageModalOpen(true);
     }
