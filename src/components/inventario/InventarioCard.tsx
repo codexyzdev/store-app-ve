@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 interface Producto {
@@ -32,8 +32,8 @@ function ImageModal({
   productName: string;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  if (!isOpen || !imagenes || imagenes.length === 0) return null;
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % imagenes.length);
@@ -47,6 +47,61 @@ function ImageModal({
     setCurrentIndex(index);
   };
 
+  // Mínima distancia para considerar un swipe
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && imagenes.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && imagenes.length > 1) {
+      prevImage();
+    }
+  };
+
+  // Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+      if (e.key === "ArrowLeft" && imagenes.length > 1) {
+        prevImage();
+      }
+      if (e.key === "ArrowRight" && imagenes.length > 1) {
+        nextImage();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      // Prevenir scroll del body cuando el modal está abierto
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, imagenes.length, onClose]);
+
+  if (!isOpen || !imagenes || imagenes.length === 0) return null;
+
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
       <div className='relative max-w-4xl max-h-full w-full bg-white rounded-xl overflow-hidden'>
@@ -57,19 +112,25 @@ function ImageModal({
           </h3>
           <button
             onClick={onClose}
-            className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+            className='p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation'
           >
             <span className='text-xl text-gray-500'>✕</span>
           </button>
         </div>
 
         {/* Imagen principal */}
-        <div className='relative bg-gray-50'>
+        <div
+          className='relative bg-gray-50'
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <div className='aspect-video sm:aspect-square lg:aspect-video max-h-96 sm:max-h-[500px] flex items-center justify-center'>
             <img
               src={imagenes[currentIndex]}
               alt={`${productName} - ${currentIndex + 1}`}
-              className='max-w-full max-h-full object-contain'
+              className='max-w-full max-h-full object-contain select-none'
+              draggable={false}
             />
           </div>
 
@@ -78,20 +139,30 @@ function ImageModal({
             <>
               {/* Botones anterior/siguiente */}
               <button
-                onClick={prevImage}
-                className='absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-lg transition-all'
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className='absolute left-2 top-1/2 -translate-y-1/2 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all touch-manipulation z-10'
+                style={{ touchAction: "manipulation" }}
               >
                 <span className='text-xl text-gray-700'>←</span>
               </button>
               <button
-                onClick={nextImage}
-                className='absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-lg transition-all'
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className='absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all touch-manipulation z-10'
+                style={{ touchAction: "manipulation" }}
               >
                 <span className='text-xl text-gray-700'>→</span>
               </button>
 
               {/* Contador */}
-              <div className='absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm'>
+              <div className='absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm'>
                 {currentIndex + 1} / {imagenes.length}
               </div>
             </>
@@ -105,17 +176,23 @@ function ImageModal({
               {imagenes.map((imagen, index) => (
                 <button
                   key={index}
-                  onClick={() => goToImage(index)}
-                  className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    goToImage(index);
+                  }}
+                  className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all touch-manipulation ${
                     index === currentIndex
                       ? "border-indigo-500 ring-2 ring-indigo-200"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
+                  style={{ touchAction: "manipulation" }}
                 >
                   <img
                     src={imagen}
                     alt={`${productName} - miniatura ${index + 1}`}
-                    className='w-full h-full object-cover'
+                    className='w-full h-full object-cover select-none'
+                    draggable={false}
                   />
                 </button>
               ))}
@@ -123,33 +200,14 @@ function ImageModal({
           </div>
         )}
 
-        {/* Gestos táctiles para móvil */}
-        <div
-          className='absolute inset-0 sm:hidden'
-          onTouchStart={(e) => {
-            const touch = e.touches[0];
-            const startX = touch.clientX;
-
-            const handleTouchEnd = (endEvent: TouchEvent) => {
-              const endTouch = endEvent.changedTouches[0];
-              const endX = endTouch.clientX;
-              const diff = startX - endX;
-
-              if (Math.abs(diff) > 50) {
-                // Mínimo 50px de deslizamiento
-                if (diff > 0) {
-                  nextImage();
-                } else {
-                  prevImage();
-                }
-              }
-
-              document.removeEventListener("touchend", handleTouchEnd);
-            };
-
-            document.addEventListener("touchend", handleTouchEnd);
-          }}
-        />
+        {/* Indicador de swipe en móvil */}
+        {imagenes.length > 1 && (
+          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none sm:hidden'>
+            <div className='bg-black/40 text-white px-3 py-1 rounded-full text-xs opacity-0 animate-pulse'>
+              ← Desliza para navegar →
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
