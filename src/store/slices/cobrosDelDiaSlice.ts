@@ -15,7 +15,7 @@ export interface CobroPendienteDetallado {
   historialPagos: number;
   totalCuotas: number;
   notas?: string;
-  fechaInicio: Date;
+  fechaInicio: number; // Timestamp en lugar de Date para ser serializable
 }
 
 export interface GrupoCobros {

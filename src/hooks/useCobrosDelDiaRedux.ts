@@ -73,13 +73,18 @@ export function useCobrosDelDiaRedux() {
         const fechaInicio = new Date(financiamiento.fechaInicio);
         const pagosRealizados = contarPagosRealizados(financiamiento.id);
         
-        // Verificar si hay cuota pendiente para hoy
+        // Verificar cuotas pendientes para hoy Y cuotas atrasadas
         for (let i = 0; i < financiamiento.cuotas; i++) {
           const fechaCuota = new Date(fechaInicio);
           fechaCuota.setDate(fechaInicio.getDate() + i * 7);
           
-          if (fechaCuota.getTime() === hoy.getTime()) {
+          // Incluir cuotas que vencen hoy O que están atrasadas (fechas pasadas)
+          if (fechaCuota.getTime() <= hoy.getTime()) {
             if (pagosRealizados > i) continue; // Ya pagada
+            
+            // Determinar si es cuota de hoy o atrasada
+            const esVencidaHoy = fechaCuota.getTime() === hoy.getTime();
+            const diasAtraso = Math.floor((hoy.getTime() - fechaCuota.getTime()) / (1000 * 60 * 60 * 24));
             
             pendientes.push({
               clienteId: financiamiento.clienteId,
@@ -93,8 +98,8 @@ export function useCobrosDelDiaRedux() {
               producto: nombreProducto,
               historialPagos: pagosRealizados,
               totalCuotas: financiamiento.cuotas,
-              fechaInicio: fechaInicio,
-              notas: financiamiento.descripcion
+              fechaInicio: fechaInicio.getTime(), // Convertir Date a timestamp
+              notas: `${financiamiento.descripcion || ''}${diasAtraso > 0 ? ` • Atrasada ${diasAtraso} día${diasAtraso > 1 ? 's' : ''}` : ''}`
             });
           }
         }

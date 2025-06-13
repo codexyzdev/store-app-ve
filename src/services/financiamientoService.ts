@@ -1,5 +1,4 @@
 import { FinanciamientoCuota, Cobro, cobrosDB, financiamientoDB } from '@/lib/firebase/database';
-import { calcularCuotasAtrasadas } from '@/utils/financiamiento';
 
 export interface PagoData {
   monto: number;
@@ -105,8 +104,16 @@ export class FinanciamientoService {
         estado: "completado",
       });
     } else {
-      const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobrosExistentes);
-      const nuevoEstado = cuotasAtrasadas > 0 ? "atrasado" : "activo";
+      // Determinar el estado basado en la lógica original del servicio
+      const fechaActual = new Date();
+      const fechaInicio = new Date(financiamiento.fechaInicio);
+      const semanasTranscurridas = Math.floor(
+        (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
+      );
+      const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, financiamiento.cuotas));
+      const cuotasPagadas = cobrosExistentes.length + cuotasNuevas;
+      
+      const nuevoEstado = cuotasPagadas < cuotasEsperadas ? "atrasado" : "activo";
       
       if (financiamiento.estado !== nuevoEstado) {
         await financiamientoDB.actualizar(financiamientoId, {
@@ -136,13 +143,29 @@ export class FinanciamientoService {
     );
 
     const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
-    const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobrosValidos);
+    
+    // Calcular cuotas atrasadas (lógica específica del servicio)
+    let cuotasAtrasadas = 0;
+    if (financiamiento.tipoVenta === "cuotas") {
+      const fechaActual = new Date();
+      const fechaInicio = new Date(financiamiento.fechaInicio);
+      const semanasTranscurridas = Math.floor(
+        (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
+      );
+      const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, financiamiento.cuotas));
+      const cuotasPagadas = cobrosValidos.length;
+      cuotasAtrasadas = Math.max(0, cuotasEsperadas - cuotasPagadas);
+    }
+    
     const progreso = montoPendiente > 0 
       ? ((financiamiento.monto - montoPendiente) / financiamiento.monto) * 100 
       : 100;
 
-    const cuotasPagadas = cobrosValidos.filter(c => c.tipo === "cuota").length;
-    const cuotasPendientes = Math.max(0, financiamiento.cuotas - cuotasPagadas);
+    // Separar para diferentes propósitos
+    const cuotasRegulares = cobrosValidos.filter(c => c.tipo === "cuota").length;
+    const cuotasIniciales = cobrosValidos.filter(c => c.tipo === "inicial").length;
+    const cuotasPagadas = cuotasRegulares; // Solo cuotas regulares para consistencia con lógica de atrasos
+    const cuotasPendientes = Math.max(0, financiamiento.cuotas - cuotasRegulares);
 
     return {
       cobrosValidos,
@@ -152,7 +175,10 @@ export class FinanciamientoService {
       cuotasAtrasadas,
       progreso,
       cuotasPagadas,
-      cuotasPendientes
+      cuotasPendientes,
+      cuotasRegulares,
+      cuotasIniciales,
+      totalCuotas: cuotasRegulares + cuotasIniciales
     };
   }
 

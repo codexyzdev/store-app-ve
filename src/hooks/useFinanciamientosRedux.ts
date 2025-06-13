@@ -256,7 +256,7 @@ export function useFinanciamientosRedux() {
     const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
     const progreso = financiamiento.monto > 0 ? (totalCobrado / financiamiento.monto) * 100 : 0;
 
-    // Calcular cuotas atrasadas
+    // Calcular cuotas atrasadas manteniendo la lógica original
     let cuotasAtrasadas = 0;
     if (financiamiento.tipoVenta === 'cuotas') {
       const fechaActual = new Date();

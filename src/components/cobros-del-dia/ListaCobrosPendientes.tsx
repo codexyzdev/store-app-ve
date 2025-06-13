@@ -25,7 +25,7 @@ export function ListaCobrosPendientes({
         <h3 className='text-lg font-semibold text-gray-600 mb-2'>
           ¡Excelente trabajo!
         </h3>
-        <p className='text-gray-500'>No hay cobros pendientes para hoy</p>
+        <p className='text-gray-500'>No hay cobros pendientes ni atrasados</p>
       </div>
     );
   }

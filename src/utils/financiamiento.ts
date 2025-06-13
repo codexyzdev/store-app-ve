@@ -16,7 +16,7 @@ export function calcularCuotasAtrasadas(financiamiento: FinanciamientoCuota, cob
   const milisegundosPorSemana = 7 * 24 * 60 * 60 * 1000;
   const semanasPasadas = Math.floor((hoy.getTime() - fechaInicio.getTime()) / milisegundosPorSemana);
   
-  // Filtrar cobros válidos para este financiamiento (excluir cobros iniciales del cálculo de atrasos)
+  // Filtrar cobros válidos para este financiamiento (incluir el filtro de numeroCuota)
   const cobrosValidos = cobros 
     ? cobros.filter(c => 
         c.financiamientoId === financiamiento.id && 
@@ -26,7 +26,7 @@ export function calcularCuotasAtrasadas(financiamiento: FinanciamientoCuota, cob
       ) 
     : [];
 
-  // Separar cobros regulares de iniciales para el cálculo
+  // Separar cobros regulares de iniciales para el cálculo correcto
   const cobrosRegulares = cobrosValidos.filter(c => c.tipo === "cuota");
   const cobrosIniciales = cobrosValidos.filter(c => c.tipo === "inicial");
   

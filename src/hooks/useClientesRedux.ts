@@ -27,14 +27,27 @@ export function useClientesRedux() {
 
   // Suscripción a Firebase
   useEffect(() => {
+    console.log('🔄 Iniciando suscripción a clientes en useClientesRedux')
     dispatch(setLoading(true))
     
+    // Timeout de seguridad para desbloquear la UI si Firebase no responde
+    const timeoutId = setTimeout(() => {
+      console.warn('⏰ Timeout de clientes - desbloqueando UI con datos vacíos')
+      dispatch(setClientes([]))
+      dispatch(setError('Conexión lenta con Firebase. Los datos pueden cargar gradualmente.'))
+    }, 10000) // 10 segundos
+
     const unsubscribe = clientesDB.suscribir((clientes) => {
+      console.log('📄 Hook recibió clientes:', clientes.length)
+      clearTimeout(timeoutId) // Cancelar timeout si los datos llegan
       dispatch(setClientes(clientes))
       dispatch(setError(null))
     })
 
-    return unsubscribe
+    return () => {
+      clearTimeout(timeoutId)
+      unsubscribe()
+    }
   }, [dispatch])
 
   // Clientes filtrados y ordenados (memoizado para performance)

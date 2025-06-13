@@ -9,6 +9,7 @@ import { Cliente } from "@/lib/firebase/database";
 import { FiltrosAvanzados } from "@/components/clientes/FiltrosAvanzados";
 import Modal from "@/components/Modal";
 import ClientesPrint from "@/components/clientes/ClientesPrint";
+// import { DiagnosticoFirebase } from "@/components/DiagnosticoFirebase";
 
 export default function ClientesPage() {
   const [vistaCards, setVistaCards] = useState(true);
@@ -49,6 +50,7 @@ export default function ClientesPage() {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
+      {/* <DiagnosticoFirebase /> */}
       <div className='container mx-auto px-4 py-8'>
         {/* Header */}
         <div className='mb-8'>

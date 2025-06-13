@@ -88,7 +88,7 @@ const calcularEstadoFinanciamiento = (
     return 'completado';
   }
 
-  // Calcular si hay atrasos
+  // Calcular si hay atrasos (restaurando lógica original)
   const fechaActual = new Date();
   const fechaInicio = new Date(financiamiento.fechaInicio);
   const semanasTranscurridas = Math.floor(
@@ -257,7 +257,7 @@ const calcularEstadisticas = (
         break;
       case 'atrasado':
         atrasados++;
-        // Calcular cuotas vencidas
+        // Calcular cuotas vencidas (restaurando lógica original)
         if (financiamiento.tipoVenta === 'cuotas') {
           const fechaActual = new Date();
           const fechaInicio = new Date(financiamiento.fechaInicio);

@@ -127,14 +127,24 @@ export const clientesDB = {
   // Suscripción en tiempo real
   suscribir(callback: (clientes: Cliente[]) => void) {
     const clientesRef = ref(database, 'clientes');
-    onValue(clientesRef, (snapshot) => {
-      const data = snapshot.val();
-      const clientes = data ? Object.values(data) : [];
-      callback(clientes as Cliente[]);
-    });
+    
+    const unsubscribe = onValue(clientesRef, 
+      (snapshot) => {
+        console.log('📄 Datos de clientes recibidos de Firebase:', snapshot.exists());
+        const data = snapshot.val();
+        const clientes = data ? Object.values(data) : [];
+        console.log('👥 Cantidad de clientes cargados:', clientes.length);
+        callback(clientes as Cliente[]);
+      },
+      (error) => {
+        console.error('❌ Error en suscripción de clientes:', error);
+        // Aún así intentar llamar el callback con array vacío para desbloquear la UI
+        callback([]);
+      }
+    );
 
     // Retorna función para cancelar suscripción
-    return () => off(clientesRef);
+    return unsubscribe;
   }
 };
 
@@ -182,13 +192,22 @@ export const financiamientoDB = {
   // Suscripción en tiempo real
   suscribir(callback: (financiamientos: FinanciamientoCuota[]) => void) {
     const financiamientosRef = ref(database, 'financiamientos');
-    onValue(financiamientosRef, (snapshot) => {
-      const data = snapshot.val();
-      const financiamientos = data ? Object.values(data) : [];
-      callback(financiamientos as FinanciamientoCuota[]);
-    });
+    
+    const unsubscribe = onValue(financiamientosRef, 
+      (snapshot) => {
+        console.log('💰 Datos de financiamientos recibidos de Firebase:', snapshot.exists());
+        const data = snapshot.val();
+        const financiamientos = data ? Object.values(data) : [];
+        console.log('💰 Cantidad de financiamientos cargados:', financiamientos.length);
+        callback(financiamientos as FinanciamientoCuota[]);
+      },
+      (error) => {
+        console.error('❌ Error en suscripción de financiamientos:', error);
+        callback([]);
+      }
+    );
 
-    return () => off(financiamientosRef);
+    return unsubscribe;
   }
 };
 
@@ -264,12 +283,22 @@ export const cobrosDB = {
   // Suscripción en tiempo real a todos los cobros
   suscribir(callback: (cobros: Cobro[]) => void) {
     const cobrosRef = ref(database, 'cobros');
-    onValue(cobrosRef, (snapshot) => {
-      const data = snapshot.val();
-      const cobros = data ? Object.values(data) : [];
-      callback(cobros as Cobro[]);
-    });
-    return () => off(cobrosRef);
+    
+    const unsubscribe = onValue(cobrosRef, 
+      (snapshot) => {
+        console.log('💸 Datos de cobros recibidos de Firebase:', snapshot.exists());
+        const data = snapshot.val();
+        const cobros = data ? Object.values(data) : [];
+        console.log('💸 Cantidad de cobros cargados:', cobros.length);
+        callback(cobros as Cobro[]);
+      },
+      (error) => {
+        console.error('❌ Error en suscripción de cobros:', error);
+        callback([]);
+      }
+    );
+    
+    return unsubscribe;
   },
 
   // Suscripción en tiempo real a cobros del día
@@ -409,13 +438,22 @@ export const inventarioDB = {
   // Suscripción en tiempo real
   suscribir(callback: (productos: Producto[]) => void) {
     const productosRef = ref(database, 'productos');
-    onValue(productosRef, (snapshot: DataSnapshot) => {
-      const data = snapshot.val();
-      const productos = data ? Object.values(data) : [];
-      callback(productos as Producto[]);
-    });
+    
+    const unsubscribe = onValue(productosRef, 
+      (snapshot: DataSnapshot) => {
+        console.log('📦 Datos de productos recibidos de Firebase:', snapshot.exists());
+        const data = snapshot.val();
+        const productos = data ? Object.values(data) : [];
+        console.log('📦 Cantidad de productos cargados:', productos.length);
+        callback(productos as Producto[]);
+      },
+      (error) => {
+        console.error('❌ Error en suscripción de productos:', error);
+        callback([]);
+      }
+    );
 
-    return () => off(productosRef);
+    return unsubscribe;
   }
 };
 

@@ -398,14 +398,27 @@ export default function FinanciamientoClientePage() {
 
                                   {financiamiento.tipoVenta === "cuotas" && (
                                     <>
-                                      <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
-                                        <span className='text-xs sm:text-sm font-medium text-gray-600'>
-                                          Cuotas:
-                                        </span>
-                                        <span className='text-base sm:text-lg font-bold text-gray-900'>
-                                          {cobrosValidos.length}/
-                                          {financiamiento.cuotas}
-                                        </span>
+                                      <div className='p-3 bg-sky-50 rounded-xl'>
+                                        <div className='flex items-center justify-between mb-1'>
+                                          <span className='text-xs sm:text-sm font-medium text-gray-600'>
+                                            Cuotas:
+                                          </span>
+                                          <span className='text-base sm:text-lg font-bold text-gray-900'>
+                                            {info.totalCuotas ||
+                                              info.cuotasPagadas}
+                                            /{financiamiento.cuotas}
+                                          </span>
+                                        </div>
+                                        {info.cuotasIniciales > 0 && (
+                                          <div className='text-xs text-gray-500'>
+                                            <span>
+                                              Regulares: {info.cuotasRegulares}
+                                            </span>
+                                            <span className='ml-2'>
+                                              Iniciales: {info.cuotasIniciales}
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
 
                                       <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
