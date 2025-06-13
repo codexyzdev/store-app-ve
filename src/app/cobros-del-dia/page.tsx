@@ -1,172 +1,149 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCobrosDelDiaRedux } from "@/hooks/useCobrosDelDiaRedux";
+import { useAppDispatch } from "@/store/hooks";
+import { setBusqueda, setTipoVista } from "@/store/slices/cobrosDelDiaSlice";
 import {
-  cobrosDB,
-  Cobro,
-  clientesDB,
-  Cliente,
-  prestamosDB,
-  Prestamo,
-  inventarioDB,
-  Producto,
-} from "@/lib/firebase/database";
-import BusquedaCobros from "@/components/cobranza/BusquedaCobros";
-import TablaCobros from "@/components/cobranza/TablaCobros";
-import ResumenDelDiaCobros from "@/components/cobranza/ResumenDelDiaCobros";
-import ListaCobrosRealizados from "@/components/cobranza/ListaCobrosRealizados";
-import ListaCobrosPendientes from "@/components/cobranza/ListaCobrosPendientes";
-
-interface GrupoCobros {
-  clienteId: string;
-  nombre: string;
-  cedula: string;
-  cobros: Cobro[];
-}
+  EstadisticasCobrosDelDia,
+  FiltrosCobrosDelDia,
+  TarjetaCobroPendiente,
+  ListaCobrosPendientes,
+  CobrosRealizados,
+} from "@/components/cobros-del-dia";
 
 export default function CobrosDelDiaPage() {
-  const [cobros, setCobros] = useState<Cobro[]>([]);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const {
+    estadisticas,
+    filters,
+    cobrosPendientesFiltrados,
+    cobrosAgrupadosFiltrados,
+    loading,
+    error,
+  } = useCobrosDelDiaRedux();
 
-  useEffect(() => {
-    const unsubCobros = cobrosDB.suscribir((data) => {
-      // Filtrar solo los cobros de hoy
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const manana = new Date(hoy);
-      manana.setDate(hoy.getDate() + 1);
-      const cobrosHoy = data.filter((cobro) => {
-        const fechaCobro = new Date(cobro.fecha);
-        return fechaCobro >= hoy && fechaCobro < manana;
-      });
-      setCobros(cobrosHoy);
-      setLoading(false);
-    });
-    const unsubClientes = clientesDB.suscribir(setClientes);
-    const unsubPrestamos = prestamosDB.suscribir(setPrestamos);
-    const unsubProductos = inventarioDB.suscribir(setProductos);
-
-    return () => {
-      unsubCobros();
-      unsubClientes();
-      unsubPrestamos();
-      unsubProductos();
-    };
-  }, []);
-
-  const getClienteNombre = (id: string) => {
-    const cliente = clientes.find((c: Cliente) => c.id === id);
-    return cliente ? cliente.nombre : "-";
+  // Función para llamar a un cliente
+  const llamarCliente = (telefono: string) => {
+    window.open(`tel:${telefono}`, "_self");
   };
 
-  const getClienteCedula = (id: string) => {
-    const cliente = clientes.find((c: Cliente) => c.id === id);
-    return cliente ? cliente.cedula : "";
+  // Función para navegar a cobrar
+  const registrarCobro = (financiamientoId: string) => {
+    router.push(`/financiamiento/${financiamientoId}/cobrar`);
   };
 
-  // Agrupar cobros por cliente
-  const cobrosAgrupados = cobros.reduce(
-    (acc: Record<string, GrupoCobros>, cobro: Cobro) => {
-      const prestamo = prestamos.find(
-        (p: Prestamo) => p.id === cobro.prestamoId
-      );
-      if (!prestamo) return acc;
+  // Manejadores de eventos
+  const handleBusquedaChange = (busqueda: string) => {
+    dispatch(setBusqueda(busqueda));
+  };
 
-      const clienteId = prestamo.clienteId;
-      if (!acc[clienteId]) {
-        acc[clienteId] = {
-          clienteId,
-          nombre: getClienteNombre(clienteId),
-          cedula: getClienteCedula(clienteId),
-          cobros: [],
-        };
-      }
-      acc[clienteId].cobros.push(cobro);
-      return acc;
-    },
-    {}
-  );
+  const handleTipoVistaChange = (tipoVista: "tarjetas" | "lista") => {
+    dispatch(setTipoVista(tipoVista));
+  };
 
-  const cobrosAgrupadosArray: GrupoCobros[] = Object.values(cobrosAgrupados);
-
-  // Filtrar cobros por cliente o cédula
-  const cobrosFiltrados = cobrosAgrupadosArray.filter((grupo) => {
-    const nombre = grupo.nombre.toLowerCase();
-    const cedula = grupo.cedula.toLowerCase();
+  if (loading) {
     return (
-      nombre.includes(busqueda.toLowerCase()) ||
-      cedula.includes(busqueda.toLowerCase())
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600'></div>
+      </div>
     );
-  });
+  }
 
-  // Calcular cobros pendientes para hoy
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const pendientesHoy: any[] = [];
-
-  prestamos.forEach((prestamo) => {
-    if (prestamo.estado !== "activo" && prestamo.estado !== "atrasado") return;
-    const cliente = clientes.find((c) => c.id === prestamo.clienteId);
-    const producto = productos.find((p) => p.id === prestamo.productoId);
-    const fechaInicio = new Date(prestamo.fechaInicio);
-    const cobrosPrestamo = cobros.filter(
-      (c) => c.prestamoId === prestamo.id && c.tipo === "cuota"
+  if (error) {
+    return (
+      <div className='p-6 bg-red-50 rounded-lg'>
+        <h2 className='text-lg font-semibold text-red-600 mb-2'>Error</h2>
+        <p className='text-red-700'>{error}</p>
+      </div>
     );
-    for (let i = 0; i < prestamo.cuotas; i++) {
-      const fechaCuota = new Date(fechaInicio);
-      fechaCuota.setDate(fechaInicio.getDate() + i * 7);
-      if (fechaCuota.getTime() === hoy.getTime()) {
-        if (cobrosPrestamo.length > i) continue; // Ya pagada
-        pendientesHoy.push({
-          clienteId: prestamo.clienteId,
-          nombre: cliente ? cliente.nombre : "-",
-          cedula: cliente ? cliente.cedula : "",
-          telefono: cliente ? cliente.telefono : undefined,
-          producto: producto ? producto.nombre : "",
-          monto: prestamo.monto / prestamo.cuotas,
-          cuota: i + 1,
-        });
-      }
-    }
-  });
+  }
 
   return (
-    <div className='p-4 max-w-7xl mx-auto'>
-      <h1 className='text-2xl font-bold mb-6'>Cobros del Día</h1>
+    <div className='p-6 max-w-7xl mx-auto'>
+      {/* Header */}
+      <div className='mb-8'>
+        <h1 className='text-3xl font-bold text-gray-800 mb-2'>
+          📅 Cobros del Día
+        </h1>
+        <p className='text-gray-600'>
+          Gestiona todos los cobros programados para hoy
+        </p>
+      </div>
 
-      {loading ? (
-        <div className='flex justify-center items-center min-h-[200px]'>
-          <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600'></div>
+      {/* Estadísticas */}
+      <div className='mb-8'>
+        <EstadisticasCobrosDelDia estadisticas={estadisticas} />
+      </div>
+
+      {/* Filtros */}
+      <div className='mb-8'>
+        <FiltrosCobrosDelDia
+          filters={filters}
+          onBusquedaChange={handleBusquedaChange}
+          onTipoVistaChange={handleTipoVistaChange}
+        />
+      </div>
+
+      {/* Contenido principal */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+        {/* Cobros Pendientes */}
+        <div>
+          <div className='flex items-center gap-2 mb-6'>
+            <h2 className='text-xl font-semibold text-gray-800'>
+              🔔 Cobros Pendientes
+            </h2>
+            <span className='bg-orange-100 text-orange-800 text-sm font-medium px-2.5 py-0.5 rounded-full'>
+              {cobrosPendientesFiltrados.length}
+            </span>
+          </div>
+
+          {filters.tipoVista === "tarjetas" ? (
+            <div className='grid gap-4'>
+              {cobrosPendientesFiltrados.map((cobro) => (
+                <TarjetaCobroPendiente
+                  key={`${cobro.financiamientoId}-${cobro.cuota}`}
+                  cobro={cobro}
+                  onLlamar={llamarCliente}
+                  onCobrar={registrarCobro}
+                />
+              ))}
+              {cobrosPendientesFiltrados.length === 0 && (
+                <div className='text-center py-12 bg-white rounded-lg shadow'>
+                  <div className='text-gray-400 mb-4'>🎉</div>
+                  <h3 className='text-lg font-semibold text-gray-600 mb-2'>
+                    ¡Excelente trabajo!
+                  </h3>
+                  <p className='text-gray-500'>
+                    No hay cobros pendientes para hoy
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <ListaCobrosPendientes
+              cobros={cobrosPendientesFiltrados}
+              onLlamar={llamarCliente}
+              onCobrar={registrarCobro}
+            />
+          )}
         </div>
-      ) : (
-        <>
-          {/* Resumen solo de cobros del día */}
-          <ResumenDelDiaCobros cobros={cobros} prestamos={prestamos} />
-          {/* Lista de cobros pendientes para hoy */}
-          <ListaCobrosPendientes
-            pendientes={pendientesHoy}
-            onRegistrarCobro={(pendiente) => {}}
-            onContactarCliente={(pendiente) => {}}
-          />
-          {/* Lista de cobros realizados */}
-          <ListaCobrosRealizados
-            cobrosAgrupados={cobrosFiltrados}
-            onVerHistorial={(clienteId) => {}}
-            onImprimirRecibo={(cobro) => {}}
-          />
-          {/* Buscador de cobros */}
-          <BusquedaCobros busqueda={busqueda} onBusquedaChange={setBusqueda} />
-          {/* Tabla de cobros agrupados */}
-          <TablaCobros
-            cobrosAgrupados={cobrosFiltrados}
-            prestamos={prestamos}
-          />
-        </>
-      )}
+
+        {/* Cobros Realizados */}
+        <div>
+          <div className='flex items-center gap-2 mb-6'>
+            <h2 className='text-xl font-semibold text-gray-800'>
+              ✅ Cobros Realizados
+            </h2>
+            <span className='bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full'>
+              {cobrosAgrupadosFiltrados.length}
+            </span>
+          </div>
+
+          <CobrosRealizados cobrosAgrupados={cobrosAgrupadosFiltrados} />
+        </div>
+      </div>
     </div>
   );
 }
