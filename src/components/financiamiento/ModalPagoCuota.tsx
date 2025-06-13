@@ -117,6 +117,8 @@ export default function ModalPagoCuota({
   };
 
   // Verificar comprobante con debounce
+  // Nota: verificarComprobanteDuplicado no se incluye en las dependencias porque
+  // está memoizada en el hook Redux y su inclusión causa re-renders innecesarios
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (tipoPago !== "efectivo" && comprobante.trim()) {
@@ -160,7 +162,8 @@ export default function ModalPagoCuota({
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [comprobante, tipoPago]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comprobante, tipoPago]); // Removido verificarComprobanteDuplicado de las dependencias
 
   // Limpiar validación cuando cambie a efectivo
   useEffect(() => {
@@ -308,7 +311,7 @@ export default function ModalPagoCuota({
 
       try {
         console.log("🔍 VERIFICACIÓN FINAL: Comprobante", comprobante.trim());
-        const esDuplicadoFinal = await cobrosDB.verificarComprobanteDuplicado(
+        const esDuplicadoFinal = await verificarComprobanteDuplicado(
           comprobante.trim()
         );
 
