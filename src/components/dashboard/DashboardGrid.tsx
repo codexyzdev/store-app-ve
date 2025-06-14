@@ -38,6 +38,11 @@ export const DashboardGrid = () => {
             icon={<span className='text-4xl'>💰</span>}
             href='/financiamiento-cuota'
           />
+          <DashboardCard
+            title='Ventas al Contado'
+            icon={<span className='text-4xl'>💵</span>}
+            href='/ventas-contado'
+          />
         </div>
       </div>
 

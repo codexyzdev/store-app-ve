@@ -24,9 +24,10 @@ export default function FinanciamientosCompletadosPage() {
   // Filtrar financiamientos completados
   const financiamientosCompletados = useMemo(() => {
     return financiamientos.filter((f) => {
-      // Considerar como completado si se marca así o si el total cobrado >= monto
-      if (f.tipoVenta === "contado") return true;
+      // Excluir ventas al contado, sólo evaluar financiamientos a cuotas
+      if (f.tipoVenta !== "cuotas") return false;
 
+      // Considerar completado si el total cobrado >= monto
       const cobrosFin = cobros.filter(
         (c) =>
           c.financiamientoId === f.id &&

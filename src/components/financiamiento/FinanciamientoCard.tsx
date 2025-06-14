@@ -62,7 +62,10 @@ export const FinanciamientoCard = ({
                   N° Control:
                 </span>
                 <span className='px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-lg text-sm font-bold tracking-wide'>
-                  {formatNumeroControl(financiamiento.numeroControl, "F")}
+                  {formatNumeroControl(
+                    financiamiento.numeroControl,
+                    financiamiento.tipoVenta === "cuotas" ? "F" : "C"
+                  )}
                 </span>
               </div>
             )}

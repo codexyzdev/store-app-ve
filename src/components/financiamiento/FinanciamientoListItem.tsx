@@ -7,6 +7,8 @@ import {
   getInitials,
 } from "@/utils/financiamientoHelpers";
 
+import { formatNumeroControl } from "@/utils/format";
+
 interface FinanciamientoListItemProps {
   financiamiento: FinanciamientoCuota;
   clienteInfo: ClienteInfo;
@@ -39,8 +41,11 @@ export const FinanciamientoListItem = memo(
                 </h3>
                 {financiamiento.numeroControl && (
                   <span className='px-2 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded text-xs font-bold tracking-wide'>
-                    F-
-                    {financiamiento.numeroControl.toString().padStart(3, "0")}
+                    {formatNumeroControl(
+                      financiamiento.numeroControl,
+                      financiamiento.tipoVenta === "cuotas" ? "F" : "C",
+                      3
+                    )}
                   </span>
                 )}
               </div>

@@ -38,6 +38,7 @@ export default function FinanciamientoCuotaPage() {
     cobros,
     setBusqueda,
     setEstado,
+    setTipoVenta,
     updateFiltersWithData,
     initialized,
   } = useFinanciamientosRedux();
@@ -57,6 +58,14 @@ export default function FinanciamientoCuotaPage() {
       updateFiltersWithData(clientes, productos);
     }
   }, [clientes, productos, updateFiltersWithData]);
+
+  // Establecer tipoVenta a "cuotas" al montar y limpiarlo al desmontar
+  useEffect(() => {
+    setTipoVenta("cuotas");
+    return () => {
+      setTipoVenta("todos");
+    };
+  }, [setTipoVenta]);
 
   // Usar financiamientos filtrados de Redux
   const financiamientosParaMostrar =
