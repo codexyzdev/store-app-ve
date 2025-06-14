@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { FinanciamientoStats } from "@/components/financiamiento/FinanciamientoStats";
 import { FinanciamientoCard } from "@/components/financiamiento/FinanciamientoCard";
 import { FinanciamientoListItem } from "@/components/financiamiento/FinanciamientoListItem";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -31,7 +30,7 @@ export default function FinanciamientoCuotaPage() {
   const {
     financiamientosFiltrados,
     filters,
-    estadisticas,
+  
     loading: financiamientosLoading,
     error: financiamientosError,
     financiamientos,
@@ -168,34 +167,7 @@ export default function FinanciamientoCuotaPage() {
         </div>
 
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
-          {/* Indicador de Redux */}
-          {initialized && (
-            <div className='mb-4'>
-              <div className='bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3'>
-                <div className='flex items-center gap-3'>
-                  <div className='w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>
-                    <span className='text-white text-xs font-bold'>✓</span>
-                  </div>
-                  <span className='text-green-800 font-medium text-sm'>
-                    🚀 Redux Habilitado - Filtros avanzados y estadísticas
-                    optimizadas
-                  </span>
-                  <div className='ml-auto flex items-center gap-1 text-xs text-green-600'>
-                    <span>📊 {financiamientosFiltrados.length} resultados</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Estadísticas */}
-          <div className='mb-6 sm:mb-8'>
-            <FinanciamientoStats
-              financiamientos={financiamientos}
-              cobros={cobros}
-              estadisticasRedux={initialized ? estadisticas : undefined}
-            />
-          </div>
+          
 
           {/* Filtros y controles */}
           <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8'>
@@ -232,7 +204,6 @@ export default function FinanciamientoCuotaPage() {
                           | "todos"
                           | "activo"
                           | "atrasado"
-                          | "completado"
                       )
                     }
                     className='w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white'
@@ -240,7 +211,7 @@ export default function FinanciamientoCuotaPage() {
                     <option value='todos'>📊 Todos los estados</option>
                     <option value='activo'>✅ Activos</option>
                     <option value='atrasado'>⚠️ Atrasados</option>
-                    <option value='completado'>💚 Completados</option>
+                  
                   </select>
                 </div>
 
