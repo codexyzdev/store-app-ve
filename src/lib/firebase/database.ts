@@ -39,8 +39,7 @@ export interface FinanciamientoCuota {
   estado: 'activo' | 'completado' | 'atrasado';
   productoId: string; // Mantener para compatibilidad con financiamientos existentes
   productos?: ProductoFinanciamiento[]; // Array de productos para financiamientos agrupados
-  tipoVenta: 'contado' | 'cuotas';
-  pagado?: boolean; // solo para contado
+  tipoVenta: 'cuotas';
   descripcion?: string;
 }
 
@@ -77,7 +76,17 @@ export interface Producto {
   updatedAt: number;
 }
 
-
+// Nueva interfaz para Ventas al Contado (sin cuotas ni estados de financiamiento)
+export interface VentaContado {
+  id: string;
+  numeroControl: number;
+  clienteId: string;
+  monto: number;
+  fecha: number; // fecha de la venta (timestamp)
+  productoId: string;
+  productos?: ProductoFinanciamiento[]; // Para ventas con múltiples productos
+  descripcion?: string;
+}
 
 // Funciones CRUD para Clientes
 export const clientesDB = {
@@ -559,4 +568,54 @@ async function verificarCedulaUnica(cedula: string, idExcluir?: string): Promise
     // En caso de error, permitir la operación para no bloquear la funcionalidad
     return true;
   }
-} 
+}
+
+// CRUD para ventas al contado
+export const ventasContadoDB = {
+  async crear(venta: Omit<VentaContado, "id" | "numeroControl">) {
+    // Obtener contador de ventas al contado
+    const numeroControl = await contadoresDB.obtenerSiguiente("ventasContado");
+
+    const ventasRef = ref(database, "ventasContado");
+    const newVentaRef = push(ventasRef);
+    const id = newVentaRef.key;
+    if (!id) throw new Error("Error al generar ID");
+
+    const nuevaVenta = { ...venta, id, numeroControl } as VentaContado;
+    await set(newVentaRef, nuevaVenta);
+    return nuevaVenta;
+  },
+
+  async obtener(id: string) {
+    const snapshot = await get(ref(database, `ventasContado/${id}`));
+    return snapshot.val() as VentaContado;
+  },
+
+  async actualizar(id: string, datos: Partial<VentaContado>) {
+    await update(ref(database, `ventasContado/${id}`), datos);
+  },
+
+  async eliminar(id: string) {
+    await remove(ref(database, `ventasContado/${id}`));
+  },
+
+  // Suscripción
+  suscribir(callback: (ventas: VentaContado[]) => void) {
+    const ventasRef = ref(database, "ventasContado");
+
+    const unsubscribe = onValue(
+      ventasRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        const ventas = data ? Object.values(data) : [];
+        callback(ventas as VentaContado[]);
+      },
+      (error) => {
+        console.error("❌ Error en suscripción de ventas al contado:", error);
+        callback([]);
+      }
+    );
+
+    return unsubscribe;
+  },
+}; 

@@ -27,13 +27,14 @@ export default function FinanciamientosCompletadosPage() {
       // Excluir ventas al contado, sólo evaluar financiamientos a cuotas
       if (f.tipoVenta !== "cuotas") return false;
 
-      // Considerar completado si el total cobrado >= monto
+      // Considerar completado si está marcado como completado o si el total cobrado >= monto
       const cobrosFin = cobros.filter(
         (c) =>
           c.financiamientoId === f.id &&
           (c.tipo === "cuota" || c.tipo === "inicial")
       );
       const totalCobradoItem = cobrosFin.reduce((acc, c) => acc + c.monto, 0);
+      if (f.estado === "completado") return true;
       return totalCobradoItem >= f.monto;
     });
   }, [financiamientos, cobros]);

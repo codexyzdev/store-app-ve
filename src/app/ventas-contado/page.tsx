@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -12,39 +11,46 @@ import {
   getProductoNombre,
 } from "@/utils/financiamientoHelpers";
 
-export default function VentasContadoPage() {
-  const {
-    financiamientos,
-    setTipoVenta,
-    filters,
-    setBusqueda,
-    loading,
-    error,
-  } = useFinanciamientosRedux();
+import { ventasContadoDB, VentaContado } from "@/lib/firebase/database";
 
+export default function VentasContadoPage() {
   const { clientes } = useClientesRedux();
   const { productos } = useProductosRedux();
 
-  // Fijar tipoVenta = "contado" al entrar
-  useEffect(() => {
-    setTipoVenta("contado");
-    return () => {
-      setTipoVenta("todos");
-    };
-  }, [setTipoVenta]);
+  const [ventas, setVentas] = useState<VentaContado[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
 
-  // Construir lista de ventas al contado
-  const ventasContado = useMemo(() => {
-    return financiamientos.filter((f) => f.tipoVenta === "contado");
-  }, [financiamientos]);
+  // Suscripción tiempo real a ventas al contado
+  useEffect(() => {
+    const unsub = ventasContadoDB.suscribir((lista) => {
+      setVentas(lista);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const ventasFiltradas = useMemo(() => {
+    const term = busqueda.toLowerCase();
+    return ventas.filter((v) => {
+      const cliente = getClienteInfo(v.clienteId, clientes);
+      const producto = getProductoNombre(v.productoId, productos);
+      return (
+        cliente?.nombre.toLowerCase().includes(term) ||
+        producto.toLowerCase().includes(term) ||
+        v.numeroControl.toString().includes(term)
+      );
+    });
+  }, [ventas, busqueda, clientes, productos]);
 
   const items = useMemo(() => {
-    return ventasContado.map((f) => {
+    return ventasFiltradas.map((f) => {
       const cliente = getClienteInfo(f.clienteId, clientes);
       const producto = getProductoNombre(f.productoId, productos);
       return { f, cliente, producto };
     });
-  }, [ventasContado, clientes, productos]);
+  }, [ventasFiltradas, clientes, productos]);
 
   if (error) {
     return (
@@ -56,15 +62,20 @@ export default function VentasContadoPage() {
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
         {/* Header */}
-        <div className='flex items-center justify-between mb-6'>
-          <h1 className='text-2xl sm:text-3xl font-bold text-gray-800'>
-            Ventas al Contado ({items.length})
-          </h1>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
+          <div className='flex items-center gap-4'>
+            <h1 className='text-2xl sm:text-3xl font-bold text-gray-800'>
+              Ventas al Contado ({items.length})
+            </h1>
+          </div>
+
           <Link
-            href='/financiamiento-cuota'
-            className='inline-flex items-center gap-2 text-sky-600 hover:text-sky-800 font-medium'
+            href='/ventas-contado/nuevo'
+            className='inline-flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
           >
-            ← Financiamientos
+            <span className='text-xl'>💵</span>
+            <span className='hidden sm:inline'>Nueva Venta</span>
+            <span className='sm:hidden'>Nueva</span>
           </Link>
         </div>
 
@@ -76,7 +87,7 @@ export default function VentasContadoPage() {
             </div>
             <input
               type='text'
-              value={filters.busqueda}
+              value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder='Buscar por cliente, producto o Nº de venta...'
               className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm'

@@ -2,7 +2,12 @@
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Producto, ProductoFinanciamiento } from "@/lib/firebase/database";
+import {
+  Producto,
+  ProductoFinanciamiento,
+  ventasContadoDB,
+  VentaContado,
+} from "@/lib/firebase/database";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
@@ -205,7 +210,32 @@ export default function NuevoFinanciamientoPage() {
         0
       ).getTime();
 
-      // Crear el financiamiento con múltiples productos
+      if (formData.tipoVenta === "contado") {
+        // ----- Crear venta al contado -----
+        const ventaData: Omit<VentaContado, "id" | "numeroControl"> = {
+          clienteId: formData.cliente,
+          monto: parseFloat(formData.monto),
+          fecha: fechaInicio,
+          productoId: productosCarrito[0].productoId,
+          productos: productosCarrito,
+          descripcion:
+            formData.descripcion ||
+            `Venta al contado de ${productosCarrito.length} producto$${
+              productosCarrito.length > 1 ? "s" : ""
+            }`,
+        } as any;
+
+        await ventasContadoDB.crear(ventaData);
+
+        setShowSuccess(true);
+        setTimeout(() => {
+          router.push("/ventas-contado");
+        }, 2000);
+        setLoading(false);
+        return;
+      }
+
+      // ----- Crear financiamiento a cuotas -----
       const financiamientoData = {
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
