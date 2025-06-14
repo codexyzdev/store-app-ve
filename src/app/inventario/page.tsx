@@ -13,6 +13,8 @@ import { InventarioStatsExpanded } from "@/components/inventario/InventarioStats
 import { InventarioFilters } from "@/components/inventario/InventarioFilters";
 import Modal from "@/components/Modal";
 import InventarioPrint from "@/components/inventario/InventarioPrint";
+import InventarioHTML from "@/components/inventario/InventarioHTML";
+import InventarioPDFViewer from "@/components/inventario/InventarioPDFViewer";
 import {
   setProductos,
   setSearchTerm,
@@ -45,6 +47,7 @@ export default function InventarioPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [mostrarImpresion, setMostrarImpresion] = useState(false);
+  const [mostrarPDF, setMostrarPDF] = useState(false);
   // Producto seleccionado para editar
   const [productoSeleccionado, setProductoSeleccionado] = useState<
     ProductoType | undefined
@@ -155,6 +158,15 @@ export default function InventarioPage() {
               >
                 <span className='text-xl'>🖨️</span>
                 Imprimir
+              </button>
+
+              {/* Botón generar PDF */}
+              <button
+                className='inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+                onClick={() => setMostrarPDF(true)}
+              >
+                <span className='text-xl'>📄</span>
+                Generar PDF
               </button>
 
               {/* Botón nuevo producto */}
@@ -319,7 +331,21 @@ export default function InventarioPage() {
             </div>
           </div>
 
-          <InventarioPrint productos={productosFiltrados} />
+          <InventarioHTML productos={productosFiltrados} />
+        </div>
+      </Modal>
+
+      {/* Modal de PDF */}
+      <Modal
+        isOpen={mostrarPDF}
+        onClose={() => setMostrarPDF(false)}
+        title='Generar PDF del Inventario'
+      >
+        <div className='h-96 lg:h-[500px]'>
+          <InventarioPDFViewer
+            productos={productosFiltrados}
+            showViewer={true}
+          />
         </div>
       </Modal>
 
