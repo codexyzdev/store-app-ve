@@ -49,7 +49,7 @@ export default function NuevoFinanciamientoPage() {
   });
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [cantidadProducto, setCantidadProducto] = useState(1);
-  const [cuotasIniciales, setCuotasIniciales] = useState(0);
+  const [cuotasIniciales, setCuotasIniciales] = useState(1);
   // Estados para búsqueda y selección de cliente
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] =
@@ -495,11 +495,7 @@ export default function NuevoFinanciamientoPage() {
                               <div className='text-sm text-blue-700'>
                                 {clienteSeleccionado.telefono}
                               </div>
-                              {clienteSeleccionado.direccion && (
-                                <div className='text-sm text-blue-600'>
-                                  {clienteSeleccionado.direccion}
-                                </div>
-                              )}
+                              
                             </div>
                             <span className='text-blue-600 text-xl'>✅</span>
                           </div>
