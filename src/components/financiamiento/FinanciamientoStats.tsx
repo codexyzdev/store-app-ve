@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
 import { FinanciamientosEstadisticas } from "@/store/slices/financiamientosSlice";
+import Link from "next/link";
 
 interface FinanciamientoCuota {
   id: string;
@@ -211,28 +212,56 @@ export function FinanciamientoStats({
 
   return (
     <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8'>
-      {stats.map((stat, index) => (
-        <div
-          key={stat.name}
-          className={`${stat.bgColor} rounded-xl p-4 border ${stat.borderColor} hover:shadow-md transition-all duration-200 group`}
-          style={{
-            animationDelay: `${index * 100}ms`,
-            animation: "fadeInUp 0.6s ease-out forwards",
-          }}
-        >
-          <div className='flex flex-col items-center text-center'>
-            <div
-              className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform duration-200`}
-            >
-              <span className='text-xl text-white'>{stat.icon}</span>
+      {stats.map((stat, index) =>
+        stat.name === "Completados" ? (
+          <Link
+            key={stat.name}
+            href='/financiamiento-cuota/completados'
+            className={`${stat.bgColor} rounded-xl p-4 border ${stat.borderColor} hover:shadow-md transition-all duration-200 group`}
+            style={{
+              animationDelay: `${index * 100}ms`,
+              animation: "fadeInUp 0.6s ease-out forwards",
+            }}
+          >
+            <div className='flex flex-col items-center text-center'>
+              <div
+                className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform duration-200`}
+              >
+                <span className='text-xl text-white'>{stat.icon}</span>
+              </div>
+              <div className={`text-2xl font-bold ${stat.textColor} mb-1`}>
+                {stat.value}
+              </div>
+              <div className='text-xs text-gray-600 font-medium'>
+                {stat.name}
+              </div>
             </div>
-            <div className={`text-2xl font-bold ${stat.textColor} mb-1`}>
-              {stat.value}
+          </Link>
+        ) : (
+          <div
+            key={stat.name}
+            className={`${stat.bgColor} rounded-xl p-4 border ${stat.borderColor} hover:shadow-md transition-all duration-200 group`}
+            style={{
+              animationDelay: `${index * 100}ms`,
+              animation: "fadeInUp 0.6s ease-out forwards",
+            }}
+          >
+            <div className='flex flex-col items-center text-center'>
+              <div
+                className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform duration-200`}
+              >
+                <span className='text-xl text-white'>{stat.icon}</span>
+              </div>
+              <div className={`text-2xl font-bold ${stat.textColor} mb-1`}>
+                {stat.value}
+              </div>
+              <div className='text-xs text-gray-600 font-medium'>
+                {stat.name}
+              </div>
             </div>
-            <div className='text-xs text-gray-600 font-medium'>{stat.name}</div>
           </div>
-        </div>
-      ))}
+        )
+      )}
 
       <style jsx>{`
         @keyframes fadeInUp {
