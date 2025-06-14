@@ -27,7 +27,7 @@ export function ProductoModal({
     descripcion: "",
     precio: 0,
     stock: 0,
-    stockMinimo: 5,
+    stockMinimo: 0,
     categoria: "",
     imagenes: [] as string[],
   });
@@ -44,7 +44,7 @@ export function ProductoModal({
         descripcion: producto.descripcion || "",
         precio: producto.precio,
         stock: producto.stock,
-        stockMinimo: producto.stockMinimo || 5,
+        stockMinimo: producto.stockMinimo || 0,
         categoria: producto.categoria,
         imagenes: producto.imagenes || [],
       });
@@ -54,7 +54,7 @@ export function ProductoModal({
         descripcion: "",
         precio: 0,
         stock: 0,
-        stockMinimo: 5,
+        stockMinimo: 0,
         categoria: "",
         imagenes: [],
       });
@@ -370,7 +370,7 @@ export function ProductoModal({
                   <input
                     type='number'
                     min='0'
-                    value={formData.stock}
+                    value={formData.stock === 0 ? "" : formData.stock}
                     onChange={(e) =>
                       handleInputChange("stock", parseInt(e.target.value) || 0)
                     }
@@ -396,7 +396,7 @@ export function ProductoModal({
                   <input
                     type='number'
                     min='0'
-                    value={formData.stockMinimo}
+                    value={formData.stockMinimo === 0 ? "" : formData.stockMinimo}
                     onChange={(e) =>
                       handleInputChange(
                         "stockMinimo",
