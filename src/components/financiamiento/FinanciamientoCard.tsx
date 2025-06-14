@@ -169,11 +169,9 @@ export const FinanciamientoCard = ({
               </>
             ) : (
               <>
-                <span className='text-sm text-green-700 font-medium flex items-center  gap-2'>
-                  <span className='text-sm font-bold px-2 py-1 rounded'>
-                    ✅
-                  </span>
-                  <span>Pagos al día</span>
+                <span className='text-sm text-green-700 font-medium px-2 py-1 flex items-center  gap-2'>
+                  <span>✅</span>
+                  Pagos al día
                 </span>
               </>
             )}
