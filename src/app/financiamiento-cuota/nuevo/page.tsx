@@ -50,7 +50,7 @@ export default function NuevoFinanciamientoPage() {
     cuotas: "15", // siempre 15 cuotas fijas
     fechaInicio: todayStr,
     descripcion: "",
-    tipoVenta: "cuotas", // por defecto cuotas
+    tipoVenta: "cuotas", // fijo a cuotas
   });
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [cantidadProducto, setCantidadProducto] = useState(1);
@@ -67,8 +67,7 @@ export default function NuevoFinanciamientoPage() {
       (acc, item) => acc + item.subtotal,
       0
     );
-    const montoConRecargo =
-      formData.tipoVenta === "contado" ? montoTotal : montoTotal * 1.5;
+    const montoConRecargo = montoTotal * 1.5; // siempre recargo 50%
     setFormData((prev) => ({
       ...prev,
       monto: Math.round(montoConRecargo).toString(),
@@ -210,45 +209,16 @@ export default function NuevoFinanciamientoPage() {
         0
       ).getTime();
 
-      if (formData.tipoVenta === "contado") {
-        // ----- Crear venta al contado -----
-        const ventaData: Omit<VentaContado, "id" | "numeroControl"> = {
-          clienteId: formData.cliente,
-          monto: parseFloat(formData.monto),
-          fecha: fechaInicio,
-          productoId: productosCarrito[0].productoId,
-          productos: productosCarrito,
-          descripcion:
-            formData.descripcion ||
-            `Venta al contado de ${productosCarrito.length} producto$${
-              productosCarrito.length > 1 ? "s" : ""
-            }`,
-        } as any;
-
-        await ventasContadoDB.crear(ventaData);
-
-        setShowSuccess(true);
-        setTimeout(() => {
-          router.push("/ventas-contado");
-        }, 2000);
-        setLoading(false);
-        return;
-      }
-
       // ----- Crear financiamiento a cuotas -----
       const financiamientoData = {
         clienteId: formData.cliente,
         monto: parseFloat(formData.monto),
-        cuotas: formData.tipoVenta === "contado" ? 0 : 15, // Siempre 15 cuotas para financiamiento
+        cuotas: 15,
         fechaInicio: fechaInicio,
-        estado:
-          formData.tipoVenta === "contado"
-            ? ("completado" as const)
-            : ("activo" as const),
+        estado: "activo" as const,
         productoId: productosCarrito[0].productoId, // Mantener compatibilidad con el primer producto
         productos: productosCarrito, // Array de productos
-        tipoVenta: formData.tipoVenta as "contado" | "cuotas",
-        ...(formData.tipoVenta === "contado" ? { pagado: true } : {}),
+        tipoVenta: "cuotas",
         descripcion:
           formData.descripcion ||
           `Financiamiento de ${productosCarrito.length} producto${
@@ -775,9 +745,6 @@ export default function NuevoFinanciamientoPage() {
                           <option value='cuotas'>
                             A cuotas (+50% recargo)
                           </option>
-                          <option value='contado'>
-                            Al contado (precio normal)
-                          </option>
                         </select>
                       </div>
 
@@ -805,8 +772,6 @@ export default function NuevoFinanciamientoPage() {
                         </div>
                         <p className='text-xs text-gray-500 mt-1'>
                           Calculado automáticamente
-                          {formData.tipoVenta === "cuotas" &&
-                            " (incluye 50% recargo)"}
                         </p>
                       </div>
 
@@ -994,9 +959,7 @@ export default function NuevoFinanciamientoPage() {
                         )}
                         <div className='flex justify-between'>
                           <span className='text-gray-700'>Tipo:</span>
-                          <span className='font-semibold capitalize'>
-                            {formData.tipoVenta}
-                          </span>
+                          <span className='font-semibold'>Cuotas</span>
                         </div>
                       </div>
                     </div>
@@ -1026,17 +989,9 @@ export default function NuevoFinanciamientoPage() {
                     ) : (
                       <>
                         <span>💾</span>
-                        {formData.tipoVenta === "contado"
-                          ? `Registrar Venta (${
-                              productosCarrito.length
-                            } producto${
-                              productosCarrito.length > 1 ? "s" : ""
-                            })`
-                          : `Crear Financiamiento (${
-                              productosCarrito.length
-                            } producto${
-                              productosCarrito.length > 1 ? "s" : ""
-                            })`}
+                        {`Crear Financiamiento (${
+                          productosCarrito.length
+                        } producto${productosCarrito.length > 1 ? "s" : ""})`}
                       </>
                     )}
                   </button>
