@@ -102,7 +102,7 @@ export const FinanciamientoCard = ({
                 Producto
               </span>
             </div>
-            <span className='text-sm font-semibold text-gray-900'>
+            <span className='text-sm font-semibold text-gray-900 line-clamp-2'>
               {productoNombre}
             </span>
           </div>

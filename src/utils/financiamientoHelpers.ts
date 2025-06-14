@@ -49,11 +49,11 @@ export const calcularFinanciamiento = (
 ): FinanciamientoCalculado => {
   const cobrosValidos = getCobrosFinanciamiento(financiamiento.id, cobros);
   const totalCobrado = cobrosValidos.reduce((acc, cobro) => acc + cobro.monto, 0);
-  const montoPendiente = financiamiento.monto - totalCobrado;
+  const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
   const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobrosValidos);
   const valorCuota = Math.round(financiamiento.monto / financiamiento.cuotas);
   const cuotasPagadas = cobrosValidos.length;
-  const progreso = (totalCobrado / financiamiento.monto) * 100;
+  const progreso = financiamiento.monto > 0 ? (totalCobrado / financiamiento.monto) * 100 : 0;
 
   const estadoInfo =
     cuotasAtrasadas > 0
@@ -68,8 +68,47 @@ export const calcularFinanciamiento = (
     cuotasAtrasadas,
     valorCuota,
     cuotasPagadas,
-    progreso,
+    progreso: Math.min(100, progreso),
     estadoInfo,
+  };
+};
+
+// Función para validar consistencia de cálculos
+export const validarConsistenciaFinanciamiento = (
+  financiamiento: FinanciamientoCuota,
+  calculado: FinanciamientoCalculado
+): { esConsistente: boolean; errores: string[] } => {
+  const errores: string[] = [];
+
+  // Validar que monto total = monto cobrado + monto pendiente
+  const sumaCalculada = calculado.totalCobrado + calculado.montoPendiente;
+  if (Math.abs(sumaCalculada - financiamiento.monto) > 0.01) {
+    errores.push(
+      `Inconsistencia en monto: Total=${financiamiento.monto}, Cobrado=${calculado.totalCobrado}, Pendiente=${calculado.montoPendiente}, Suma=${sumaCalculada}`
+    );
+  }
+
+  // Validar que el valor de cuota sea correcto
+  const valorCuotaEsperado = Math.round(financiamiento.monto / financiamiento.cuotas);
+  if (calculado.valorCuota !== valorCuotaEsperado) {
+    errores.push(
+      `Inconsistencia en valor de cuota: Esperado=${valorCuotaEsperado}, Calculado=${calculado.valorCuota}`
+    );
+  }
+
+  // Validar que el progreso esté entre 0 y 100
+  if (calculado.progreso < 0 || calculado.progreso > 100) {
+    errores.push(`Progreso fuera de rango: ${calculado.progreso}%`);
+  }
+
+  // Validar que el monto pendiente no sea negativo
+  if (calculado.montoPendiente < 0) {
+    errores.push(`Monto pendiente negativo: ${calculado.montoPendiente}`);
+  }
+
+  return {
+    esConsistente: errores.length === 0,
+    errores,
   };
 };
 

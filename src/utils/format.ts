@@ -3,5 +3,5 @@ export const formatNumeroControl = (
   prefijo: string = "C",
   longitud: number = 6
 ): string => {
-  return `#${prefijo}-${numero.toString().padStart(longitud, "0")}`;
+  return `${prefijo}-${numero.toString().padStart(longitud, "0")}`;
 }; 

@@ -43,8 +43,7 @@ export const FinanciamientoListItem = memo(
                   <span className='px-2 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded text-xs font-bold tracking-wide'>
                     {formatNumeroControl(
                       financiamiento.numeroControl,
-                      financiamiento.tipoVenta === "cuotas" ? "F" : "C",
-                      3
+                      financiamiento.tipoVenta === "cuotas" ? "F" : "C"
                     )}
                   </span>
                 )}

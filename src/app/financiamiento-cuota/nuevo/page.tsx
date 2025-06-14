@@ -2,12 +2,7 @@
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Producto,
-  ProductoFinanciamiento,
-  ventasContadoDB,
-  VentaContado,
-} from "@/lib/firebase/database";
+import { Producto, ProductoFinanciamiento } from "@/lib/firebase/database";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
@@ -72,7 +67,7 @@ export default function NuevoFinanciamientoPage() {
       ...prev,
       monto: Math.round(montoConRecargo).toString(),
     }));
-  }, [productosCarrito, formData.tipoVenta]);
+  }, [productosCarrito]);
 
   // Actualiza formData cuando se selecciona un cliente
   useEffect(() => {
@@ -229,7 +224,7 @@ export default function NuevoFinanciamientoPage() {
       const nuevoFinanciamiento = await crearFinanciamiento(financiamientoData);
 
       // Si hay cuotas iniciales, crear cobros para las últimas cuotas
-      if (formData.tipoVenta === "cuotas" && cuotasIniciales > 0) {
+      if (cuotasIniciales > 0) {
         const valorCuota = parseFloat(formData.monto) / 15;
 
         for (let i = 0; i < cuotasIniciales; i++) {
@@ -727,27 +722,6 @@ export default function NuevoFinanciamientoPage() {
                     </div>
 
                     <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-                      {/* Tipo de venta */}
-                      <div>
-                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
-                          Tipo de Venta
-                        </label>
-                        <select
-                          value={formData.tipoVenta}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              tipoVenta: e.target.value as "contado" | "cuotas",
-                            })
-                          }
-                          className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
-                        >
-                          <option value='cuotas'>
-                            A cuotas (+50% recargo)
-                          </option>
-                        </select>
-                      </div>
-
                       {/* Monto */}
                       <div>
                         <label className='block text-sm font-semibold text-gray-700 mb-2'>
@@ -771,77 +745,66 @@ export default function NuevoFinanciamientoPage() {
                           />
                         </div>
                         <p className='text-xs text-gray-500 mt-1'>
-                          Calculado automáticamente
+                          Calculado automáticamente (+50% recargo)
                         </p>
                       </div>
 
-                      {/* Cuotas Fijas */}
-                      {formData.tipoVenta === "cuotas" && (
-                        <div>
-                          <label className='block text-sm font-semibold text-gray-700 mb-2'>
-                            Plan de Cuotas
-                          </label>
-                          <div className='w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600'>
-                            15 cuotas semanales (fijo)
-                          </div>
-                          {parseFloat(formData.monto) > 0 && (
-                            <p className='text-xs text-gray-500 mt-1'>
-                              Valor por cuota: $
-                              {Math.round(
-                                parseFloat(formData.monto) / 15
-                              ).toLocaleString()}
-                            </p>
-                          )}
+                      {/* Plan de Cuotas */}
+                      <div>
+                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                          Plan de Cuotas
+                        </label>
+                        <div className='w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600'>
+                          15 cuotas semanales (fijo)
                         </div>
-                      )}
+                        {parseFloat(formData.monto) > 0 && (
+                          <p className='text-xs text-gray-500 mt-1'>
+                            Valor por cuota: $
+                            {Math.round(
+                              parseFloat(formData.monto) / 15
+                            ).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
 
                       {/* Cuotas Iniciales */}
-                      {formData.tipoVenta === "cuotas" && (
-                        <div>
-                          <label className='block text-sm font-semibold text-gray-700 mb-2'>
-                            Cuotas Iniciales (Opcional)
-                          </label>
-                          <select
-                            value={cuotasIniciales}
-                            onChange={(e) =>
-                              setCuotasIniciales(parseInt(e.target.value))
-                            }
-                            className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
-                          >
-                            <option value={0}>Sin pago inicial</option>
-                            <option value={1}>1 cuota inicial</option>
-                            <option value={2}>2 cuotas iniciales</option>
-                            <option value={3}>3 cuotas iniciales</option>
-                            <option value={4}>4 cuotas iniciales</option>
-                          </select>
-                          {cuotasIniciales > 0 &&
-                            parseFloat(formData.monto) > 0 && (
-                              <div className='mt-2 space-y-1'>
-                                <p className='text-xs text-blue-600 font-medium'>
-                                  💰 Pago inicial: $
-                                  {Math.round(
-                                    (parseFloat(formData.monto) / 15) *
-                                      cuotasIniciales
-                                  ).toLocaleString()}
-                                </p>
-                                <p className='text-xs text-gray-500'>
-                                  Se marcarán como pagadas las últimas{" "}
-                                  {cuotasIniciales} cuota
-                                  {cuotasIniciales > 1 ? "s" : ""} del plan
-                                </p>
-                              </div>
-                            )}
-                        </div>
-                      )}
+                      <div>
+                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                          Cuotas Iniciales
+                        </label>
+                        <select
+                          value={cuotasIniciales}
+                          onChange={(e) =>
+                            setCuotasIniciales(parseInt(e.target.value))
+                          }
+                          className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                        >
+                          <option value={1}>1 cuota inicial</option>
+                          <option value={2}>2 cuotas iniciales</option>
+                          <option value={3}>3 cuotas iniciales</option>
+                          <option value={4}>4 cuotas iniciales</option>
+                        </select>
+                        {cuotasIniciales > 0 &&
+                          parseFloat(formData.monto) > 0 && (
+                            <div className='mt-2 space-y-1'>
+                              <p className='text-xs text-blue-600 font-medium'>
+                                💰 Pago inicial: $
+                                {Math.round(
+                                  (parseFloat(formData.monto) / 15) *
+                                    cuotasIniciales
+                                ).toLocaleString()}
+                              </p>
+                              <p className='text-xs text-gray-500'>
+                                Se marcarán como pagadas las últimas{" "}
+                                {cuotasIniciales} cuota
+                                {cuotasIniciales > 1 ? "s" : ""} del plan
+                              </p>
+                            </div>
+                          )}
+                      </div>
 
                       {/* Fecha de inicio */}
-                      <div
-                        className={
-                          formData.tipoVenta === "contado"
-                            ? "md:col-span-2"
-                            : ""
-                        }
-                      >
+                      <div className='md:col-span-3'>
                         <label className='block text-sm font-semibold text-gray-700 mb-2'>
                           Fecha de Inicio
                         </label>
@@ -891,10 +854,7 @@ export default function NuevoFinanciamientoPage() {
                 {productosCarrito.length > 0 && (
                   <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
                     <h3 className='text-lg font-bold text-blue-900 mb-4 flex items-center gap-2'>
-                      📋 Resumen del{" "}
-                      {formData.tipoVenta === "contado"
-                        ? "Pago"
-                        : "Financiamiento"}
+                      📋 Resumen del Financiamiento
                     </h3>
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
                       <div className='space-y-2'>
@@ -910,16 +870,12 @@ export default function NuevoFinanciamientoPage() {
                             ${montoTotal.toFixed(0)}
                           </span>
                         </div>
-                        {formData.tipoVenta === "cuotas" && (
-                          <div className='flex justify-between'>
-                            <span className='text-gray-700'>
-                              Recargo (50%):
-                            </span>
-                            <span className='font-semibold text-orange-600'>
-                              +${(montoTotal * 0.5).toFixed(0)}
-                            </span>
-                          </div>
-                        )}
+                        <div className='flex justify-between'>
+                          <span className='text-gray-700'>Recargo (50%):</span>
+                          <span className='font-semibold text-orange-600'>
+                            +${(montoTotal * 0.5).toFixed(0)}
+                          </span>
+                        </div>
                       </div>
                       <div className='space-y-2'>
                         <div className='flex justify-between'>
@@ -928,38 +884,34 @@ export default function NuevoFinanciamientoPage() {
                             ${formData.monto}
                           </span>
                         </div>
-                        {formData.tipoVenta === "cuotas" && (
-                          <>
-                            <div className='flex justify-between'>
-                              <span className='text-gray-700'>Cuotas:</span>
-                              <span className='font-semibold'>
-                                15 de $
-                                {Math.round(
-                                  parseFloat(formData.monto) / 15
-                                ).toLocaleString()}
-                              </span>
-                            </div>
-                            {cuotasIniciales > 0 && (
-                              <div className='flex justify-between'>
-                                <span className='text-gray-700'>
-                                  Pago inicial:
-                                </span>
-                                <span className='font-semibold text-blue-600'>
-                                  $
-                                  {Math.round(
-                                    (parseFloat(formData.monto) / 15) *
-                                      cuotasIniciales
-                                  ).toLocaleString()}{" "}
-                                  ({cuotasIniciales} cuota
-                                  {cuotasIniciales > 1 ? "s" : ""})
-                                </span>
-                              </div>
-                            )}
-                          </>
+                        <div className='flex justify-between'>
+                          <span className='text-gray-700'>Cuotas:</span>
+                          <span className='font-semibold'>
+                            15 de $
+                            {Math.round(
+                              parseFloat(formData.monto) / 15
+                            ).toLocaleString()}
+                          </span>
+                        </div>
+                        {cuotasIniciales > 0 && (
+                          <div className='flex justify-between'>
+                            <span className='text-gray-700'>Pago inicial:</span>
+                            <span className='font-semibold text-blue-600'>
+                              $
+                              {Math.round(
+                                (parseFloat(formData.monto) / 15) *
+                                  cuotasIniciales
+                              ).toLocaleString()}{" "}
+                              ({cuotasIniciales} cuota
+                              {cuotasIniciales > 1 ? "s" : ""})
+                            </span>
+                          </div>
                         )}
                         <div className='flex justify-between'>
-                          <span className='text-gray-700'>Tipo:</span>
-                          <span className='font-semibold'>Cuotas</span>
+                          <span className='text-gray-700'>Modalidad:</span>
+                          <span className='font-semibold'>
+                            15 Cuotas Semanales
+                          </span>
                         </div>
                       </div>
                     </div>
