@@ -46,18 +46,6 @@ import InventarioPDFViewer from "@/components/inventario/InventarioPDFViewer";
 - `productos`: Array de productos a incluir en el PDF
 - `showViewer` (opcional): Mostrar vista previa del PDF (default: true)
 
-### 3. `InventarioHTML`
-
-**Archivo:** `InventarioHTML.tsx`
-
-Versión HTML del inventario para impresión tradicional (mantiene compatibilidad).
-
-```tsx
-import InventarioHTML from "@/components/inventario/InventarioHTML";
-
-<InventarioHTML productos={productos} />;
-```
-
 ## 🚀 Formas de Uso
 
 ### Opción 1: Descarga Directa
@@ -188,18 +176,13 @@ pnpm add @react-pdf/renderer
 - [Lista de propiedades CSS compatibles](https://react-pdf.org/styling)
 - [Ejemplos de componentes](https://react-pdf.org/components)
 
-## 🔄 Migración desde Impresión HTML
+## ✨ Ventajas del PDF
 
-Si vienes de usar impresión HTML tradicional:
-
-1. **Antes:** `window.print()` con estilos CSS
-2. **Ahora:** Componentes React-PDF con `StyleSheet`
-
-3. **Ventajas del PDF:**
-   - Formato consistente en todos los dispositivos
-   - No depende del navegador para la impresión
-   - Mejor control sobre el diseño
-   - Posibilidad de guardar y compartir fácilmente
+- **Formato consistente** en todos los dispositivos
+- **No depende del navegador** para la impresión
+- **Mejor control sobre el diseño** y layout
+- **Posibilidad de guardar y compartir** fácilmente
+- **Calidad profesional** para documentos comerciales
 
 ## 📝 Ejemplo Completo
 

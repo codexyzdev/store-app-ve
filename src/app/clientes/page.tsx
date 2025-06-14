@@ -8,13 +8,13 @@ import { Cliente } from "@/lib/firebase/database";
 
 import { FiltrosAvanzados } from "@/components/clientes/FiltrosAvanzados";
 import Modal from "@/components/Modal";
-import ClientesPrint from "@/components/clientes/ClientesPrint";
+import ClientesPDFViewer from "@/components/clientes/ClientesPDFViewer";
 import EditarClienteForm from "@/components/clientes/EditarClienteForm";
 // import { DiagnosticoFirebase } from "@/components/DiagnosticoFirebase";
 
 export default function ClientesPage() {
   const [vistaCards, setVistaCards] = useState(true);
-  const [mostrarImpresion, setMostrarImpresion] = useState(false);
+  const [mostrarPDF, setMostrarPDF] = useState(false);
   const [mostrarEdicion, setMostrarEdicion] = useState(false);
   const [clienteAEditar, setClienteAEditar] = useState<Cliente | null>(null);
   const router = useRouter();
@@ -95,12 +95,12 @@ export default function ClientesPage() {
               </Link>
               <button
                 type='button'
-                onClick={() => setMostrarImpresion(true)}
-                className='inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
-                title='Imprimir Clientes'
+                onClick={() => setMostrarPDF(true)}
+                className='inline-flex items-center gap-3 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+                title='Generar PDF de Clientes'
               >
-                <span className='text-xl'>🖨️</span>
-                Imprimir Lista
+                <span className='text-xl'>📄</span>
+                Generar PDF
               </button>
             </div>
           </div>
@@ -349,36 +349,17 @@ export default function ClientesPage() {
           </div>
         )}
 
-        {/* Modal de impresión */}
+        {/* Modal de PDF */}
         <Modal
-          isOpen={mostrarImpresion}
-          onClose={() => setMostrarImpresion(false)}
-          title='Imprimir Clientes'
+          isOpen={mostrarPDF}
+          onClose={() => setMostrarPDF(false)}
+          title='Generar PDF de Clientes'
         >
-          <div className='print-container'>
-            <div className='no-print mb-4 text-center'>
-              <p className='text-gray-600 mb-3'>
-                Haz clic en "Imprimir" o usa Ctrl+P para imprimir esta lista de
-                clientes.
-              </p>
-              <div className='flex gap-2 justify-center'>
-                <button
-                  onClick={() => window.print()}
-                  className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2'
-                >
-                  <span>🖨️</span>
-                  Imprimir
-                </button>
-                <button
-                  onClick={() => setMostrarImpresion(false)}
-                  className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-
-            <ClientesPrint clientes={clientesParaMostrar} />
+          <div className='h-96 lg:h-[500px]'>
+            <ClientesPDFViewer
+              clientes={clientesParaMostrar}
+              showViewer={true}
+            />
           </div>
         </Modal>
 
@@ -396,30 +377,6 @@ export default function ClientesPage() {
             />
           </Modal>
         )}
-
-        {/* Estilos para impresión */}
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `@media print {
-              .no-print { display: none !important; }
-              .print-container {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-              }
-              .fixed.inset-0 > div:first-child { display: none !important; }
-              .clientes-print {
-                position: static !important;
-                transform: none !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-                margin: 0 !important;
-                padding: 20px !important;
-              }
-            }`,
-          }}
-        />
       </div>
     </div>
   );

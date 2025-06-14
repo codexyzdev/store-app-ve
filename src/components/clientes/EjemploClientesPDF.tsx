@@ -1,48 +1,54 @@
 import React from "react";
 import { PDFDownloadLink, BlobProvider } from "@react-pdf/renderer";
-import { Producto } from "@/lib/firebase/database";
-import InventarioPrint from "./InventarioPrint";
-import InventarioPDFViewer from "./InventarioPDFViewer";
+import { Cliente } from "@/lib/firebase/database";
+import ClientesPrint from "./ClientesPrint";
+import ClientesPDFViewer from "./ClientesPDFViewer";
 
 // Datos de ejemplo para demostrar el funcionamiento
-const productosEjemplo: Producto[] = [
+const clientesEjemplo: Cliente[] = [
   {
     id: "1",
-    nombre: "Laptop Dell Inspiron",
-    categoria: "Electrónicos",
-    precio: 850.0,
-    stock: 5,
-    descripcion: "Laptop para uso profesional",
-    fechaCreacion: new Date(),
-    fechaActualizacion: new Date(),
+    numeroControl: 1001,
+    nombre: "María Elena Rodríguez",
+    cedula: "0801-1985-12345",
+    telefono: "9876-5432",
+    direccion: "Col. Centro, Tegucigalpa",
+    createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000, // Hace 30 días
   },
   {
     id: "2",
-    nombre: "Mouse Inalámbrico",
-    categoria: "Accesorios",
-    precio: 25.5,
-    stock: 20,
-    descripcion: "Mouse ergonómico inalámbrico",
-    fechaCreacion: new Date(),
-    fechaActualizacion: new Date(),
+    numeroControl: 1002,
+    nombre: "Carlos Alberto Martínez",
+    cedula: "0801-1990-67890",
+    telefono: "8765-4321",
+    direccion: "Col. Las Flores, San Pedro Sula",
+    createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000, // Hace 15 días
   },
   {
     id: "3",
-    nombre: "Teclado Mecánico",
-    categoria: "Accesorios",
-    precio: 120.0,
-    stock: 8,
-    descripcion: "Teclado mecánico RGB",
-    fechaCreacion: new Date(),
-    fechaActualizacion: new Date(),
+    numeroControl: 1003,
+    nombre: "Ana Sofía López",
+    cedula: "",
+    telefono: "7654-3210",
+    direccion: "Barrio El Centro, La Ceiba",
+    createdAt: Date.now() - 7 * 24 * 60 * 60 * 1000, // Hace 7 días
+  },
+  {
+    id: "4",
+    numeroControl: 1004,
+    nombre: "Juan Pablo Hernández",
+    cedula: "0801-1988-11111",
+    telefono: "",
+    direccion: "Col. Nueva Esperanza, Choloma",
+    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000, // Hace 2 días
   },
 ];
 
-const EjemploPDF: React.FC = () => {
+const EjemploClientesPDF: React.FC = () => {
   return (
     <div className='p-6 max-w-4xl mx-auto'>
       <h1 className='text-3xl font-bold mb-8 text-center'>
-        Ejemplo de Generación de PDF - Inventario
+        Ejemplo de Generación de PDF - Lista de Clientes
       </h1>
 
       <div className='grid gap-8'>
@@ -52,15 +58,16 @@ const EjemploPDF: React.FC = () => {
             1. Descarga directa de PDF
           </h2>
           <p className='text-gray-600 mb-4'>
-            Usa este botón para descargar directamente el PDF sin vista previa.
+            Usa este botón para descargar directamente el PDF de clientes sin
+            vista previa.
           </p>
           <PDFDownloadLink
-            document={<InventarioPrint productos={productosEjemplo} />}
-            fileName='inventario-ejemplo.pdf'
+            document={<ClientesPrint clientes={clientesEjemplo} />}
+            fileName='clientes-ejemplo.pdf'
             className='bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center gap-2'
           >
             {({ blob, url, loading, error }) =>
-              loading ? "Generando..." : "📄 Descargar PDF"
+              loading ? "Generando..." : "📄 Descargar PDF de Clientes"
             }
           </PDFDownloadLink>
         </div>
@@ -75,10 +82,7 @@ const EjemploPDF: React.FC = () => {
             descarga.
           </p>
           <div className='h-96 border border-gray-300 rounded-lg overflow-hidden'>
-            <InventarioPDFViewer
-              productos={productosEjemplo}
-              showViewer={true}
-            />
+            <ClientesPDFViewer clientes={clientesEjemplo} showViewer={true} />
           </div>
         </div>
 
@@ -92,10 +96,10 @@ const EjemploPDF: React.FC = () => {
               </h3>
               <ul className='list-disc list-inside space-y-1 text-gray-700'>
                 <li>
-                  <code>InventarioPrint</code> - Documento PDF
+                  <code>ClientesPrint</code> - Documento PDF
                 </li>
                 <li>
-                  <code>InventarioPDFViewer</code> - Visor + Descarga
+                  <code>ClientesPDFViewer</code> - Visor + Descarga
                 </li>
               </ul>
             </div>
@@ -105,15 +109,49 @@ const EjemploPDF: React.FC = () => {
               </h3>
               <ul className='list-disc list-inside space-y-1 text-gray-700'>
                 <li>Formato A4 profesional</li>
-                <li>Tabla con bordes y estilos</li>
-                <li>Resumen estadístico</li>
+                <li>Tabla con información completa</li>
+                <li>Resumen estadístico de clientes</li>
                 <li>Fecha de generación automática</li>
+                <li>Pie de página con numeración</li>
               </ul>
             </div>
           </div>
         </div>
 
-        {/* Sección 4: Ejemplo de uso programático */}
+        {/* Sección 4: Estadísticas de ejemplo */}
+        <div className='bg-sky-50 p-6 rounded-lg border border-sky-200'>
+          <h2 className='text-xl font-semibold mb-4 text-sky-800'>
+            📊 Datos de ejemplo
+          </h2>
+          <div className='grid md:grid-cols-4 gap-4'>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-sky-600'>
+                {clientesEjemplo.length}
+              </div>
+              <div className='text-sm text-sky-700'>Total Clientes</div>
+            </div>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-green-600'>
+                {clientesEjemplo.filter((c) => c.cedula).length}
+              </div>
+              <div className='text-sm text-green-700'>Con Cédula</div>
+            </div>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-purple-600'>
+                {clientesEjemplo.filter((c) => c.telefono).length}
+              </div>
+              <div className='text-sm text-purple-700'>Con Teléfono</div>
+            </div>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-orange-600'>
+                {clientesEjemplo.filter((c) => c.direccion).length}
+              </div>
+              <div className='text-sm text-orange-700'>Con Dirección</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sección 5: Ejemplo de uso programático */}
         <div className='bg-white p-6 rounded-lg shadow-lg border'>
           <h2 className='text-xl font-semibold mb-4'>
             3. Uso programático (avanzado)
@@ -121,9 +159,7 @@ const EjemploPDF: React.FC = () => {
           <p className='text-gray-600 mb-4'>
             También puedes generar el PDF programáticamente y obtener el blob.
           </p>
-          <BlobProvider
-            document={<InventarioPrint productos={productosEjemplo} />}
-          >
+          <BlobProvider document={<ClientesPrint clientes={clientesEjemplo} />}>
             {({ blob, url, loading, error }) => (
               <div className='space-y-2'>
                 <div className='text-sm text-gray-600'>
@@ -141,7 +177,7 @@ const EjemploPDF: React.FC = () => {
                     </a>
                     <a
                       href={url}
-                      download='inventario-blob.pdf'
+                      download='clientes-blob.pdf'
                       className='bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-sm'
                     >
                       💾 Descargar via blob
@@ -157,4 +193,4 @@ const EjemploPDF: React.FC = () => {
   );
 };
 
-export default EjemploPDF;
+export default EjemploClientesPDF;

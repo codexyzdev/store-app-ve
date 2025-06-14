@@ -13,7 +13,6 @@ import { InventarioStatsExpanded } from "@/components/inventario/InventarioStats
 import { InventarioFilters } from "@/components/inventario/InventarioFilters";
 import Modal from "@/components/Modal";
 import InventarioPrint from "@/components/inventario/InventarioPrint";
-import InventarioHTML from "@/components/inventario/InventarioHTML";
 import InventarioPDFViewer from "@/components/inventario/InventarioPDFViewer";
 import {
   setProductos,
@@ -46,7 +45,6 @@ export default function InventarioPage() {
   } = useSelector((state: RootState) => state.inventario);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [mostrarImpresion, setMostrarImpresion] = useState(false);
   const [mostrarPDF, setMostrarPDF] = useState(false);
   // Producto seleccionado para editar
   const [productoSeleccionado, setProductoSeleccionado] = useState<
@@ -143,23 +141,6 @@ export default function InventarioPage() {
               </p>
             </div>
             <div className='mt-4 sm:mt-0 flex gap-3'>
-              {/* Botón imprimir */}
-              <button
-                className='inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
-                onClick={() => {
-                  setMostrarImpresion(true);
-                  setTimeout(() => {
-                    const originalTitle = document.title;
-                    document.title = "Inventario";
-                    window.print();
-                    document.title = originalTitle;
-                  }, 500);
-                }}
-              >
-                <span className='text-xl'>🖨️</span>
-                Imprimir
-              </button>
-
               {/* Botón generar PDF */}
               <button
                 className='inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
@@ -303,38 +284,6 @@ export default function InventarioPage() {
         producto={productoSeleccionado}
       />
 
-      {/* Modal de impresión */}
-      <Modal
-        isOpen={mostrarImpresion}
-        onClose={() => setMostrarImpresion(false)}
-        title='Imprimir Inventario'
-      >
-        <div className='print-container'>
-          <div className='no-print mb-4 text-center'>
-            <p className='text-gray-600 mb-3'>
-              Haz clic en "Imprimir" o usa Ctrl+P para imprimir este inventario.
-            </p>
-            <div className='flex gap-2 justify-center'>
-              <button
-                onClick={() => window.print()}
-                className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2'
-              >
-                <span>🖨️</span>
-                Imprimir
-              </button>
-              <button
-                onClick={() => setMostrarImpresion(false)}
-                className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-
-          <InventarioHTML productos={productosFiltrados} />
-        </div>
-      </Modal>
-
       {/* Modal de PDF */}
       <Modal
         isOpen={mostrarPDF}
@@ -348,30 +297,6 @@ export default function InventarioPage() {
           />
         </div>
       </Modal>
-
-      {/* Estilos para impresión */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `@media print {
-            .no-print { display: none !important; }
-            .print-container {
-              width: 100% !important;
-              max-width: none !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            .fixed.inset-0 > div:first-child { display: none !important; }
-            .inventario-print {
-              position: static !important;
-              transform: none !important;
-              box-shadow: none !important;
-              border-radius: 0 !important;
-              margin: 0 !important;
-              padding: 20px !important;
-            }
-          }`,
-        }}
-      />
     </div>
   );
 }
