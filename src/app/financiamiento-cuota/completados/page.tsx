@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
@@ -14,6 +14,7 @@ import {
 } from "@/utils/financiamientoHelpers";
 import { FinanciamientoListItem } from "@/components/financiamiento/FinanciamientoListItem";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 export default function FinanciamientosCompletadosPage() {
   const { financiamientos, cobros, loading, error } = useFinanciamientosRedux();
@@ -55,6 +56,17 @@ export default function FinanciamientosCompletadosPage() {
     });
   }, [financiamientosCompletados, clientes, productos, cobros]);
 
+  const PAGE_SIZE = 25;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, items.length));
+  }, [items.length]);
+
+  const sentinelRef = useInfiniteScroll(loadMore);
+
+  const itemsToRender = items.slice(0, visibleCount);
+
   if (error) {
     return (
       <ErrorMessage message={error} onRetry={() => window.location.reload()} />
@@ -91,7 +103,7 @@ export default function FinanciamientosCompletadosPage() {
             <p className='text-gray-600'>No hay financiamientos completados.</p>
           )}
 
-          {items.map(
+          {itemsToRender.map(
             ({ financiamiento, clienteInfo, productoNombre, calculado }) => (
               <FinanciamientoListItem
                 key={financiamiento.id}
@@ -101,6 +113,10 @@ export default function FinanciamientosCompletadosPage() {
                 calculado={calculado as FinanciamientoCalculado}
               />
             )
+          )}
+
+          {visibleCount < items.length && (
+            <div ref={sentinelRef} className='h-10' />
           )}
         </div>
       </div>

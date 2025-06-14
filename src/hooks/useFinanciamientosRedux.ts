@@ -30,21 +30,24 @@ import {
   clearFilters,
   updateFilteredFinanciamientos,
 } from '@/store/slices/financiamientosSlice';
+import {
+  selectFinanciamientos,
+  selectFinanciamientosFiltrados,
+  selectFinanciamientosEstadisticas,
+} from '@/store/selectors/financiamientosSelectors';
 
 export function useFinanciamientosRedux() {
   const dispatch = useDispatch();
   
-  // Selectors
-  const {
-    financiamientos,
-    cobros,
-    financiamientosFiltrados,
-    filters,
-    estadisticas,
-    loading,
-    error,
-    initialized,
-  } = useSelector((state: RootState) => state.financiamientos);
+  // Datos memoizados
+  const financiamientos = useSelector(selectFinanciamientos);
+  const financiamientosFiltrados = useSelector(selectFinanciamientosFiltrados);
+  const estadisticas = useSelector(selectFinanciamientosEstadisticas);
+
+  // Otros valores (no derivan cálculos pesados)
+  const { cobros, filters, loading, error, initialized } = useSelector(
+    (state: RootState) => state.financiamientos
+  );
 
   // Suscripción a financiamientos
   useEffect(() => {

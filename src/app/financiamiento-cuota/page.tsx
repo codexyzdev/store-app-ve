@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { FinanciamientoStats } from "@/components/financiamiento/FinanciamientoStats";
 import { FinanciamientoCard } from "@/components/financiamiento/FinanciamientoCard";
@@ -17,6 +17,7 @@ import {
   ClienteInfo,
 } from "@/utils/financiamientoHelpers";
 import { FinanciamientoCuota } from "@/lib/firebase/database";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 interface FinanciamientoConDatos {
   financiamiento: FinanciamientoCuota;
@@ -64,6 +65,8 @@ export default function FinanciamientoCuotaPage() {
       : financiamientos;
 
   // Calcular datos para cada financiamiento - MEMOIZADO PARA PERFORMANCE
+  const PAGE_SIZE = 25;
+
   const financiamientosConDatos: FinanciamientoConDatos[] = useMemo(() => {
     return financiamientosParaMostrar.map((financiamiento) => {
       const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
@@ -81,6 +84,19 @@ export default function FinanciamientoCuotaPage() {
       };
     });
   }, [financiamientosParaMostrar, clientes, productos, cobros]);
+
+  // Estado para control de items visibles
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) =>
+      Math.min(prev + PAGE_SIZE, financiamientosConDatos.length)
+    );
+  }, [financiamientosConDatos.length]);
+
+  const sentinelRef = useInfiniteScroll(loadMore);
+
+  const itemsToRender = financiamientosConDatos.slice(0, visibleCount);
 
   // Manejo de errores
   if (error) {
@@ -286,7 +302,7 @@ export default function FinanciamientoCuotaPage() {
                   : "space-y-3 sm:space-y-4"
               }
             >
-              {financiamientosConDatos.map(
+              {itemsToRender.map(
                 (item: FinanciamientoConDatos, index: number) => {
                   return vistaCards ? (
                     <FinanciamientoCard
@@ -309,6 +325,11 @@ export default function FinanciamientoCuotaPage() {
                 }
               )}
             </div>
+          )}
+
+          {/* Sentinel para cargar más */}
+          {visibleCount < financiamientosConDatos.length && (
+            <div ref={sentinelRef} className='h-10' />
           )}
         </div>
       </div>

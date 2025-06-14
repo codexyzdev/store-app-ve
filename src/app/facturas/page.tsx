@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
-import { useProductos } from "@/hooks/useProductos";
+import { useProductosRedux } from "@/hooks/useProductosRedux";
 import {
   financiamientoDB,
   FinanciamientoCuota,
@@ -14,7 +14,7 @@ import FacturaPrint from "@/components/facturas/FacturaPrint";
 
 export default function FacturasPage() {
   const { clientes } = useClientesRedux();
-  const { productos } = useProductos();
+  const { productos } = useProductosRedux();
   const [facturas, setFacturas] = useState<FinanciamientoCuota[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [facturaSeleccionada, setFacturaSeleccionada] =
