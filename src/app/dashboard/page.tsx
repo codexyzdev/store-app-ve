@@ -152,25 +152,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Tarjeta siempre visible - Facturas */}
-          <div className='bg-white p-6 rounded-lg shadow-lg border-l-4 border-emerald-500'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <h3 className='text-lg font-semibold text-gray-800'>
-                  Facturas
-                </h3>
-                <p className='text-gray-600'>Ventas al contado</p>
-              </div>
-              <div className='text-3xl text-emerald-500'>🧾</div>
-            </div>
-            <a
-              href='/facturas'
-              className='mt-4 inline-flex items-center text-emerald-600 hover:text-emerald-800 font-medium'
-            >
-              Ver facturas →
-            </a>
-          </div>
-
           {/* Tarjeta siempre visible - Transacciones */}
           <div className='bg-white p-6 rounded-lg shadow-lg border-l-4 border-indigo-500'>
             <div className='flex items-center justify-between'>

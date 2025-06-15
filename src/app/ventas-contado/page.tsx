@@ -10,27 +10,27 @@ import {
   getClienteInfo,
   getProductoNombre,
 } from "@/utils/financiamientoHelpers";
+import Modal from "@/components/Modal";
+import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
+import FacturaVentaContadoPDF from "@/components/pdf/FacturaVentaContadoPDF";
 
-import {
-  ventasContadoDB,
-  VentaContado,
-  Cliente,
-} from "@/lib/firebase/database";
+import { ventasContadoDB, VentaContado } from "@/lib/firebase/database";
 
 export default function VentasContadoPage() {
   const { clientes } = useClientesRedux();
   const { productos } = useProductosRedux();
 
   const [ventas, setVentas] = useState<VentaContado[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [ventaSeleccionada, setVentaSeleccionada] =
+    useState<VentaContado | null>(null);
+  const [mostrarPDF, setMostrarPDF] = useState(false);
 
   // Suscripción tiempo real a ventas al contado
   useEffect(() => {
     const unsub = ventasContadoDB.suscribir((lista) => {
       setVentas(lista);
-      setLoading(false);
     });
     return () => unsub();
   }, []);
@@ -53,6 +53,11 @@ export default function VentasContadoPage() {
     const producto = getProductoNombre(f.productoId, productos);
     return { f, cliente, producto };
   });
+
+  const handleVerFactura = (venta: VentaContado) => {
+    setVentaSeleccionada(venta);
+    setMostrarPDF(true);
+  };
 
   if (error) {
     return (
@@ -107,7 +112,8 @@ export default function VentasContadoPage() {
             {items.map(({ f, cliente, producto }) => (
               <div
                 key={f.id}
-                className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4'
+                className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow duration-200'
+                onClick={() => handleVerFactura(f)}
               >
                 <div className='flex items-center justify-between'>
                   <span className='text-sm font-medium text-gray-500'>
@@ -138,10 +144,92 @@ export default function VentasContadoPage() {
                     {new Date(f.fecha).toLocaleDateString("es-ES")}
                   </span>
                 </div>
+
+                <div className='pt-2 border-t border-gray-100'>
+                  <div className='flex items-center justify-center gap-2 text-sky-600 text-sm font-medium'>
+                    <span>📄</span>
+                    <span>Click para ver factura</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         )}
+
+        {/* Modal PDF */}
+        <Modal
+          isOpen={mostrarPDF && !!ventaSeleccionada}
+          onClose={() => setMostrarPDF(false)}
+          title={`Factura N° ${
+            ventaSeleccionada
+              ? formatNumeroControl(ventaSeleccionada.numeroControl, "C")
+              : ""
+          }`}
+        >
+          {ventaSeleccionada && (
+            <div className='space-y-4'>
+              {/* Botón de descarga */}
+              <div className='flex justify-center mb-4'>
+                <PDFDownloadLink
+                  document={
+                    <FacturaVentaContadoPDF
+                      venta={ventaSeleccionada}
+                      cliente={
+                        clientes.find(
+                          (c) => c.id === ventaSeleccionada.clienteId
+                        ) || null
+                      }
+                      producto={
+                        productos.find(
+                          (p) => p.id === ventaSeleccionada.productoId
+                        ) || null
+                      }
+                    />
+                  }
+                  fileName={`factura-${formatNumeroControl(
+                    ventaSeleccionada.numeroControl,
+                    "C"
+                  )}.pdf`}
+                  className='inline-flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-lg'
+                >
+                  {({ loading }: { loading: boolean }) => (
+                    <>
+                      <span>💾</span>
+                      {loading
+                        ? "Generando..."
+                        : `Descargar Factura ${formatNumeroControl(
+                            ventaSeleccionada.numeroControl,
+                            "C"
+                          )}`}
+                    </>
+                  )}
+                </PDFDownloadLink>
+              </div>
+
+              {/* Visor PDF */}
+              <div
+                className='border border-gray-300 rounded-lg overflow-hidden'
+                style={{ height: "500px" }}
+              >
+                <PDFViewer width='100%' height='100%' showToolbar={false}>
+                  <FacturaVentaContadoPDF
+                    venta={ventaSeleccionada}
+                    cliente={
+                      clientes.find(
+                        (c) => c.id === ventaSeleccionada.clienteId
+                      ) || null
+                    }
+                    producto={
+                      productos.find(
+                        (p) => p.id === ventaSeleccionada.productoId
+                      ) || null
+                    }
+                  />
+                </PDFViewer>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );
