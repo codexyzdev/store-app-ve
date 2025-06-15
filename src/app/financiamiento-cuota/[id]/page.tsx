@@ -659,7 +659,7 @@ export default function FinanciamientoClientePage() {
 
             {cliente && (
               <PlanPagosPrint
-                prestamo={financiamiento}
+                financiamiento={financiamiento}
                 cliente={cliente}
                 cobros={getCobrosFinanciamiento(financiamiento.id)}
                 valorCuota={financiamiento.monto / financiamiento.cuotas}

@@ -15,7 +15,7 @@ import { FinanciamientoCuota, Cliente, Cobro } from "@/lib/firebase/database";
 import { formatNumeroControl } from "@/utils/format";
 
 interface PlanPagosPrintProps {
-  prestamo: FinanciamientoCuota;
+  financiamiento: FinanciamientoCuota;
   cliente: Cliente;
   cobros: Cobro[];
   valorCuota: number;
@@ -213,12 +213,12 @@ const styles = StyleSheet.create({
 });
 
 const PlanPagosPDFDocument: React.FC<{
-  prestamo: FinanciamientoCuota;
+  financiamiento: FinanciamientoCuota;
   cliente: Cliente;
   cobros: Cobro[];
   valorCuota: number;
   productos: any[];
-}> = ({ prestamo, cliente, cobros, valorCuota, productos }) => {
+}> = ({ financiamiento, cliente, cobros, valorCuota, productos }) => {
   // Generar las cuotas del plan de pagos
   const generarCuotas = (): Cuota[] => {
     // Separar cobros por tipo
@@ -226,25 +226,28 @@ const PlanPagosPDFDocument: React.FC<{
     const cobrosRegulares = cobros.filter((c) => c.tipo === "cuota");
 
     // Generar las cuotas semanales
-    const cuotas: Cuota[] = Array.from({ length: prestamo.cuotas }, (_, i) => {
-      // Cuotas regulares empiezan 7 días después de la fecha de inicio
-      const fechaTentativa = new Date(prestamo.fechaInicio);
-      fechaTentativa.setDate(fechaTentativa.getDate() + (i + 1) * 7);
+    const cuotas: Cuota[] = Array.from(
+      { length: financiamiento.cuotas },
+      (_, i) => {
+        // Cuotas regulares empiezan 7 días después de la fecha de inicio
+        const fechaTentativa = new Date(financiamiento.fechaInicio);
+        fechaTentativa.setDate(fechaTentativa.getDate() + (i + 1) * 7);
 
-      return {
-        numero: i + 1,
-        fechaTentativa,
-        estado: "pendiente",
-        tipo: "regular",
-      };
-    });
+        return {
+          numero: i + 1,
+          fechaTentativa,
+          estado: "pendiente",
+          tipo: "regular",
+        };
+      }
+    );
 
     // Marcar cuotas iniciales como pagadas
     cobrosIniciales.forEach((cobro) => {
       if (
         cobro.numeroCuota &&
         cobro.numeroCuota >= 1 &&
-        cobro.numeroCuota <= prestamo.cuotas
+        cobro.numeroCuota <= financiamiento.cuotas
       ) {
         const cuotaIndex = cobro.numeroCuota - 1;
         cuotas[cuotaIndex].estado = "pagada";
@@ -258,7 +261,7 @@ const PlanPagosPDFDocument: React.FC<{
       if (
         cobro.numeroCuota &&
         cobro.numeroCuota >= 1 &&
-        cobro.numeroCuota <= prestamo.cuotas
+        cobro.numeroCuota <= financiamiento.cuotas
       ) {
         const cuotaIndex = cobro.numeroCuota - 1;
         cuotas[cuotaIndex].estado = "pagada";
@@ -272,12 +275,12 @@ const PlanPagosPDFDocument: React.FC<{
 
   // Función para enumerar productos duplicados
   const getProductosEnumerados = (): string => {
-    if (prestamo.productos && prestamo.productos.length > 0) {
+    if (financiamiento.productos && financiamiento.productos.length > 0) {
       const productosContados: {
         [key: string]: { nombre: string; cantidad: number };
       } = {};
 
-      prestamo.productos.forEach((prodFinanciamiento) => {
+      financiamiento.productos.forEach((prodFinanciamiento) => {
         const producto = productos.find(
           (p) => p.id === prodFinanciamiento.productoId
         );
@@ -300,14 +303,16 @@ const PlanPagosPDFDocument: React.FC<{
         .join(", ");
     } else {
       // Producto individual (compatibilidad con financiamientos antiguos)
-      const producto = productos.find((p) => p.id === prestamo.productoId);
+      const producto = productos.find(
+        (p) => p.id === financiamiento.productoId
+      );
       return producto?.nombre || "Producto no encontrado";
     }
   };
 
   const cuotas = generarCuotas();
   const cuotasPagadas = cuotas.filter((c) => c.estado === "pagada").length;
-  const cuotasPendientes = prestamo.cuotas - cuotasPagadas;
+  const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
   const montoPendiente = cuotasPendientes * valorCuota;
   const proximaCuota = cuotas.find((c) => c.estado === "pendiente");
 
@@ -351,16 +356,18 @@ const PlanPagosPDFDocument: React.FC<{
             </Text>
             <Text style={styles.infoText}>
               <Text style={{ fontWeight: "bold" }}>Código:</Text>{" "}
-              {formatNumeroControl(cliente.numeroControl, "C")}
+              {cliente?.numeroControl
+                ? formatNumeroControl(cliente.numeroControl, "C")
+                : "N/A"}
             </Text>
           </View>
 
           <View style={styles.infoBlock}>
             <Text style={styles.infoTitle}>FINANCIAMIENTO</Text>
-            {prestamo.numeroControl && (
+            {financiamiento.numeroControl && (
               <Text style={styles.infoText}>
                 <Text style={{ fontWeight: "bold" }}>Control:</Text>{" "}
-                {formatNumeroControl(prestamo.numeroControl, "F")}
+                {formatNumeroControl(financiamiento.numeroControl, "F")}
               </Text>
             )}
             <Text style={styles.infoText}>
@@ -369,15 +376,15 @@ const PlanPagosPDFDocument: React.FC<{
             </Text>
             <Text style={styles.infoText}>
               <Text style={{ fontWeight: "bold" }}>Total:</Text> $
-              {prestamo.monto.toFixed(0)}
+              {financiamiento.monto.toFixed(0)}
             </Text>
             <Text style={styles.infoText}>
               <Text style={{ fontWeight: "bold" }}>Cuotas:</Text>{" "}
-              {prestamo.cuotas} x ${valorCuota.toFixed(0)}
+              {financiamiento.cuotas} x ${valorCuota.toFixed(0)}
             </Text>
             <Text style={styles.infoText}>
               <Text style={{ fontWeight: "bold" }}>Inicio:</Text>{" "}
-              {formatearFecha(new Date(prestamo.fechaInicio))}
+              {formatearFecha(new Date(financiamiento.fechaInicio))}
             </Text>
           </View>
         </View>
@@ -428,7 +435,7 @@ const PlanPagosPDFDocument: React.FC<{
           <View style={styles.summaryColumn}>
             <Text style={styles.summaryTitle}>RESUMEN</Text>
             <Text style={styles.summaryText}>
-              Pagadas: {cuotasPagadas}/{prestamo.cuotas}
+              Pagadas: {cuotasPagadas}/{financiamiento.cuotas}
             </Text>
             <Text style={styles.summaryText}>
               Pendientes: {cuotasPendientes}
@@ -493,7 +500,7 @@ const PlanPagosPDFDocument: React.FC<{
 };
 
 const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
-  prestamo,
+  financiamiento,
   cliente,
   cobros,
   valorCuota,
@@ -501,8 +508,13 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
   // Obtener productos del store de Redux
   const productos = useAppSelector((state) => state.inventario.productos);
 
+  // Validaciones de seguridad
+  if (!financiamiento || !cliente) {
+    return <div>Error: Datos de financiamiento o cliente no disponibles</div>;
+  }
+
   const nombreArchivo = `plan-pagos-${cliente.nombre.replace(/\s+/g, "-")}-${
-    prestamo.numeroControl || prestamo.id
+    financiamiento.numeroControl || financiamiento.id
   }.pdf`;
 
   return (
@@ -511,7 +523,7 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
       <div className='pdf-viewer mb-4' style={{ height: "500px" }}>
         <PDFViewer width='100%' height='100%'>
           <PlanPagosPDFDocument
-            prestamo={prestamo}
+            financiamiento={financiamiento}
             cliente={cliente}
             cobros={cobros}
             valorCuota={valorCuota}
@@ -525,7 +537,7 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
         <PDFDownloadLink
           document={
             <PlanPagosPDFDocument
-              prestamo={prestamo}
+              financiamiento={financiamiento}
               cliente={cliente}
               cobros={cobros}
               valorCuota={valorCuota}
