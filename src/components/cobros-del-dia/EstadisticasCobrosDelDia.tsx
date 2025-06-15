@@ -46,15 +46,7 @@ export function EstadisticasCobrosDelDia({
         </span>
       </div>
 
-      <div className='bg-orange-50 p-6 rounded-xl text-center shadow-sm border border-orange-200'>
-        <UserIcon className='w-8 h-8 text-orange-600 mx-auto mb-2' />
-        <span className='text-sm text-orange-800 font-medium block mb-1'>
-          Cobros Pendientes
-        </span>
-        <span className='text-2xl font-bold text-orange-600'>
-          {estadisticas.cantidadPendientes}
-        </span>
-      </div>
+      
 
       <div className='bg-purple-50 p-6 rounded-xl text-center shadow-sm border border-purple-200'>
         <UserIcon className='w-8 h-8 text-purple-600 mx-auto mb-2' />

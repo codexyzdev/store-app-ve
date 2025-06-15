@@ -61,7 +61,7 @@ export default function FinanciamientoClientePage() {
 
     // Filtrar financiamientos del cliente usando datos de Redux
     const financiamientosDelCliente = financiamientos.filter(
-      (f) => f.clienteId === clienteId
+      (f) => f.clienteId === clienteId && f.tipoVenta === "cuotas"
     );
     setFinanciamientosCliente(financiamientosDelCliente);
   }, [clienteId, financiamientos, getClienteById]);
@@ -70,10 +70,7 @@ export default function FinanciamientoClientePage() {
   useEffect(() => {
     const nuevoTotalPendiente = financiamientosCliente.reduce(
       (acc: number, f: FinanciamientoCuota) => {
-        if (
-          f.tipoVenta !== "cuotas" ||
-          (f.estado !== "activo" && f.estado !== "atrasado")
-        ) {
+        if (f.estado !== "activo" && f.estado !== "atrasado") {
           return acc;
         }
         const info = calcularInfoFinanciamiento(f);
@@ -84,10 +81,7 @@ export default function FinanciamientoClientePage() {
 
     const nuevoTotalCuotasAtrasadas = financiamientosCliente.reduce(
       (acc: number, f: FinanciamientoCuota) => {
-        if (
-          f.tipoVenta !== "cuotas" ||
-          (f.estado !== "activo" && f.estado !== "atrasado")
-        ) {
+        if (f.estado !== "activo" && f.estado !== "atrasado") {
           return acc;
         }
         const info = calcularInfoFinanciamiento(f);
@@ -171,9 +165,9 @@ export default function FinanciamientoClientePage() {
 
   if (financiamientosLoading || clientesLoading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100 flex items-center justify-center'>
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='text-center'>
-          <div className='w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
+          <div className='w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
           <p className='text-gray-600 font-medium'>
             Cargando información del cliente...
           </p>
@@ -183,14 +177,14 @@ export default function FinanciamientoClientePage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
+    <div className='min-h-screen bg-gray-50'>
       <div className='container mx-auto px-4 py-6 sm:py-8'>
-        {/* Header mejorado */}
+        {/* Header simplificado */}
         <div className='mb-6 sm:mb-8'>
           <div className='flex items-center gap-4 mb-6'>
             <button
               onClick={() => router.back()}
-              className='inline-flex items-center gap-2 text-gray-600 hover:text-sky-600 transition-colors'
+              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors'
             >
               <span className='text-xl'>←</span>
               <span className='font-medium'>Volver</span>
@@ -198,12 +192,12 @@ export default function FinanciamientoClientePage() {
           </div>
 
           <div className='text-center mb-6 sm:mb-8'>
-            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-sky-100 mb-4'>
-              <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-slate-700 to-sky-500 rounded-xl flex items-center justify-center'>
+            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-blue-100 mb-4'>
+              <div className='w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-xl flex items-center justify-center'>
                 <span className='text-lg sm:text-xl text-white'>👤</span>
               </div>
               <div className='text-left'>
-                <h1 className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent'>
+                <h1 className='text-xl sm:text-2xl font-bold text-gray-800'>
                   Detalle del Cliente
                 </h1>
                 <p className='text-xs sm:text-sm text-gray-600'>
@@ -234,17 +228,17 @@ export default function FinanciamientoClientePage() {
         />
 
         {/* Lista de financiamientos optimizada */}
-        <div className='bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
-          <div className='bg-gradient-to-r from-slate-700 to-sky-500 px-4 sm:px-8 py-4 sm:py-6'>
+        <div className='bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 overflow-hidden'>
+          <div className='bg-blue-600 px-4 sm:px-8 py-4 sm:py-6'>
             <div className='flex items-center gap-3 sm:gap-4'>
-              <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center'>
+              <div className='w-12 h-12 sm:w-16 sm:h-16 bg-blue-500 rounded-2xl flex items-center justify-center'>
                 <span className='text-xl sm:text-2xl text-white'>📋</span>
               </div>
               <div className='text-white'>
                 <h2 className='text-lg sm:text-xl font-bold mb-1'>
                   Financiamientos del Cliente
                 </h2>
-                <p className='text-sm sm:text-base text-sky-100'>
+                <p className='text-sm sm:text-base text-blue-100'>
                   Historial completo de financiamientos y pagos
                 </p>
               </div>
@@ -266,7 +260,7 @@ export default function FinanciamientoClientePage() {
                 </p>
                 <Link
                   href='/financiamiento-cuota/nuevo'
-                  className='inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
+                  className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
                 >
                   <span>💰</span>
                   Crear Nuevo Financiamiento
@@ -288,20 +282,20 @@ export default function FinanciamientoClientePage() {
                     } = info;
                     const montoTotal = financiamiento.monto;
 
+                    // CORREGIDO: Solo hay financiamientos de cuotas aquí
                     const estadoPrincipal =
-                      financiamiento.tipoVenta === "contado" ? (
-                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-sky-100 text-sky-700 rounded-full font-bold text-sm'>
-                          <span>💵</span>Pagado
-                        </div>
-                      ) : cuotasAtrasadas > 0 ? (
+                      cuotasAtrasadas > 0 ? (
                         <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-red-100 text-red-700 rounded-full font-bold text-sm'>
                           <span>⏰</span>
-                          <span className='hidden sm:inline'>Atrasado: </span>
-                          {cuotasAtrasadas} cuota
-                          {cuotasAtrasadas > 1 ? "s" : ""}
+                          <span className='hidden sm:inline'>Atrasado </span>
+                        </div>
+                      ) : montoPendiente <= 0 ? (
+                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-green-100 text-green-700 rounded-full font-bold text-sm'>
+                          <span>✅</span>
+                          <span className='hidden sm:inline'>Completado</span>
                         </div>
                       ) : (
-                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-green-100 text-green-700 rounded-full font-bold text-sm'>
+                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-blue-100 text-blue-700 rounded-full font-bold text-sm'>
                           <span>✔️</span>Al día
                         </div>
                       );
@@ -315,10 +309,10 @@ export default function FinanciamientoClientePage() {
                         <div
                           className={`px-4 sm:px-6 py-3 sm:py-4 ${
                             cuotasAtrasadas > 0
-                              ? "bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200"
+                              ? "bg-red-50 border-b border-red-200"
                               : montoPendiente <= 0
-                              ? "bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200"
-                              : "bg-gradient-to-r from-sky-50 to-sky-100 border-b border-sky-200"
+                              ? "bg-green-50 border-b border-green-200"
+                              : "bg-blue-50 border-b border-blue-200"
                           }`}
                         >
                           <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
@@ -329,7 +323,7 @@ export default function FinanciamientoClientePage() {
                                     ? "bg-red-500 text-white"
                                     : montoPendiente <= 0
                                     ? "bg-green-500 text-white"
-                                    : "bg-sky-500 text-white"
+                                    : "bg-blue-500 text-white"
                                 }`}
                               >
                                 <span className='text-sm sm:text-lg font-bold'>
@@ -363,7 +357,7 @@ export default function FinanciamientoClientePage() {
                                 </h4>
 
                                 <div className='space-y-3 sm:space-y-4'>
-                                  <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                  <div className='flex items-center justify-between p-3 bg-blue-50 rounded-xl'>
                                     <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                       Monto total:
                                     </span>
@@ -372,7 +366,7 @@ export default function FinanciamientoClientePage() {
                                     </span>
                                   </div>
 
-                                  <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                  <div className='flex items-center justify-between p-3 bg-blue-50 rounded-xl'>
                                     <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                       Monto cobrado:
                                     </span>
@@ -381,7 +375,7 @@ export default function FinanciamientoClientePage() {
                                     </span>
                                   </div>
 
-                                  <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
+                                  <div className='flex items-center justify-between p-3 bg-blue-50 rounded-xl'>
                                     <span className='text-xs sm:text-sm font-medium text-gray-600'>
                                       Pendiente:
                                     </span>
@@ -396,44 +390,40 @@ export default function FinanciamientoClientePage() {
                                     </span>
                                   </div>
 
-                                  {financiamiento.tipoVenta === "cuotas" && (
-                                    <>
-                                      <div className='p-3 bg-sky-50 rounded-xl'>
-                                        <div className='flex items-center justify-between mb-1'>
-                                          <span className='text-xs sm:text-sm font-medium text-gray-600'>
-                                            Cuotas:
-                                          </span>
-                                          <span className='text-base sm:text-lg font-bold text-gray-900'>
-                                            {info.totalCuotas ||
-                                              info.cuotasPagadas}
-                                            /{financiamiento.cuotas}
-                                          </span>
-                                        </div>
-                                        {info.cuotasIniciales > 0 && (
-                                          <div className='text-xs text-gray-500'>
-                                            <span>
-                                              Regulares: {info.cuotasRegulares}
-                                            </span>
-                                            <span className='ml-2'>
-                                              Iniciales: {info.cuotasIniciales}
-                                            </span>
-                                          </div>
-                                        )}
+                                  {/* Información de cuotas - Solo para financiamientos de cuotas */}
+                                  <div className='p-3 bg-blue-50 rounded-xl'>
+                                    <div className='flex items-center justify-between mb-1'>
+                                      <span className='text-xs sm:text-sm font-medium text-gray-600'>
+                                        Cuotas:
+                                      </span>
+                                      <span className='text-base sm:text-lg font-bold text-gray-900'>
+                                        {info.totalCuotas || info.cuotasPagadas}
+                                        /{financiamiento.cuotas}
+                                      </span>
+                                    </div>
+                                    {info.cuotasIniciales > 0 && (
+                                      <div className='text-xs text-gray-500'>
+                                        <span>
+                                          Regulares: {info.cuotasRegulares}
+                                        </span>
+                                        <span className='ml-2'>
+                                          Iniciales: {info.cuotasIniciales}
+                                        </span>
                                       </div>
+                                    )}
+                                  </div>
 
-                                      <div className='flex items-center justify-between p-3 bg-sky-50 rounded-xl'>
-                                        <span className='text-xs sm:text-sm font-medium text-gray-600'>
-                                          Valor por cuota:
-                                        </span>
-                                        <span className='text-base sm:text-lg font-bold text-gray-900'>
-                                          ${valorCuota.toLocaleString()}
-                                        </span>
-                                      </div>
-                                    </>
-                                  )}
+                                  <div className='flex items-center justify-between p-3 bg-blue-50 rounded-xl'>
+                                    <span className='text-xs sm:text-sm font-medium text-gray-600'>
+                                      Valor por cuota:
+                                    </span>
+                                    <span className='text-base sm:text-lg font-bold text-gray-900'>
+                                      ${valorCuota.toLocaleString()}
+                                    </span>
+                                  </div>
 
                                   {/* Barra de progreso */}
-                                  <div className='p-3 bg-sky-50 rounded-xl'>
+                                  <div className='p-3 bg-blue-50 rounded-xl'>
                                     <div className='flex justify-between text-xs sm:text-sm font-medium text-gray-600 mb-2'>
                                       <span>Progreso del pago</span>
                                       <span>{progreso.toFixed(1)}%</span>
@@ -442,10 +432,10 @@ export default function FinanciamientoClientePage() {
                                       <div
                                         className={`h-2 sm:h-3 rounded-full transition-all duration-1000 ease-out ${
                                           progreso >= 100
-                                            ? "bg-gradient-to-r from-green-500 to-green-600"
+                                            ? "bg-green-500"
                                             : cuotasAtrasadas > 0
-                                            ? "bg-gradient-to-r from-red-500 to-red-600"
-                                            : "bg-gradient-to-r from-sky-500 to-sky-600"
+                                            ? "bg-red-500"
+                                            : "bg-blue-500"
                                         }`}
                                         style={{
                                           width: `${Math.min(progreso, 100)}%`,
@@ -472,7 +462,7 @@ export default function FinanciamientoClientePage() {
                                         );
                                       }}
                                       disabled={abonando[financiamiento.id]}
-                                      className='w-full bg-gradient-to-r from-sky-500 to-sky-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                                      className='w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
                                     >
                                       <span>💰</span>
                                       <span className='hidden sm:inline'>
@@ -487,7 +477,7 @@ export default function FinanciamientoClientePage() {
                                           `plan-${financiamiento.id}`
                                         )
                                       }
-                                      className='w-full bg-gradient-to-r from-slate-500 to-slate-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
+                                      className='w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
                                     >
                                       <span>📅</span>
                                       <span className='hidden sm:inline'>
@@ -507,7 +497,7 @@ export default function FinanciamientoClientePage() {
                                           `historial-${financiamiento.id}`
                                         )
                                       }
-                                      className='w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
+                                      className='w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
                                     >
                                       <span>📋</span>
                                       <span className='hidden sm:inline'>
@@ -527,7 +517,7 @@ export default function FinanciamientoClientePage() {
                                       onClick={() =>
                                         imprimirPlanPagos(financiamiento.id)
                                       }
-                                      className='w-full sm:col-span-2 xl:col-span-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
+                                      className='w-full sm:col-span-2 xl:col-span-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 sm:px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2'
                                     >
                                       <span>🖨️</span>
                                       <span className='hidden sm:inline'>
@@ -543,52 +533,50 @@ export default function FinanciamientoClientePage() {
                             </div>
 
                             {/* Plan de pagos */}
-                            {financiamiento.tipoVenta === "cuotas" &&
-                              modals.isOpen(`plan-${financiamiento.id}`) && (
-                                <div className='xl:col-span-1'>
-                                  <div className='bg-gradient-to-r from-sky-50 to-slate-50 rounded-2xl p-4 sm:p-6 border border-sky-200'>
-                                    <h4 className='text-base sm:text-lg font-semibold text-sky-800 mb-4 flex items-center gap-2'>
-                                      <span>📅</span>
-                                      Plan de Pagos
-                                    </h4>
-                                    <CuadriculaCuotas
-                                      fechaInicio={financiamiento.fechaInicio}
-                                      cobros={getCobrosFinanciamiento(
-                                        financiamiento.id
-                                      )}
-                                      valorCuota={valorCuota}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                          </div>
-
-                          {/* Historial de Pagos y Notas */}
-                          {financiamiento.tipoVenta === "cuotas" &&
-                            modals.isOpen(`historial-${financiamiento.id}`) && (
-                              <div className='mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6'>
-                                <div className='xl:col-span-2'>
-                                  <HistorialPagos
-                                    pagos={getCobrosFinanciamiento(
+                            {modals.isOpen(`plan-${financiamiento.id}`) && (
+                              <div className='xl:col-span-1'>
+                                <div className='bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-200'>
+                                  <h4 className='text-base sm:text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2'>
+                                    <span>📅</span>
+                                    Plan de Pagos
+                                  </h4>
+                                  <CuadriculaCuotas
+                                    fechaInicio={financiamiento.fechaInicio}
+                                    cobros={getCobrosFinanciamiento(
                                       financiamiento.id
                                     )}
                                     valorCuota={valorCuota}
-                                    titulo={`Historial de Pagos - ${getProductosNombres(
-                                      financiamiento
-                                    )}`}
                                   />
-                                </div>
-                                <div className='xl:col-span-1'>
-                                  <div className='bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 sm:p-6 border border-amber-200'>
-                                    <ListaNotas
-                                      cobros={getCobrosFinanciamiento(
-                                        financiamiento.id
-                                      )}
-                                    />
-                                  </div>
                                 </div>
                               </div>
                             )}
+                          </div>
+
+                          {/* Historial de Pagos y Notas */}
+                          {modals.isOpen(`historial-${financiamiento.id}`) && (
+                            <div className='mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6'>
+                              <div className='xl:col-span-2'>
+                                <HistorialPagos
+                                  pagos={getCobrosFinanciamiento(
+                                    financiamiento.id
+                                  )}
+                                  valorCuota={valorCuota}
+                                  titulo={`Historial de Pagos - ${getProductosNombres(
+                                    financiamiento
+                                  )}`}
+                                />
+                              </div>
+                              <div className='xl:col-span-1'>
+                                <div className='bg-amber-50 rounded-2xl p-4 sm:p-6 border border-amber-200'>
+                                  <ListaNotas
+                                    cobros={getCobrosFinanciamiento(
+                                      financiamiento.id
+                                    )}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -643,7 +631,7 @@ export default function FinanciamientoClientePage() {
               <div className='flex gap-2 justify-center'>
                 <button
                   onClick={() => window.print()}
-                  className='px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition flex items-center gap-2'
+                  className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2'
                 >
                   <span>🖨️</span>
                   Imprimir
