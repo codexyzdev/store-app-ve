@@ -663,7 +663,6 @@ export default function FinanciamientoClientePage() {
                 cliente={cliente}
                 cobros={getCobrosFinanciamiento(financiamiento.id)}
                 valorCuota={financiamiento.monto / financiamiento.cuotas}
-                productosNombres={getProductosNombres(financiamiento)}
               />
             )}
           </div>

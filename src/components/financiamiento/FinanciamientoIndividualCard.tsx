@@ -425,7 +425,6 @@ export default function FinanciamientoIndividualCard({
               cliente={cliente}
               cobros={getCobrosFinanciamiento(financiamiento.id)}
               valorCuota={financiamiento.monto / financiamiento.cuotas}
-              productosNombres={getProductosNombres()}
             />
           )}
         </div>
