@@ -33,75 +33,75 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
-    padding: 15,
-    fontSize: 8,
+    padding: 10,
+    fontSize: 7,
     fontFamily: "Helvetica",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#cccccc",
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   title: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
     color: "#2563eb",
   },
   subtitle: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "bold",
-    marginTop: 2,
+    marginTop: 1,
   },
   fecha: {
-    fontSize: 7,
+    fontSize: 6,
     color: "#666666",
   },
   infoSection: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 6,
   },
   infoBlock: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 6,
   },
   infoTitle: {
-    fontSize: 9,
+    fontSize: 7,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 2,
     color: "#374151",
   },
   infoText: {
-    fontSize: 7,
-    marginBottom: 2,
+    fontSize: 6,
+    marginBottom: 1,
     color: "#6b7280",
   },
   table: {
     width: "100%",
-    marginBottom: 10,
+    marginBottom: 6,
   },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#f3f4f6",
-    paddingVertical: 4,
-    paddingHorizontal: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
     borderBottomWidth: 1,
     borderBottomColor: "#d1d5db",
   },
   tableHeaderCell: {
-    fontSize: 7,
+    fontSize: 6,
     fontWeight: "bold",
     color: "#374151",
     textAlign: "center",
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    paddingVertical: 1,
+    paddingHorizontal: 1,
     borderBottomWidth: 0.5,
     borderBottomColor: "#e5e7eb",
   },
@@ -109,104 +109,103 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f9ff",
   },
   tableCell: {
-    fontSize: 6,
+    fontSize: 5,
     color: "#6b7280",
     textAlign: "center",
   },
   tableCellBold: {
-    fontSize: 6,
+    fontSize: 5,
     fontWeight: "bold",
     color: "#374151",
     textAlign: "center",
   },
-  // Anchos de columnas optimizados para A6
-  col1: { width: "8%" }, // #
-  col2: { width: "20%" }, // Fecha
-  col3: { width: "15%" }, // Monto
-  col4: { width: "18%" }, // Estado
+  // Anchos de columnas optimizados para A6 (sin columna firma)
+  col1: { width: "10%" }, // #
+  col2: { width: "30%" }, // Fecha
+  col3: { width: "20%" }, // Monto
+  col4: { width: "20%" }, // Estado
   col5: { width: "20%" }, // Fecha Pago
-  col6: { width: "19%" }, // Firma
   summary: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 4,
     backgroundColor: "#f9fafb",
-    padding: 6,
-    borderRadius: 4,
+    padding: 3,
+    borderRadius: 2,
   },
   summaryColumn: {
     flex: 1,
   },
   summaryTitle: {
-    fontSize: 8,
+    fontSize: 6,
     fontWeight: "bold",
-    marginBottom: 3,
+    marginBottom: 1,
     color: "#374151",
   },
   summaryText: {
-    fontSize: 7,
-    marginBottom: 1,
+    fontSize: 5,
+    marginBottom: 0.5,
     color: "#6b7280",
   },
   nextPayment: {
     backgroundColor: "#fef3c7",
-    padding: 4,
-    borderRadius: 3,
-    marginBottom: 8,
+    padding: 2,
+    borderRadius: 2,
+    marginBottom: 4,
   },
   nextPaymentText: {
-    fontSize: 7,
+    fontSize: 5,
     fontWeight: "bold",
     color: "#92400e",
     textAlign: "center",
   },
   footer: {
     marginTop: "auto",
-    paddingTop: 8,
+    paddingTop: 4,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
   },
   terms: {
-    marginBottom: 6,
+    marginBottom: 3,
   },
   termsTitle: {
-    fontSize: 8,
+    fontSize: 6,
     fontWeight: "bold",
-    marginBottom: 2,
+    marginBottom: 1,
     color: "#374151",
   },
   termsList: {
-    marginLeft: 8,
+    marginLeft: 4,
   },
   termsItem: {
-    fontSize: 6,
-    marginBottom: 1,
+    fontSize: 4,
+    marginBottom: 0.5,
     color: "#6b7280",
   },
   signatures: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
+    marginTop: 4,
   },
   signatureBlock: {
     flex: 1,
     alignItems: "center",
-    marginHorizontal: 8,
+    marginHorizontal: 4,
   },
   signatureLine: {
     width: "80%",
     height: 1,
     backgroundColor: "#d1d5db",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   signatureText: {
-    fontSize: 6,
+    fontSize: 5,
     fontWeight: "bold",
     textAlign: "center",
     color: "#374151",
   },
   signatureSubtext: {
-    fontSize: 5,
+    fontSize: 4,
     textAlign: "center",
     color: "#6b7280",
   },
@@ -350,10 +349,6 @@ const PlanPagosPDFDocument: React.FC<{
               {cliente.cedula || "N/A"}
             </Text>
             <Text style={styles.infoText}>
-              <Text style={{ fontWeight: "bold" }}>Dirección:</Text>{" "}
-              {cliente.direccion || "N/A"}
-            </Text>
-            <Text style={styles.infoText}>
               <Text style={{ fontWeight: "bold" }}>Código:</Text> #
               {cliente.numeroControl}
             </Text>
@@ -394,7 +389,6 @@ const PlanPagosPDFDocument: React.FC<{
             <Text style={[styles.tableHeaderCell, styles.col3]}>MONTO</Text>
             <Text style={[styles.tableHeaderCell, styles.col4]}>ESTADO</Text>
             <Text style={[styles.tableHeaderCell, styles.col5]}>PAGO</Text>
-            <Text style={[styles.tableHeaderCell, styles.col6]}>FIRMA</Text>
           </View>
 
           {cuotas.map((cuota) => (
@@ -423,9 +417,6 @@ const PlanPagosPDFDocument: React.FC<{
               </Text>
               <Text style={[styles.tableCell, styles.col5]}>
                 {cuota.fechaPago ? formatearFecha(cuota.fechaPago) : "-"}
-              </Text>
-              <Text style={[styles.tableCell, styles.col6]}>
-                {/* Espacio para firma */}
               </Text>
             </View>
           ))}
@@ -543,7 +534,9 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
           fileName={nombreArchivo}
           className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors'
         >
-          {({ loading }) => (loading ? "Generando PDF..." : "Descargar PDF")}
+          {({ loading }: { loading: boolean }) =>
+            loading ? "Generando PDF..." : "Descargar PDF"
+          }
         </PDFDownloadLink>
       </div>
     </div>
