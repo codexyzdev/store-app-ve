@@ -13,7 +13,6 @@ import ListaNotas from "@/components/notas/ListaNotas";
 
 import ModalPagoCuota from "@/components/financiamiento/ModalPagoCuota";
 import ClienteDetalle from "@/components/financiamiento/ClienteDetalle";
-import ResumenFinanciero from "@/components/financiamiento/ResumenFinanciero";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
@@ -220,7 +219,6 @@ export default function FinanciamientoClientePage() {
           </div>
         )}
 
-        
         {/* Lista de financiamientos optimizada */}
         <div className='bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 overflow-hidden'>
           <div className='bg-blue-600 px-4 sm:px-8 py-4 sm:py-6'>
@@ -267,7 +265,6 @@ export default function FinanciamientoClientePage() {
                     // Usar el servicio para calcular información
                     const info = calcularInfoFinanciamiento(financiamiento);
                     const {
-                    
                       valorCuota,
                       totalCobrado: abonos,
                       montoPendiente,
@@ -275,8 +272,6 @@ export default function FinanciamientoClientePage() {
                       progreso,
                     } = info;
                     const montoTotal = financiamiento.monto;
-
-                    
 
                     return (
                       <div
@@ -320,7 +315,6 @@ export default function FinanciamientoClientePage() {
                                 </p>
                               </div>
                             </div>
-                            
                           </div>
                         </div>
 
