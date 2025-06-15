@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   signatureText: {
-    fontSize: 5,
+    fontSize: 6,
     fontWeight: "bold",
     textAlign: "center",
     color: "#374151",
   },
   signatureSubtext: {
-    fontSize: 4,
+    fontSize: 5,
     textAlign: "center",
     color: "#6b7280",
   },
