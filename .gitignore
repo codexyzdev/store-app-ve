@@ -80,3 +80,4 @@ logs/
 README-MIGRACION.md
 scripts/
 pruebas/
+test-completo.ts

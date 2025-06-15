@@ -335,7 +335,7 @@ export default function NuevoFinanciamientoPage() {
                   Nuevo Financiamiento
                 </h1>
                 <p className='text-sm text-gray-600'>
-                  Crea un nuevo financiamiento o venta
+                  Crea un nuevo financiamiento
                 </p>
               </div>
             </div>

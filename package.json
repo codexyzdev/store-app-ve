@@ -20,7 +20,8 @@
     "lint": "next lint",
     "generar-datos": "tsx pruebas/ejecutar-datos.ts",
     "datos-prueba": "tsx pruebas/ejecutar-datos.ts",
-    "crear-usuarios": "tsx scripts/crear-usuarios.ts"
+    "crear-usuarios": "tsx scripts/crear-usuarios.ts",
+    "test-completo": "tsx test-completo.ts"
   },
   "keywords": [
     "gestión financiera",
