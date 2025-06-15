@@ -273,8 +273,8 @@ const PlanPagosPDFDocument: React.FC<{
     return cuotas;
   };
 
-  // Función para enumerar productos duplicados
-  const getProductosEnumerados = (): string => {
+  // Función para enumerar productos duplicados con texto dinámico
+  const getProductosEnumerados = (): { texto: string; etiqueta: string } => {
     if (financiamiento.productos && financiamiento.productos.length > 0) {
       const productosContados: {
         [key: string]: { nombre: string; cantidad: number };
@@ -296,17 +296,35 @@ const PlanPagosPDFDocument: React.FC<{
         }
       });
 
-      return Object.values(productosContados)
+      const productosArray = Object.values(productosContados);
+      const totalProductosUnicos = productosArray.length;
+      const cantidadTotalProductos = productosArray.reduce(
+        (total, item) => total + item.cantidad,
+        0
+      );
+
+      const textoProductos = productosArray
         .map((item) =>
           item.cantidad > 1 ? `${item.nombre} (${item.cantidad})` : item.nombre
         )
         .join(", ");
+
+      // Usar plural si hay más de un producto único O si la cantidad total es mayor a 1
+      const esPlural = totalProductosUnicos > 1 || cantidadTotalProductos > 1;
+
+      return {
+        texto: textoProductos,
+        etiqueta: esPlural ? "Productos" : "Producto",
+      };
     } else {
       // Producto individual (compatibilidad con financiamientos antiguos)
       const producto = productos.find(
         (p) => p.id === financiamiento.productoId
       );
-      return producto?.nombre || "Producto no encontrado";
+      return {
+        texto: producto?.nombre || "Producto no encontrado",
+        etiqueta: "Producto",
+      };
     }
   };
 
@@ -315,6 +333,7 @@ const PlanPagosPDFDocument: React.FC<{
   const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
   const montoPendiente = cuotasPendientes * valorCuota;
   const proximaCuota = cuotas.find((c) => c.estado === "pendiente");
+  const productosInfo = getProductosEnumerados();
 
   const formatearFecha = (fecha: Date) => {
     return fecha.toLocaleDateString("es-VE", {
@@ -371,8 +390,10 @@ const PlanPagosPDFDocument: React.FC<{
               </Text>
             )}
             <Text style={styles.infoText}>
-              <Text style={{ fontWeight: "bold" }}>Productos:</Text>{" "}
-              {getProductosEnumerados()}
+              <Text style={{ fontWeight: "bold" }}>
+                {productosInfo.etiqueta}:
+              </Text>{" "}
+              {productosInfo.texto}
             </Text>
             <Text style={styles.infoText}>
               <Text style={{ fontWeight: "bold" }}>Total:</Text> $
