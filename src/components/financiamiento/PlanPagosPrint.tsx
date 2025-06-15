@@ -12,6 +12,7 @@ import {
 } from "@react-pdf/renderer";
 import { useAppSelector } from "@/store/hooks";
 import { FinanciamientoCuota, Cliente, Cobro } from "@/lib/firebase/database";
+import { formatNumeroControl } from "@/utils/format";
 
 interface PlanPagosPrintProps {
   prestamo: FinanciamientoCuota;
@@ -349,8 +350,8 @@ const PlanPagosPDFDocument: React.FC<{
               {cliente.cedula || "N/A"}
             </Text>
             <Text style={styles.infoText}>
-              <Text style={{ fontWeight: "bold" }}>Código:</Text> #
-              {cliente.numeroControl}
+              <Text style={{ fontWeight: "bold" }}>Código:</Text>{" "}
+              {formatNumeroControl(cliente.numeroControl, "C")}
             </Text>
           </View>
 
@@ -358,8 +359,8 @@ const PlanPagosPDFDocument: React.FC<{
             <Text style={styles.infoTitle}>FINANCIAMIENTO</Text>
             {prestamo.numeroControl && (
               <Text style={styles.infoText}>
-                <Text style={{ fontWeight: "bold" }}>Control:</Text> #F-
-                {prestamo.numeroControl}
+                <Text style={{ fontWeight: "bold" }}>Control:</Text>{" "}
+                {formatNumeroControl(prestamo.numeroControl, "F")}
               </Text>
             )}
             <Text style={styles.infoText}>
@@ -388,7 +389,7 @@ const PlanPagosPDFDocument: React.FC<{
             <Text style={[styles.tableHeaderCell, styles.col2]}>FECHA</Text>
             <Text style={[styles.tableHeaderCell, styles.col3]}>MONTO</Text>
             <Text style={[styles.tableHeaderCell, styles.col4]}>ESTADO</Text>
-            <Text style={[styles.tableHeaderCell, styles.col5]}>PAGO</Text>
+            <Text style={[styles.tableHeaderCell, styles.col5]}>PAGADO</Text>
           </View>
 
           {cuotas.map((cuota) => (
