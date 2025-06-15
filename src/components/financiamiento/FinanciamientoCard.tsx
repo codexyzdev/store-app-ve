@@ -87,8 +87,7 @@ export const FinanciamientoCard = ({
                 {clienteInfo.nombre}
               </h3>
               <p className='text-sm text-gray-600 flex items-center gap-1'>
-                <span>📱</span>
-                {clienteInfo.telefono}
+                V-{clienteInfo.cedula}
               </p>
             </div>
           </div>

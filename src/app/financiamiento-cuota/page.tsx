@@ -184,7 +184,7 @@ export default function FinanciamientoCuotaPage() {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setBusqueda(e.target.value)
                     }
-                    placeholder='Buscar por cliente, cédula, teléfono, monto, producto o número de control...'
+                    placeholder='Buscar por Cédula o Número de Control...'
                     className='w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-sm sm:text-base'
                     aria-label='Buscar financiamientos por cliente, cédula o producto'
                     role='searchbox'
