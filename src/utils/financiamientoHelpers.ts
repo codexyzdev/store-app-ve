@@ -1,5 +1,6 @@
 import { FinanciamientoCuota, Cliente, Producto, Cobro } from "@/lib/firebase/database";
 import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
+import { normalizarNumeroControl, esFormatoNumeroControl } from "@/utils/format";
 
 export interface ClienteInfo {
   nombre: string;
@@ -142,7 +143,17 @@ export const filtrarFinanciamientos = (
     const monto = financiamiento.monto.toFixed(0);
     const numeroControl = financiamiento.numeroControl?.toString() || "";
 
+    const busquedaOriginal = busqueda.trim();
     const searchTerm = busqueda.toLowerCase();
+    
+    
+    // Búsqueda exacta por número de control de financiamiento
+    if (esFormatoNumeroControl(busquedaOriginal)) {
+      const numeroNormalizado = normalizarNumeroControl(busquedaOriginal);
+      return numeroNormalizado !== null && financiamiento.numeroControl === numeroNormalizado;
+    }
+    
+    // Búsqueda general (texto libre)
     return (
       clienteInfo.nombre.toLowerCase().includes(searchTerm) ||
       clienteInfo.cedula.toLowerCase().includes(searchTerm) ||

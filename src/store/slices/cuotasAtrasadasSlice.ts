@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FinanciamientoConDatos, EstadisticasCobranza } from '@/hooks/useCuotasAtrasadas';
+import { normalizarNumeroControl, esFormatoNumeroControl } from '@/utils/format';
 
 // Definición del estado de filtros
 export interface FiltrosCuotasState {
@@ -55,7 +56,18 @@ function filtrarYOrdenar(
 
     // Filtro búsqueda
     if (filters.busqueda) {
-      const texto = filters.busqueda.toLowerCase();
+      const busquedaOriginal = filters.busqueda.trim();
+      const texto = busquedaOriginal.toLowerCase();
+      
+      
+      
+      // Búsqueda exacta por número de control de financiamiento
+      if (esFormatoNumeroControl(busquedaOriginal)) {
+        const numeroNormalizado = normalizarNumeroControl(busquedaOriginal);
+        return numeroNormalizado !== null && item.numeroControl === numeroNormalizado;
+      }
+      
+      // Búsqueda general (texto libre)
       return (
         item.cliente.nombre.toLowerCase().includes(texto) ||
         item.cliente.cedula.includes(texto) ||

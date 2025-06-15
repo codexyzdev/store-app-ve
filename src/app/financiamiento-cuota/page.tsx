@@ -30,7 +30,7 @@ export default function FinanciamientoCuotaPage() {
   const {
     financiamientosFiltrados,
     filters,
-  
+
     loading: financiamientosLoading,
     error: financiamientosError,
     financiamientos,
@@ -167,8 +167,6 @@ export default function FinanciamientoCuotaPage() {
         </div>
 
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
-          
-
           {/* Filtros y controles */}
           <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8'>
             <div className='space-y-4'>
@@ -184,11 +182,22 @@ export default function FinanciamientoCuotaPage() {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setBusqueda(e.target.value)
                     }
-                    placeholder='Buscar por Cédula o Número de Control...'
+                    placeholder='Buscar por Número de Control: F-000001, 000001, 4...'
                     className='w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-sm sm:text-base'
-                    aria-label='Buscar financiamientos por cliente, cédula o producto'
+                    aria-label='Buscar financiamientos por número de control exacto'
                     role='searchbox'
+                    title='Ejemplos: F-000001, f-000001, 000001, 1'
                   />
+                </div>
+
+                {/* Ayuda de búsqueda */}
+                <div className='mt-2 text-xs text-gray-500 flex flex-wrap gap-2'>
+                  <span className='bg-blue-50 px-2 py-1 rounded-md'>
+                    💡 Búsqueda exacta por Número de Control
+                  </span>
+                  <span className='bg-purple-50 px-2 py-1 rounded-md'>
+                    Ejemplos: F-000001, f-000001, 000001, 1
+                  </span>
                 </div>
               </div>
 
@@ -200,10 +209,7 @@ export default function FinanciamientoCuotaPage() {
                     value={filters.estado}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setEstado(
-                        e.target.value as
-                          | "todos"
-                          | "activo"
-                          | "atrasado"
+                        e.target.value as "todos" | "activo" | "atrasado"
                       )
                     }
                     className='w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white'
@@ -211,7 +217,6 @@ export default function FinanciamientoCuotaPage() {
                     <option value='todos'>📊 Todos los estados</option>
                     <option value='activo'>✅ Activos</option>
                     <option value='atrasado'>⚠️ Atrasados</option>
-                  
                   </select>
                 </div>
 

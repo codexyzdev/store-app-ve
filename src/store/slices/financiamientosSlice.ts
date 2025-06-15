@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FinanciamientoCuota, Cobro } from '@/lib/firebase/database';
+import { normalizarNumeroControl, esFormatoNumeroControl } from '@/utils/format';
 
 export interface FinanciamientosFilters {
   busqueda: string;
@@ -112,13 +113,15 @@ const filtrarFinanciamientos = (
 
   // Filtro por búsqueda
   if (filters.busqueda.trim()) {
-    const busqueda = filters.busqueda.toLowerCase().trim();
+    const busquedaOriginal = filters.busqueda.trim();
+    const busqueda = busquedaOriginal.toLowerCase();
+             
     filtrados = filtrados.filter(financiamiento => {
       // Buscar en cliente
       const cliente = clientes.find(c => c.id === financiamiento.clienteId);
       const nombreCliente = cliente?.nombre?.toLowerCase() || '';
       const telefonoCliente = cliente?.telefono?.toLowerCase() || '';
-      const cedulaCliente = cliente?.cedula?.toLowerCase() || '';
+      const cedulaCliente = cliente?.cedula || '';
       
       // Buscar en producto
       const producto = productos.find(p => p.id === financiamiento.productoId);
@@ -128,6 +131,13 @@ const filtrarFinanciamientos = (
       const monto = financiamiento.monto.toString();
       const descripcion = financiamiento.descripcion?.toLowerCase() || '';
       
+      // Búsqueda exacta por número de control de financiamiento
+      if (esFormatoNumeroControl(busquedaOriginal)) {
+        const numeroNormalizado = normalizarNumeroControl(busquedaOriginal);
+        return numeroNormalizado !== null && financiamiento.numeroControl === numeroNormalizado;
+      }
+      
+      // Búsqueda general (texto libre)
       return (
         nombreCliente.includes(busqueda) ||
         telefonoCliente.includes(busqueda) ||
