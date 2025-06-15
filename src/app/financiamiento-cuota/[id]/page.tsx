@@ -220,13 +220,7 @@ export default function FinanciamientoClientePage() {
           </div>
         )}
 
-        {/* Resumen financiero mejorado */}
-        <ResumenFinanciero
-          totalPendiente={totalPendiente}
-          totalCuotasAtrasadas={totalCuotasAtrasadas}
-          actualizando={actualizando}
-        />
-
+        
         {/* Lista de financiamientos optimizada */}
         <div className='bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 overflow-hidden'>
           <div className='bg-blue-600 px-4 sm:px-8 py-4 sm:py-6'>
@@ -273,7 +267,7 @@ export default function FinanciamientoClientePage() {
                     // Usar el servicio para calcular información
                     const info = calcularInfoFinanciamiento(financiamiento);
                     const {
-                      cobrosValidos,
+                    
                       valorCuota,
                       totalCobrado: abonos,
                       montoPendiente,
