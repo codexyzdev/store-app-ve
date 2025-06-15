@@ -123,10 +123,6 @@ const FacturaVentaContadoPDF: React.FC<FacturaVentaContadoPDFProps> = ({
           <Text style={styles.label}>Teléfono:</Text>
           <Text style={styles.value}>{cliente?.telefono || "N/A"}</Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Dirección:</Text>
-          <Text style={styles.value}>{cliente?.direccion || "N/A"}</Text>
-        </View>
       </View>
 
       <View style={styles.divider} />
