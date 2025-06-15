@@ -15,7 +15,7 @@ export function EstadisticasCobrosDelDia({
   estadisticas,
 }: EstadisticasCobrosDelDiaProps) {
   return (
-    <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4'>
+    <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
       <div className='bg-green-50 p-6 rounded-xl text-center shadow-sm border border-green-200'>
         <CurrencyDollarIcon className='w-8 h-8 text-green-600 mx-auto mb-2' />
         <span className='text-sm text-green-800 font-medium block mb-1'>

@@ -282,23 +282,7 @@ export default function FinanciamientoClientePage() {
                     } = info;
                     const montoTotal = financiamiento.monto;
 
-                    // CORREGIDO: Solo hay financiamientos de cuotas aquí
-                    const estadoPrincipal =
-                      cuotasAtrasadas > 0 ? (
-                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-red-100 text-red-700 rounded-full font-bold text-sm'>
-                          <span>⏰</span>
-                          <span className='hidden sm:inline'>Atrasado </span>
-                        </div>
-                      ) : montoPendiente <= 0 ? (
-                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-green-100 text-green-700 rounded-full font-bold text-sm'>
-                          <span>✅</span>
-                          <span className='hidden sm:inline'>Completado</span>
-                        </div>
-                      ) : (
-                        <div className='inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 bg-blue-100 text-blue-700 rounded-full font-bold text-sm'>
-                          <span>✔️</span>Al día
-                        </div>
-                      );
+                    
 
                     return (
                       <div
@@ -342,7 +326,7 @@ export default function FinanciamientoClientePage() {
                                 </p>
                               </div>
                             </div>
-                            {estadoPrincipal}
+                            
                           </div>
                         </div>
 

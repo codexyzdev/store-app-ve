@@ -278,7 +278,7 @@ export default function FinanciamientoCuotaPage() {
             <div
               className={
                 vistaCards
-                  ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6"
+                  ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3  gap-4 sm:gap-6"
                   : "space-y-3 sm:space-y-4"
               }
             >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
@@ -11,7 +11,11 @@ import {
   getProductoNombre,
 } from "@/utils/financiamientoHelpers";
 
-import { ventasContadoDB, VentaContado } from "@/lib/firebase/database";
+import {
+  ventasContadoDB,
+  VentaContado,
+  Cliente,
+} from "@/lib/firebase/database";
 
 export default function VentasContadoPage() {
   const { clientes } = useClientesRedux();
@@ -31,26 +35,24 @@ export default function VentasContadoPage() {
     return () => unsub();
   }, []);
 
-  const ventasFiltradas = useMemo(() => {
-    const term = busqueda.toLowerCase();
-    return ventas.filter((v) => {
-      const cliente = getClienteInfo(v.clienteId, clientes);
-      const producto = getProductoNombre(v.productoId, productos);
-      return (
-        cliente?.nombre.toLowerCase().includes(term) ||
-        producto.toLowerCase().includes(term) ||
-        v.numeroControl.toString().includes(term)
-      );
-    });
-  }, [ventas, busqueda, clientes, productos]);
+  // Filtrar ventas
+  const term = busqueda.toLowerCase();
+  const ventasFiltradas = ventas.filter((v: VentaContado) => {
+    const cliente = getClienteInfo(v.clienteId, clientes);
+    const producto = getProductoNombre(v.productoId, productos);
+    return (
+      cliente?.nombre.toLowerCase().includes(term) ||
+      producto.toLowerCase().includes(term) ||
+      v.numeroControl.toString().includes(term)
+    );
+  });
 
-  const items = useMemo(() => {
-    return ventasFiltradas.map((f) => {
-      const cliente = getClienteInfo(f.clienteId, clientes);
-      const producto = getProductoNombre(f.productoId, productos);
-      return { f, cliente, producto };
-    });
-  }, [ventasFiltradas, clientes, productos]);
+  // Mapear items con información adicional
+  const items = ventasFiltradas.map((f: VentaContado) => {
+    const cliente = getClienteInfo(f.clienteId, clientes);
+    const producto = getProductoNombre(f.productoId, productos);
+    return { f, cliente, producto };
+  });
 
   if (error) {
     return (
@@ -88,7 +90,9 @@ export default function VentasContadoPage() {
             <input
               type='text'
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setBusqueda(e.target.value)
+              }
               placeholder='Buscar por cliente, producto o Nº de venta...'
               className='w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm'
             />
@@ -131,7 +135,7 @@ export default function VentasContadoPage() {
                 <div className='flex justify-between items-center'>
                   <span className='text-sm text-gray-500'>Fecha</span>
                   <span className='text-sm font-medium text-gray-900'>
-                    {new Date(f.fechaInicio).toLocaleDateString("es-ES")}
+                    {new Date(f.fecha).toLocaleDateString("es-ES")}
                   </span>
                 </div>
               </div>
