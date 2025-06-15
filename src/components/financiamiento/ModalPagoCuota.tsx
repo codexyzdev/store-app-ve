@@ -427,8 +427,7 @@ export default function ModalPagoCuota({
       nombre: "📱 Pago Móvil",
       descripcion: "Pago móvil interbancario",
     },
-    { id: "deposito", nombre: "🏧 Depósito", descripcion: "Depósito bancario" },
-    { id: "otro", nombre: "💳 Otro", descripcion: "Otro método de pago" },
+    { id: "zelle", nombre: "💳 Zelle", descripcion: "Zelle" },
   ];
 
   // Si el pago fue exitoso, mostrar pantalla de confirmación
