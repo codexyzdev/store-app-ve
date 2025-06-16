@@ -1,9 +1,9 @@
 import React from "react";
 import {
   CalendarDaysIcon,
-  ClockIcon,
+  ExclamationCircleIcon,
   CurrencyDollarIcon,
-  UserIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
 import { EstadisticasCobrosDelDia } from "@/store/slices/cobrosDelDiaSlice";
 
@@ -37,7 +37,7 @@ export function EstadisticasCobrosDelDia({
       </div>
 
       <div className='bg-yellow-50 p-6 rounded-xl text-center shadow-sm border border-yellow-200'>
-        <ClockIcon className='w-8 h-8 text-yellow-600 mx-auto mb-2' />
+        <ExclamationCircleIcon className='w-8 h-8 text-yellow-600 mx-auto mb-2' />
         <span className='text-sm text-yellow-800 font-medium block mb-1'>
           Monto Pendiente
         </span>
@@ -46,10 +46,8 @@ export function EstadisticasCobrosDelDia({
         </span>
       </div>
 
-      
-
       <div className='bg-purple-50 p-6 rounded-xl text-center shadow-sm border border-purple-200'>
-        <UserIcon className='w-8 h-8 text-purple-600 mx-auto mb-2' />
+        <UsersIcon className='w-8 h-8 text-purple-600 mx-auto mb-2' />
         <span className='text-sm text-purple-800 font-medium block mb-1'>
           Clientes del Día
         </span>

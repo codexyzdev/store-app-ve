@@ -1,7 +1,7 @@
 import React from "react";
 import {
-  MagnifyingGlassIcon,
-  Squares2X2Icon,
+  QuestionMarkCircleIcon,
+  ViewColumnsIcon,
   ListBulletIcon,
 } from "@heroicons/react/24/outline";
 import { FiltrosCobrosDelDia } from "@/store/slices/cobrosDelDiaSlice";
@@ -21,7 +21,7 @@ export function FiltrosCobrosDelDia({
     <div className='flex flex-col sm:flex-row gap-4 items-center justify-between'>
       {/* Buscador */}
       <div className='relative w-full'>
-        <MagnifyingGlassIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
+        <QuestionMarkCircleIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
         <input
           type='text'
           placeholder='Buscar cliente por nombre, cédula o teléfono...'
@@ -43,7 +43,7 @@ export function FiltrosCobrosDelDia({
               : "text-gray-600 hover:text-gray-800"
           }`}
         >
-          <Squares2X2Icon className='w-5 h-5' />
+          <ViewColumnsIcon className='w-5 h-5' />
           <span className='hidden sm:inline'>Tarjetas</span>
         </button>
         <button

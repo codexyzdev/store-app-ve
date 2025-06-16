@@ -2,13 +2,13 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, ReactNode } from "react";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children: React.ReactNode;
   requiredPermissions?: string[];
   allowedRoles?: string[];
-  fallback?: ReactNode;
+  fallback?: React.ReactNode;
 }
 
 export function ProtectedRoute({

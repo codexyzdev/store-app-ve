@@ -1,7 +1,7 @@
 import React from "react";
 import {
   CheckCircleIcon,
-  UserIcon,
+  UsersIcon,
   PhoneIcon,
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
@@ -74,7 +74,7 @@ export function CobrosRealizados({ cobrosAgrupados }: CobrosRealizadosProps) {
                         {cobro.tipo === "cuota"
                           ? `Cuota #${cobro.numeroCuota || index + 1}`
                           : "Pago"}
-                        {cobro.descripcion && ` - ${cobro.descripcion}`}
+                        {cobro.nota && ` - ${cobro.nota}`}
                       </span>
                       <span className='font-medium text-green-600'>
                         ${cobro.monto.toFixed(2)}

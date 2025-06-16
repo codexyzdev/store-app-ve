@@ -63,7 +63,7 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
         // Focalizar el campo de cédula para facilitar la corrección
         const cedulaInput = document.querySelector(
           'input[title="Solo números, mínimo 6 dígitos"]'
-        ) as HTMLInputElement;
+        ) as HTMLInputElement | null;
         if (cedulaInput) {
           cedulaInput.focus();
           cedulaInput.select();
