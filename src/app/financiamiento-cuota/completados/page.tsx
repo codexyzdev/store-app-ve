@@ -12,6 +12,7 @@ import {
   FinanciamientoCalculado,
   ClienteInfo,
 } from "@/utils/financiamientoHelpers";
+import { FinanciamientoCuota } from "@/lib/firebase/database";
 import { FinanciamientoListItem } from "@/components/financiamiento/FinanciamientoListItem";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
@@ -23,7 +24,7 @@ export default function FinanciamientosCompletadosPage() {
 
   // Filtrar financiamientos completados
   const financiamientosCompletados = useMemo(() => {
-    return financiamientos.filter((f: any) => {
+    return financiamientos.filter((f: FinanciamientoCuota) => {
       // Excluir ventas al contado, sólo evaluar financiamientos a cuotas
       if (f.tipoVenta !== "cuotas") return false;
 
@@ -41,21 +42,23 @@ export default function FinanciamientosCompletadosPage() {
 
   // Construir datos para los ítems de lista
   const items = useMemo(() => {
-    return financiamientosCompletados.map((financiamiento) => {
-      const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
-      const productoNombre = getProductoNombre(
-        financiamiento.productoId,
-        productos
-      );
-      const calculado = calcularFinanciamiento(financiamiento, cobros);
+    return financiamientosCompletados.map(
+      (financiamiento: FinanciamientoCuota) => {
+        const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
+        const productoNombre = getProductoNombre(
+          financiamiento.productoId,
+          productos
+        );
+        const calculado = calcularFinanciamiento(financiamiento, cobros);
 
-      return {
-        financiamiento,
-        clienteInfo,
-        productoNombre,
-        calculado,
-      };
-    });
+        return {
+          financiamiento,
+          clienteInfo,
+          productoNombre,
+          calculado,
+        };
+      }
+    );
   }, [financiamientosCompletados, clientes, productos, cobros]);
 
   const PAGE_SIZE = 25;

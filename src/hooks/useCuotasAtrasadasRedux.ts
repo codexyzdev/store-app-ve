@@ -36,6 +36,10 @@ export interface EstadisticasCobranza {
     alta: number;
     critica: number;
   };
+  casosCriticos: number;
+  casosAltoRiesgo: number;
+  promedioPorCuota: number;
+  promedioAtraso: number;
 }
 
 export const useCuotasAtrasadasRedux = () => {

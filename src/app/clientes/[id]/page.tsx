@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { clientesDB, Cliente } from "@/lib/firebase/database";
-import { use } from "react";
 import Link from "next/link";
 
 export default function EditarClientePage({

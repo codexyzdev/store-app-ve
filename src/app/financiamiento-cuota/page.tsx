@@ -296,7 +296,6 @@ export default function FinanciamientoCuotaPage() {
                       clienteInfo={item.clienteInfo}
                       productoNombre={item.productoNombre}
                       calculado={item.calculado}
-                      index={index}
                     />
                   ) : (
                     <FinanciamientoListItem
