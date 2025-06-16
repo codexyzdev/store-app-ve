@@ -99,31 +99,33 @@ export default function TransaccionesPage() {
                 </tr>
               </thead>
               <tbody>
-                {transaccionesFiltradas.map((t, idx) => {
-                  const cli = getCliente(t.clienteId);
-                  return (
-                    <tr
-                      key={t.id}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
-                      <td className='px-4 py-3'>
-                        {t.tipoVenta === "contado"
-                          ? formatNumeroControl(t.numeroControl, "C")
-                          : formatNumeroControl(t.numeroControl, "F")}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {new Date(t.fechaInicio).toLocaleDateString("es-ES")}
-                      </td>
-                      <td className='px-4 py-3'>
-                        {cli ? cli.nombre : "Cliente eliminado"}
-                      </td>
-                      <td className='px-4 py-3 capitalize'>{t.tipoVenta}</td>
-                      <td className='px-4 py-3 text-right'>
-                        ${t.monto.toLocaleString()}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {transaccionesFiltradas.map(
+                  (t: FinanciamientoCuota, idx: number) => {
+                    const cli = getCliente(t.clienteId);
+                    return (
+                      <tr
+                        key={t.id}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className='px-4 py-3'>
+                          {t.tipoVenta === "contado"
+                            ? formatNumeroControl(t.numeroControl, "C")
+                            : formatNumeroControl(t.numeroControl, "F")}
+                        </td>
+                        <td className='px-4 py-3'>
+                          {new Date(t.fechaInicio).toLocaleDateString("es-ES")}
+                        </td>
+                        <td className='px-4 py-3'>
+                          {cli ? cli.nombre : "Cliente eliminado"}
+                        </td>
+                        <td className='px-4 py-3 capitalize'>{t.tipoVenta}</td>
+                        <td className='px-4 py-3 text-right'>
+                          ${t.monto.toLocaleString()}
+                        </td>
+                      </tr>
+                    );
+                  }
+                )}
               </tbody>
             </table>
           </div>

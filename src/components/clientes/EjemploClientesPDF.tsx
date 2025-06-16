@@ -66,7 +66,7 @@ const EjemploClientesPDF: React.FC = () => {
             fileName='clientes-ejemplo.pdf'
             className='bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center gap-2'
           >
-            {({ blob, url, loading, error }) =>
+            {({ blob, url, loading, error }: any) =>
               loading ? "Generando..." : "📄 Descargar PDF de Clientes"
             }
           </PDFDownloadLink>
@@ -160,7 +160,7 @@ const EjemploClientesPDF: React.FC = () => {
             También puedes generar el PDF programáticamente y obtener el blob.
           </p>
           <BlobProvider document={<ClientesPrint clientes={clientesEjemplo} />}>
-            {({ blob, url, loading, error }) => (
+            {({ blob, url, loading, error }: any) => (
               <div className='space-y-2'>
                 <div className='text-sm text-gray-600'>
                   Estado: {loading ? "Generando..." : "Listo"}

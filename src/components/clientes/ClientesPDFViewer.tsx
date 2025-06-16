@@ -23,7 +23,7 @@ const ClientesPDFViewer: React.FC<ClientesPDFViewerProps> = ({
           fileName={fileName}
           className='bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center gap-2 transition-colors'
         >
-          {({ blob, url, loading, error }) => (
+          {({ blob, url, loading, error }: any) => (
             <>
               {loading ? (
                 <>

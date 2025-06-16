@@ -100,7 +100,7 @@ const ComprobanteModal: React.FC<ComprobanteModalProps> = ({
                 src={imagenUrl}
                 alt='Comprobante de pago'
                 className='w-full h-auto rounded-lg shadow-lg max-h-96 object-contain mx-auto'
-                onError={(e) => {
+                onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                   (e.target as HTMLImageElement).src = "/placeholder-image.png";
                 }}
               />
@@ -340,7 +340,9 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
             </label>
             <select
               value={filtroTipoPago}
-              onChange={(e) => setFiltroTipoPago(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setFiltroTipoPago(e.target.value)
+              }
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm'
             >
               {tiposPago.map((tipo) => (
@@ -358,7 +360,9 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
             <input
               type='date'
               value={filtroFecha}
-              onChange={(e) => setFiltroFecha(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFiltroFecha(e.target.value)
+              }
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm'
             />
           </div>

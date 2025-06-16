@@ -132,7 +132,7 @@ export function NuevoClienteForm() {
           <Input
             type='file'
             accept='image/*'
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const file = e.target.files?.[0];
               if (file) setFotoCedula(file);
             }}

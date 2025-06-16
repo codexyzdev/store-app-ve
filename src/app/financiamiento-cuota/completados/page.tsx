@@ -23,7 +23,7 @@ export default function FinanciamientosCompletadosPage() {
 
   // Filtrar financiamientos completados
   const financiamientosCompletados = useMemo(() => {
-    return financiamientos.filter((f) => {
+    return financiamientos.filter((f: any) => {
       // Excluir ventas al contado, sólo evaluar financiamientos a cuotas
       if (f.tipoVenta !== "cuotas") return false;
 
@@ -106,7 +106,12 @@ export default function FinanciamientosCompletadosPage() {
           )}
 
           {itemsToRender.map(
-            ({ financiamiento, clienteInfo, productoNombre, calculado }) => (
+            ({
+              financiamiento,
+              clienteInfo,
+              productoNombre,
+              calculado,
+            }: any) => (
               <FinanciamientoListItem
                 key={financiamiento.id}
                 financiamiento={financiamiento}

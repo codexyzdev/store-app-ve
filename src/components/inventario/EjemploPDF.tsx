@@ -124,7 +124,7 @@ const EjemploPDF: React.FC = () => {
           <BlobProvider
             document={<InventarioPrint productos={productosEjemplo} />}
           >
-            {({ blob, url, loading, error }) => (
+            {({ blob, url, loading, error }: any) => (
               <div className='space-y-2'>
                 <div className='text-sm text-gray-600'>
                   Estado: {loading ? "Generando..." : "Listo"}

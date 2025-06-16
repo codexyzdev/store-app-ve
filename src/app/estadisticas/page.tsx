@@ -560,7 +560,7 @@ export default function EstadisticasPage() {
                     <input
                       type='date'
                       value={filtrosIngresos.fechaDesde}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setFiltrosIngresos((prev) => ({
                           ...prev,
                           fechaDesde: e.target.value,
@@ -576,7 +576,7 @@ export default function EstadisticasPage() {
                     <input
                       type='date'
                       value={filtrosIngresos.fechaHasta}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setFiltrosIngresos((prev) => ({
                           ...prev,
                           fechaHasta: e.target.value,
@@ -597,7 +597,7 @@ export default function EstadisticasPage() {
                 </label>
                 <select
                   value={filtrosIngresos.tipoPago}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setFiltrosIngresos((prev) => ({
                       ...prev,
                       tipoPago: e.target.value,
@@ -617,7 +617,7 @@ export default function EstadisticasPage() {
                 </label>
                 <select
                   value={filtrosIngresos.tipoIngreso}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setFiltrosIngresos((prev) => ({
                       ...prev,
                       tipoIngreso: e.target.value,
@@ -723,56 +723,60 @@ export default function EstadisticasPage() {
                       </td>
                     </tr>
                   ) : (
-                    ingresosFiltrados.map((ingreso, index) => (
-                      <tr
-                        key={`${ingreso.tipo}-${ingreso.id}`}
-                        className={`${
-                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                        } border-b border-gray-100 hover:bg-blue-50 transition-colors`}
-                      >
-                        <td className='px-4 py-3'>
-                          {new Date(ingreso.fecha).toLocaleDateString("es-ES")}
-                        </td>
-                        <td className='px-4 py-3'>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              ingreso.tipo === "cobro"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-purple-100 text-purple-700"
-                            }`}
-                          >
-                            {ingreso.tipo === "cobro"
-                              ? "Cobro"
-                              : "Venta Contado"}
-                          </span>
-                        </td>
-                        <td className='px-4 py-3 font-medium'>
-                          {getNombreCliente(ingreso.clienteId)}
-                        </td>
-                        <td className='px-4 py-3 text-right font-bold'>
-                          ${ingreso.monto.toLocaleString()}
-                        </td>
-                        <td className='px-4 py-3'>
-                          <span className='capitalize'>
-                            {ingreso.tipoPago || "Efectivo"}
-                          </span>
-                        </td>
-                        <td className='px-4 py-3'>
-                          {ingreso.comprobante || "-"}
-                        </td>
-                        <td className='px-4 py-3 text-center'>
-                          <button
-                            onClick={() => {
-                              setIngresoSeleccionado(ingreso);
-                              setMostrarModal(true);
-                            }}
-                            className='text-blue-600 hover:text-blue-800 font-medium'
-                          >
-                            Ver detalles
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                    ingresosFiltrados.map(
+                      (ingreso: IngresoUnificado, index: number) => (
+                        <tr
+                          key={`${ingreso.tipo}-${ingreso.id}`}
+                          className={`${
+                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          } border-b border-gray-100 hover:bg-blue-50 transition-colors`}
+                        >
+                          <td className='px-4 py-3'>
+                            {new Date(ingreso.fecha).toLocaleDateString(
+                              "es-ES"
+                            )}
+                          </td>
+                          <td className='px-4 py-3'>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                ingreso.tipo === "cobro"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}
+                            >
+                              {ingreso.tipo === "cobro"
+                                ? "Cobro"
+                                : "Venta Contado"}
+                            </span>
+                          </td>
+                          <td className='px-4 py-3 font-medium'>
+                            {getNombreCliente(ingreso.clienteId)}
+                          </td>
+                          <td className='px-4 py-3 text-right font-bold'>
+                            ${ingreso.monto.toLocaleString()}
+                          </td>
+                          <td className='px-4 py-3'>
+                            <span className='capitalize'>
+                              {ingreso.tipoPago || "Efectivo"}
+                            </span>
+                          </td>
+                          <td className='px-4 py-3'>
+                            {ingreso.comprobante || "-"}
+                          </td>
+                          <td className='px-4 py-3 text-center'>
+                            <button
+                              onClick={() => {
+                                setIngresoSeleccionado(ingreso);
+                                setMostrarModal(true);
+                              }}
+                              className='text-blue-600 hover:text-blue-800 font-medium'
+                            >
+                              Ver detalles
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    )
                   )}
                 </tbody>
               </table>
