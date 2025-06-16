@@ -15,7 +15,28 @@ import {
   Cobro,
 } from '@/lib/firebase/database';
 import { calcularCuotasAtrasadas } from '@/utils/financiamiento';
-import { FinanciamientoConDatos } from './useCuotasAtrasadas';
+// Definición de tipos necesarios
+export interface FinanciamientoConDatos extends FinanciamientoCuota {
+  cliente: Cliente;
+  producto: Producto;
+  cuotasAtrasadas: number;
+  montoAtrasado: number;
+  valorCuota: number;
+  ultimaCuota: Cobro | null;
+  diasAtraso: number;
+  severidad: 'baja' | 'media' | 'alta' | 'critica';
+}
+
+export interface EstadisticasCobranza {
+  totalClientes: number;
+  montoTotal: number;
+  porSeveridad: {
+    baja: number;
+    media: number;
+    alta: number;
+    critica: number;
+  };
+}
 
 export const useCuotasAtrasadasRedux = () => {
   const dispatch = useAppDispatch();

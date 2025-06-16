@@ -1,14 +1,14 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, InputHTMLAttributes, ComponentType } from "react";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helpText?: string;
-  leftIcon?: React.ComponentType<{
+  leftIcon?: ComponentType<{
     className?: string;
     "aria-hidden"?: boolean;
   }>;
-  rightIcon?: React.ComponentType<{
+  rightIcon?: ComponentType<{
     className?: string;
     "aria-hidden"?: boolean;
   }>;
@@ -46,8 +46,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       id,
       required,
       ...props
-    },
-    ref
+    }: InputProps,
+    ref: React.Ref<HTMLInputElement>
   ) => {
     // Generar ID único si no se proporciona
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
@@ -67,8 +67,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const conditionalClasses = [
       hasError
         ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-        : variantClasses[variant],
-      sizeClasses[inputSize],
+        : variantClasses[variant as keyof typeof variantClasses],
+      sizeClasses[inputSize as keyof typeof sizeClasses],
       fullWidth ? "w-full" : "",
       hasIcons ? "pl-10" : "", // Espacio para íconos
       className,

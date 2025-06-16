@@ -9,8 +9,8 @@ import {
   ListBulletIcon,
   ArchiveBoxIcon,
   ChartBarIcon,
-  BanknotesIcon,
-  ArrowsRightLeftIcon,
+  BanknotesIcon as CurrencyDollarIcon,
+  ArrowPathRoundedSquareIcon as ArrowsRightLeftIcon,
 } from "@heroicons/react/24/outline";
 import {
   Bars3Icon,
@@ -218,7 +218,7 @@ const Header = () => {
             />
             <NavigationButton
               onClick={() => handleNavigateTo("/ventas-contado")}
-              icon={BanknotesIcon}
+              icon={CurrencyDollarIcon}
               label='Ventas al Contado'
               ariaLabel='Ir a ventas al contado'
             />

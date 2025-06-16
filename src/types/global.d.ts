@@ -17,6 +17,11 @@ declare module '@heroicons/react/24/outline' {
   export const ChartBarIcon: React.FC<React.SVGProps<SVGSVGElement>>;
   export const Cog6ToothIcon: React.FC<React.SVGProps<SVGSVGElement>>;
   export const ArchiveBoxIcon: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const XMarkIcon: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const CurrencyDollarIcon: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ArrowPathRoundedSquareIcon: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const MapPinIcon: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ClipboardDocumentListIcon: React.FC<React.SVGProps<SVGSVGElement>>;
 }
 
 declare module 'react' {

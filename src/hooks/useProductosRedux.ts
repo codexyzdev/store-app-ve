@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react'
+import React, { useEffect, useCallback, useMemo } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { inventarioDB, Producto } from '@/lib/firebase/database'
 import { setProductos, clearError } from '@/store/inventarioSlice'

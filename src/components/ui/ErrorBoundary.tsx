@@ -1,19 +1,19 @@
 "use client";
 
-import React, { Component, ReactNode } from "react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import React, { Component, ReactNode, ErrorInfo, ComponentType } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
   showDetails?: boolean;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
-  errorInfo?: React.ErrorInfo;
+  errorInfo?: ErrorInfo;
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -29,7 +29,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
 
     this.setState({
@@ -71,7 +71,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           role='alert'
           aria-live='assertive'
         >
-          <ExclamationTriangleIcon
+          <ExclamationCircleIcon
             className='w-16 h-16 text-red-500 mb-4'
             aria-hidden='true'
           />
@@ -141,7 +141,7 @@ export default ErrorBoundary;
 
 // Hook para usar ErrorBoundary de forma funcional
 export const withErrorBoundary = <P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">
 ) => {
   const WrappedComponent = (props: P) => (

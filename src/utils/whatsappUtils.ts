@@ -1,4 +1,4 @@
-import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadas";
+import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadasRedux";
 import type { CobroPendienteDetallado } from "@/store/slices/cobrosDelDiaSlice";
 
 export function formatearTelefono(telefono: string): string {

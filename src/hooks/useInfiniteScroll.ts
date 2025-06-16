@@ -1,4 +1,4 @@
-import { useEffect, useRef, MutableRefObject } from "react";
+import React, { useEffect, useRef, MutableRefObject } from "react";
 
 export function useInfiniteScroll(callback: () => void): MutableRefObject<HTMLDivElement | null> {
   const sentinelRef = useRef<HTMLDivElement | null>(null);

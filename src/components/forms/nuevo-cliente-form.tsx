@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/Button";
 import {
   Form,
   FormControl,
@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import Input from "@/components/ui/Input";
 import { clientesDB } from "@/lib/firebase/database";
 import { subirImagenCliente } from "@/lib/firebase/storage";
 import { toast } from "sonner";
@@ -139,7 +139,7 @@ export function NuevoClienteForm() {
           />
         </div>
 
-        <Button type='submit' className='w-full' disabled={loading}>
+        <Button className='w-full' disabled={loading} {...{ type: "submit" }}>
           {loading ? "Guardando..." : "Guardar Cliente"}
         </Button>
       </form>

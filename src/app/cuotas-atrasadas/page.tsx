@@ -15,7 +15,7 @@ import { EstadisticasCobranza } from "@/components/cuotas/EstadisticasCobranza";
 import { FiltrosYBusqueda } from "@/components/cuotas/FiltrosYBusqueda";
 import { TarjetaCuotaAtrasada } from "@/components/cuotas/TarjetaCuotaAtrasada";
 import { TablaCompacta } from "@/components/cuotas/TablaCompacta";
-import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadas";
+import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadasRedux";
 import Modal from "@/components/Modal";
 import CuotasMorosasPrint from "@/components/cuotas/CuotasMorosasPrint";
 

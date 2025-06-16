@@ -1,7 +1,7 @@
-import React from "react";
+import React, { ButtonHTMLAttributes, ComponentType, ReactNode } from "react";
 import LoadingSpinner from "./LoadingSpinner";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?:
     | "primary"
     | "secondary"
@@ -12,9 +12,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   fullWidth?: boolean;
-  icon?: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  icon?: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   iconPosition?: "left" | "right";
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const variantClasses = {

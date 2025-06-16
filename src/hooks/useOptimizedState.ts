@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 interface OptimizedStateOptions<T> {
   equalityCheck?: (prev: T, next: T) => boolean;
@@ -57,7 +57,7 @@ export const useOptimizedState = <T>(
  */
 export const useOptimizedArray = <T>(
   initialArray: T[] = [],
-  keyExtractor: (item: T) => string | number = (_, index) => index
+  keyExtractor: (item: T, index: number) => string | number = (_, index: number) => index
 ) => {
   const [array, setArray] = useOptimizedState(initialArray, {
     equalityCheck: (prev, next) => {

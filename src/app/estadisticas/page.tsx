@@ -127,7 +127,7 @@ export default function EstadisticasPage() {
       filtrosIngresos.fechaHasta + "T23:59:59"
     ).getTime();
 
-    return ingresosUnificados.filter((ingreso) => {
+    return ingresosUnificados.filter((ingreso: IngresoUnificado) => {
       // Filtro por fecha
       if (ingreso.fecha < fechaDesdeMs || ingreso.fecha > fechaHastaMs) {
         return false;
@@ -164,22 +164,28 @@ export default function EstadisticasPage() {
   // Calcular resumen de ingresos
   const resumenIngresos = useMemo(() => {
     const totalGeneral = ingresosFiltrados.reduce(
-      (acc, ing) => acc + ing.monto,
+      (acc: number, ing: IngresoUnificado) => acc + ing.monto,
       0
     );
     const totalCobros = ingresosFiltrados
-      .filter((ing) => ing.tipo === "cobro")
-      .reduce((acc, ing) => acc + ing.monto, 0);
+      .filter((ing: IngresoUnificado) => ing.tipo === "cobro")
+      .reduce((acc: number, ing: IngresoUnificado) => acc + ing.monto, 0);
     const totalVentasContado = ingresosFiltrados
-      .filter((ing) => ing.tipo === "venta-contado")
-      .reduce((acc, ing) => acc + ing.monto, 0);
+      .filter((ing: IngresoUnificado) => ing.tipo === "venta-contado")
+      .reduce((acc: number, ing: IngresoUnificado) => acc + ing.monto, 0);
 
     const cobrosEfectivo = ingresosFiltrados
-      .filter((ing) => ing.tipo === "cobro" && ing.tipoPago === "efectivo")
-      .reduce((acc, ing) => acc + ing.monto, 0);
+      .filter(
+        (ing: IngresoUnificado) =>
+          ing.tipo === "cobro" && ing.tipoPago === "efectivo"
+      )
+      .reduce((acc: number, ing: IngresoUnificado) => acc + ing.monto, 0);
     const cobrosTransferencia = ingresosFiltrados
-      .filter((ing) => ing.tipo === "cobro" && ing.tipoPago === "transferencia")
-      .reduce((acc, ing) => acc + ing.monto, 0);
+      .filter(
+        (ing: IngresoUnificado) =>
+          ing.tipo === "cobro" && ing.tipoPago === "transferencia"
+      )
+      .reduce((acc: number, ing: IngresoUnificado) => acc + ing.monto, 0);
 
     return {
       totalGeneral,
@@ -209,7 +215,7 @@ export default function EstadisticasPage() {
         "Comprobante",
         "Notas",
       ].join(","),
-      ...ingresosFiltrados.map((ing) =>
+      ...ingresosFiltrados.map((ing: IngresoUnificado) =>
         [
           new Date(ing.fecha).toLocaleDateString("es-ES"),
           ing.tipo === "cobro" ? "Cobro" : "Venta Contado",
@@ -403,8 +409,6 @@ export default function EstadisticasPage() {
               </div>
             </div>
           </div>
-
-          
 
           <div className='bg-white rounded-2xl p-6 shadow-sm border border-amber-100'>
             <div className='flex items-center gap-3'>

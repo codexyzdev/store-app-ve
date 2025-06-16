@@ -1,5 +1,5 @@
 import React from "react";
-import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadas";
+import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadasRedux";
 
 interface CuotasMorosasPrintProps {
   financiamientos: FinanciamientoConDatos[];

@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadas";
+import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadasRedux";
 import { getSeveridadConfig } from "@/utils/severidadUtils";
 import {
   formatearTelefono,

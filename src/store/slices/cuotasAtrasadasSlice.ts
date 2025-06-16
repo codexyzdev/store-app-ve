@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { FinanciamientoConDatos, EstadisticasCobranza } from '@/hooks/useCuotasAtrasadas';
+import { FinanciamientoConDatos, EstadisticasCobranza } from '@/hooks/useCuotasAtrasadasRedux';
 import { normalizarNumeroControl, esFormatoNumeroControl } from '@/utils/format';
 
 // Definición del estado de filtros
