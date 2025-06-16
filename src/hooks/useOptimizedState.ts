@@ -12,7 +12,7 @@ interface OptimizedStateOptions<T> {
 export const useOptimizedState = <T>(
   initialState: T,
   options: OptimizedStateOptions<T> = {}
-) {
+) => {
   const { equalityCheck, debugName } = options;
   const [state, setState] = useState<T>(initialState);
 
@@ -50,7 +50,7 @@ export const useOptimizedState = <T>(
   }, [equalityCheck, debugName]);
 
   return [state, setOptimizedState] as const;
-}
+};
 
 /**
  * Hook para manejar arrays de forma optimizada
@@ -58,7 +58,7 @@ export const useOptimizedState = <T>(
 export const useOptimizedArray = <T>(
   initialArray: T[] = [],
   keyExtractor: (item: T) => string | number = (_, index) => index
-) {
+) => {
   const [array, setArray] = useOptimizedState(initialArray, {
     equalityCheck: (prev, next) => {
       if (prev.length !== next.length) return false;
@@ -85,14 +85,14 @@ export const useOptimizedArray = <T>(
     array,
     ...actions
   };
-}
+};
 
 /**
  * Hook para formularios optimizado que previene re-renders en cada keystroke
  */
 export const useOptimizedForm = <T extends Record<string, any>>(
   initialValues: T
-) {
+) => {
   const [values, setValues] = useOptimizedState(initialValues, {
     debugName: 'OptimizedForm'
   });
@@ -141,4 +141,4 @@ export const useOptimizedForm = <T extends Record<string, any>>(
     clearErrors,
     reset
   };
-} 
+}; 

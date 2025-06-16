@@ -3,7 +3,6 @@
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "types": ["@types/node", "@types/react", "@types/react-dom"],
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,

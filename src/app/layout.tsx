@@ -4,6 +4,7 @@ import "@fontsource-variable/roboto";
 import "./globals.css";
 import "../styles/print.css";
 import Header from "@/components/header/Header";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { AuthProvider } from "@/hooks/use-auth";
 import { StoreProvider } from "@/store/StoreProvider";
 import { NotificationCenter } from "@/components/ui/NotificationCenter";
@@ -47,15 +48,21 @@ export default function RootLayout({
   return (
     <html lang='es' suppressHydrationWarning>
       <body className='antialiased'>
-        <StoreProvider>
-          <AuthProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <Header />
-              <main>{children}</main>
-              <NotificationCenter />
-            </Suspense>
-          </AuthProvider>
-        </StoreProvider>
+        <ErrorBoundary showDetails={process.env.NODE_ENV === "development"}>
+          <StoreProvider>
+            <AuthProvider>
+              <Suspense fallback={<LoadingFallback />}>
+                <ErrorBoundary>
+                  <Header />
+                </ErrorBoundary>
+                <main>
+                  <ErrorBoundary>{children}</ErrorBoundary>
+                </main>
+                <NotificationCenter />
+              </Suspense>
+            </AuthProvider>
+          </StoreProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -1,79 +1,90 @@
+import React from "react";
+
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg" | "xl";
-  color?: "white" | "blue" | "gray";
+  color?: "primary" | "white" | "gray";
   text?: string;
-  centered?: boolean;
+  className?: string;
+  fullScreen?: boolean;
 }
 
 const sizeClasses = {
   sm: "h-4 w-4",
-  md: "h-8 w-8",
-  lg: "h-12 w-12",
-  xl: "h-16 w-16",
+  md: "h-6 w-6",
+  lg: "h-8 w-8",
+  xl: "h-12 w-12",
 };
 
 const colorClasses = {
-  white: "border-white border-t-transparent",
-  blue: "border-blue-500 border-t-transparent",
-  gray: "border-gray-300 border-t-transparent",
+  primary: "border-sky-500",
+  white: "border-white",
+  gray: "border-gray-500",
 };
 
-export function LoadingSpinner({
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = "md",
-  color = "blue",
+  color = "primary",
   text,
-  centered = false,
-}: LoadingSpinnerProps) {
-  const spinnerContent = (
-    <>
+  className = "",
+  fullScreen = false,
+}) => {
+  const spinnerElement = (
+    <div className={`flex flex-col items-center justify-center ${className}`}>
       <div
-        className={`
-          animate-spin rounded-full border-2 
-          ${sizeClasses[size]} 
-          ${colorClasses[color]}
-        `}
+        className={`animate-spin rounded-full border-b-2 ${sizeClasses[size]} ${colorClasses[color]}`}
+        role='status'
+        aria-hidden='true'
       />
       {text && (
         <p
           className={`mt-2 text-sm font-medium ${
-            color === "white" ? "text-white" : "text-gray-600"
+            color === "white" ? "text-white" : "text-gray-700"
           }`}
+          aria-live='polite'
         >
           {text}
         </p>
       )}
-    </>
+      <span className='sr-only'>Cargando...</span>
+    </div>
   );
 
-  if (centered) {
+  if (fullScreen) {
     return (
-      <div className='flex flex-col items-center justify-center'>
-        {spinnerContent}
+      <div
+        className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm'
+        role='status'
+        aria-live='polite'
+        aria-label='Cargando contenido'
+      >
+        {spinnerElement}
       </div>
     );
   }
 
-  return <div className='flex flex-col items-center'>{spinnerContent}</div>;
-}
+  return spinnerElement;
+};
+
+export default LoadingSpinner;
 
 // Componente específico para páginas completas
-export function PageLoadingSpinner({
+export const PageLoadingSpinner = ({
   text = "Cargando...",
 }: {
   text?: string;
-}) {
+}) => {
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100 flex flex-col items-center justify-center'>
-      <LoadingSpinner size='lg' color='blue' text={text} centered />
+      <LoadingSpinner size='lg' color='primary' text={text} />
     </div>
   );
-}
+};
 
 // Componente para cards o secciones
-export function CardLoadingSpinner({ text }: { text?: string }) {
+export const CardLoadingSpinner = ({ text }: { text?: string }) => {
   return (
     <div className='flex items-center justify-center min-h-[200px]'>
-      <LoadingSpinner size='md' color='gray' text={text} centered />
+      <LoadingSpinner size='md' color='gray' text={text} />
     </div>
   );
-}
+};

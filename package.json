@@ -18,10 +18,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "accessibility-audit": "node scripts/accessibility-audit.js",
+    "analyze": "ANALYZE=true next build",
+    "type-check": "tsc --noEmit",
     "generar-datos": "tsx pruebas/ejecutar-datos.ts",
     "datos-prueba": "tsx pruebas/ejecutar-datos.ts",
     "crear-usuarios": "tsx scripts/crear-usuarios.ts",
-    "test-completo": "tsx test-completo.ts"
+    "test-completo": "tsx test-completo.ts",
+    "check-all": "npm run type-check && npm run lint && npm run accessibility-audit"
   },
   "keywords": [
     "gestión financiera",

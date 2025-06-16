@@ -1,6 +1,7 @@
 "use client";
 
 import HeaderBackButton from "@/components/header/HeaderBackButton";
+import NavigationButton from "@/components/navigation/NavigationButton";
 import {
   CalendarDaysIcon,
   ExclamationCircleIcon,
@@ -171,17 +172,12 @@ const Header = () => {
         {/* Contenido del Sidebar */}
         <div className='p-6 h-full overflow-y-auto'>
           <nav className='flex flex-col gap-3'>
-            <button
+            <NavigationButton
               onClick={() => handleNavigateTo("/dashboard")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-              aria-label='Ir al panel de inicio'
-            >
-              <FolderIcon
-                className='w-5 h-5 text-gray-600 group-hover:text-sky-600'
-                aria-hidden='true'
-              />
-              <span className='font-medium text-sm'>Inicio</span>
-            </button>
+              icon={FolderIcon}
+              label='Inicio'
+              ariaLabel='Ir al panel de inicio'
+            />
 
             {/* Separador */}
             <div className='border-t border-gray-200 my-2'></div>
@@ -189,20 +185,18 @@ const Header = () => {
               Cobranza
             </div>
 
-            <button
-              onClick={() => navigateTo("/cobros-del-dia")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <CalendarDaysIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Cobros del día</span>
-            </button>
-            <button
-              onClick={() => navigateTo("/cuotas-atrasadas")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <ExclamationCircleIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Cuotas atrasadas</span>
-            </button>
+            <NavigationButton
+              onClick={() => handleNavigateTo("/cobros-del-dia")}
+              icon={CalendarDaysIcon}
+              label='Cobros del día'
+              ariaLabel='Ir a cobros del día'
+            />
+            <NavigationButton
+              onClick={() => handleNavigateTo("/cuotas-atrasadas")}
+              icon={ExclamationCircleIcon}
+              label='Cuotas atrasadas'
+              ariaLabel='Ir a cuotas atrasadas'
+            />
 
             {/* Separador */}
             <div className='border-t border-gray-200 my-2'></div>
@@ -210,29 +204,24 @@ const Header = () => {
               Gestión
             </div>
 
-            <button
-              onClick={() => navigateTo("/clientes")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <UsersIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Clientes</span>
-            </button>
-            <button
-              onClick={() => navigateTo("/financiamiento-cuota")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <ListBulletIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>
-                Financiamiento a Cuota
-              </span>
-            </button>
-            <button
-              onClick={() => navigateTo("/ventas-contado")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <BanknotesIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Ventas al Contado</span>
-            </button>
+            <NavigationButton
+              onClick={() => handleNavigateTo("/clientes")}
+              icon={UsersIcon}
+              label='Clientes'
+              ariaLabel='Ir a gestión de clientes'
+            />
+            <NavigationButton
+              onClick={() => handleNavigateTo("/financiamiento-cuota")}
+              icon={ListBulletIcon}
+              label='Financiamiento a Cuota'
+              ariaLabel='Ir a financiamiento a cuota'
+            />
+            <NavigationButton
+              onClick={() => handleNavigateTo("/ventas-contado")}
+              icon={BanknotesIcon}
+              label='Ventas al Contado'
+              ariaLabel='Ir a ventas al contado'
+            />
 
             {/* Separador */}
             <div className='border-t border-gray-200 my-2'></div>
@@ -240,28 +229,25 @@ const Header = () => {
               Inventario y Análisis
             </div>
 
-            <button
-              onClick={() => navigateTo("/inventario")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <ArchiveBoxIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Inventario</span>
-            </button>
+            <NavigationButton
+              onClick={() => handleNavigateTo("/inventario")}
+              icon={ArchiveBoxIcon}
+              label='Inventario'
+              ariaLabel='Ir a gestión de inventario'
+            />
 
-            <button
-              onClick={() => navigateTo("/transacciones")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <ArrowsRightLeftIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Transacciones</span>
-            </button>
-            <button
-              onClick={() => navigateTo("/estadisticas")}
-              className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
-            >
-              <ChartBarIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
-              <span className='font-medium text-sm'>Estadísticas</span>
-            </button>
+            <NavigationButton
+              onClick={() => handleNavigateTo("/transacciones")}
+              icon={ArrowsRightLeftIcon}
+              label='Transacciones'
+              ariaLabel='Ir a historial de transacciones'
+            />
+            <NavigationButton
+              onClick={() => handleNavigateTo("/estadisticas")}
+              icon={ChartBarIcon}
+              label='Estadísticas'
+              ariaLabel='Ir a dashboard de estadísticas'
+            />
           </nav>
         </div>
       </div>
