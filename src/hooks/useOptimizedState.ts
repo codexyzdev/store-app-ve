@@ -9,7 +9,7 @@ interface OptimizedStateOptions<T> {
  * Hook optimizado que previene re-renders innecesarios
  * usando comparación de igualdad personalizada
  */
-export function useOptimizedState<T>(
+export const useOptimizedState = <T>(
   initialState: T,
   options: OptimizedStateOptions<T> = {}
 ) {
@@ -55,7 +55,7 @@ export function useOptimizedState<T>(
 /**
  * Hook para manejar arrays de forma optimizada
  */
-export function useOptimizedArray<T>(
+export const useOptimizedArray = <T>(
   initialArray: T[] = [],
   keyExtractor: (item: T) => string | number = (_, index) => index
 ) {
@@ -90,7 +90,7 @@ export function useOptimizedArray<T>(
 /**
  * Hook para formularios optimizado que previene re-renders en cada keystroke
  */
-export function useOptimizedForm<T extends Record<string, any>>(
+export const useOptimizedForm = <T extends Record<string, any>>(
   initialValues: T
 ) {
   const [values, setValues] = useOptimizedState(initialValues, {

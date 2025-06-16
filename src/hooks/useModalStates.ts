@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export function useModalStates() {
+export const useModalStates = () => {
   const [modalStates, setModalStates] = useState<{ [key: string]: boolean }>({});
 
   const openModal = useCallback((modalId: string) => {

@@ -19,17 +19,25 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-// Componente de loading para Suspense
-function LoadingFallback() {
+// Componente de loading para Suspense optimizado
+const LoadingFallback = () => {
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-800 via-slate-700 to-sky-500 flex flex-col items-center justify-center'>
+    <div
+      className='min-h-screen bg-gradient-to-br from-slate-800 via-slate-700 to-sky-500 flex flex-col items-center justify-center'
+      role='status'
+      aria-live='polite'
+      aria-label='Cargando contenido'
+    >
       <div className='text-center'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4' />
-        <p className='text-white text-lg'>Cargando...</p>
+        <div
+          className='animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4'
+          aria-hidden='true'
+        />
+        <p className='text-white text-lg font-medium'>Cargando...</p>
       </div>
     </div>
   );
-}
+};
 
 export default function RootLayout({
   children,

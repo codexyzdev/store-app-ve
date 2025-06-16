@@ -14,7 +14,7 @@ import {
   clearAllFilters,
 } from '@/store/slices/uiSlice'
 
-export function useUI() {
+export const useUI = () => {
   const dispatch = useAppDispatch()
   const uiState = useAppSelector((state) => state.ui)
 

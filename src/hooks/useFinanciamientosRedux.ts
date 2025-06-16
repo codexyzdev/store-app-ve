@@ -36,7 +36,7 @@ import {
   selectFinanciamientosEstadisticas,
 } from '@/store/selectors/financiamientosSelectors';
 
-export function useFinanciamientosRedux() {
+export const useFinanciamientosRedux = () => {
   const dispatch = useDispatch();
   
   // Datos memoizados

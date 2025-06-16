@@ -4,7 +4,7 @@ import { inventarioDB, Producto } from '@/lib/firebase/database'
 import { setProductos, clearError } from '@/store/inventarioSlice'
 import { useUI } from './useUI'
 
-export function useProductosRedux() {
+export const useProductosRedux = () => {
   const dispatch = useAppDispatch()
   const inventarioState = useAppSelector((state) => state.inventario)
   const { showNotification } = useUI()

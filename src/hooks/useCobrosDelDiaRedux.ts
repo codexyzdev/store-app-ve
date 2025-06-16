@@ -17,7 +17,7 @@ import {
   Producto,
 } from '@/lib/firebase/database';
 
-export function useCobrosDelDiaRedux() {
+export const useCobrosDelDiaRedux = () => {
   const dispatch = useAppDispatch();
   const state = useAppSelector((s) => s.cobrosDelDia);
 

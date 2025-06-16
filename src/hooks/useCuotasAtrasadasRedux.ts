@@ -17,7 +17,7 @@ import {
 import { calcularCuotasAtrasadas } from '@/utils/financiamiento';
 import { FinanciamientoConDatos } from './useCuotasAtrasadas';
 
-export function useCuotasAtrasadasRedux() {
+export const useCuotasAtrasadasRedux = () => {
   const dispatch = useAppDispatch();
 
   const state = useAppSelector((s) => s.cuotasAtrasadas);

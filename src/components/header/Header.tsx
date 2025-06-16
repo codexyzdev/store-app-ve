@@ -24,20 +24,22 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUI } from "@/hooks/useUI";
 import { logoutUser } from "@/lib/firebase/auth";
 
-export default function Header() {
+const Header = () => {
+  // Early return si no hay autenticación
+  const { userProfile, isAuthenticated } = useAuth();
+
   // Estado local para el menú de usuario (mantenemos esto local por ahora)
   const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
-  const { userProfile, isAuthenticated } = useAuth();
   // Estado global para el sidebar usando Redux
   const { sidebarOpen: isSidebarOpen, toggleSidebar, setSidebarOpen } = useUI();
 
-  const navigateTo = (path: string) => {
+  const handleNavigateTo = (path: string) => {
     router.push(path);
     setSidebarOpen(false);
   };
 
-  const handleLogout = async () => {
+  const handleLogoutUser = async () => {
     const result = await logoutUser();
     if (result.success) {
       // Eliminar cookie
@@ -50,14 +52,14 @@ export default function Header() {
 
   // Cerrar sidebar y menú de usuario al presionar Escape o hacer clic fuera
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSidebarOpen(false);
         setShowUserMenu(false);
       }
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutsideMenu = (event: MouseEvent) => {
       const target = event.target as Element;
       if (!target.closest("[data-user-menu]")) {
         setShowUserMenu(false);
@@ -65,23 +67,23 @@ export default function Header() {
     };
 
     if (isSidebarOpen) {
-      document.addEventListener("keydown", handleEscape);
+      document.addEventListener("keydown", handleEscapeKey);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
 
     if (showUserMenu) {
-      document.addEventListener("click", handleClickOutside);
-      document.addEventListener("keydown", handleEscape);
+      document.addEventListener("click", handleClickOutsideMenu);
+      document.addEventListener("keydown", handleEscapeKey);
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+      document.removeEventListener("click", handleClickOutsideMenu);
       document.body.style.overflow = "unset";
     };
-  }, [isSidebarOpen, showUserMenu]);
+  }, [isSidebarOpen, showUserMenu, setSidebarOpen]);
 
   return (
     <>
@@ -130,10 +132,14 @@ export default function Header() {
                   </div>
                 </div>
                 <button
-                  onClick={handleLogout}
-                  className='w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors'
+                  onClick={handleLogoutUser}
+                  className='w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                  aria-label='Cerrar sesión de usuario'
                 >
-                  <ArrowRightOnRectangleIcon className='w-4 h-4' />
+                  <ArrowRightOnRectangleIcon
+                    className='w-4 h-4'
+                    aria-hidden='true'
+                  />
                   Cerrar Sesión
                 </button>
               </div>
@@ -144,9 +150,11 @@ export default function Header() {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 transform ${
+        className={`fixed inset-y-0 left-0 transform w-80 max-w-[85vw] bg-white border-r shadow-2xl transition-transform duration-300 ease-in-out z-50 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-80 max-w-[85vw] bg-white border-r shadow-2xl transition-transform duration-300 ease-in-out z-50`}
+        }`}
+        role='navigation'
+        aria-label='Menú principal de navegación'
       >
         {/* Header del Sidebar */}
         <div className='flex items-center justify-between p-6 border-b bg-gray-50'>
@@ -164,10 +172,14 @@ export default function Header() {
         <div className='p-6 h-full overflow-y-auto'>
           <nav className='flex flex-col gap-3'>
             <button
-              onClick={() => navigateTo("/dashboard")}
+              onClick={() => handleNavigateTo("/dashboard")}
               className='flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500'
+              aria-label='Ir al panel de inicio'
             >
-              <FolderIcon className='w-5 h-5 text-gray-600 group-hover:text-sky-600' />
+              <FolderIcon
+                className='w-5 h-5 text-gray-600 group-hover:text-sky-600'
+                aria-hidden='true'
+              />
               <span className='font-medium text-sm'>Inicio</span>
             </button>
 
@@ -264,4 +276,6 @@ export default function Header() {
       )}
     </>
   );
-}
+};
+
+export default Header;
