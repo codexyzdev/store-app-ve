@@ -87,13 +87,13 @@ const styles = StyleSheet.create({
 interface FacturaVentaContadoPDFProps {
   venta: VentaContado;
   cliente: Cliente | null;
-  producto: Producto | null;
+  productos: Producto[];
 }
 
 const FacturaVentaContadoPDF: React.FC<FacturaVentaContadoPDFProps> = ({
   venta,
   cliente,
-  producto,
+  productos,
 }) => (
   <Document>
     <Page size='A6' style={styles.page}>
@@ -142,14 +142,40 @@ const FacturaVentaContadoPDF: React.FC<FacturaVentaContadoPDFProps> = ({
             })}
           </Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Producto:</Text>
-          <Text style={styles.value}>{producto?.nombre || "N/A"}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Cantidad:</Text>
-          <Text style={styles.value}>1 unidad</Text>
-        </View>
+      </View>
+
+      {/* Lista de Productos */}
+      <View style={styles.section}>
+        <Text style={[styles.label, { marginBottom: 5 }]}>
+          PRODUCTOS ADQUIRIDOS
+        </Text>
+        {venta.productos && venta.productos.length > 0 ? (
+          venta.productos.map((item, index) => {
+            const producto = productos.find((p) => p.id === item.productoId);
+            return (
+              <View key={index} style={{ marginBottom: 3 }}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>
+                    {producto?.nombre || "Producto no encontrado"}:
+                  </Text>
+                  <Text style={styles.value}>
+                    {item.cantidad} x ${item.precioUnitario.toFixed(0)} = $
+                    {item.subtotal.toFixed(0)}
+                  </Text>
+                </View>
+              </View>
+            );
+          })
+        ) : (
+          // Fallback para ventas antiguas con un solo producto
+          <View style={styles.row}>
+            <Text style={styles.label}>Producto:</Text>
+            <Text style={styles.value}>
+              {productos.find((p) => p.id === venta.productoId)?.nombre ||
+                "N/A"}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Total */}

@@ -39,10 +39,23 @@ export default function VentasContadoPage() {
   const term = busqueda.toLowerCase();
   const ventasFiltradas = ventas.filter((v: VentaContado) => {
     const cliente = getClienteInfo(v.clienteId, clientes);
-    const producto = getProductoNombre(v.productoId, productos);
+
+    // Buscar en múltiples productos
+    let productosCoinciden = false;
+    if (v.productos && v.productos.length > 0) {
+      productosCoinciden = v.productos.some((p) => {
+        const nombreProducto = getProductoNombre(p.productoId, productos);
+        return nombreProducto.toLowerCase().includes(term);
+      });
+    } else {
+      // Fallback para ventas con un solo producto
+      const producto = getProductoNombre(v.productoId, productos);
+      productosCoinciden = producto.toLowerCase().includes(term);
+    }
+
     return (
       cliente?.nombre.toLowerCase().includes(term) ||
-      producto.toLowerCase().includes(term) ||
+      productosCoinciden ||
       v.numeroControl.toString().includes(term)
     );
   });
@@ -50,8 +63,23 @@ export default function VentasContadoPage() {
   // Mapear items con información adicional
   const items = ventasFiltradas.map((f: VentaContado) => {
     const cliente = getClienteInfo(f.clienteId, clientes);
-    const producto = getProductoNombre(f.productoId, productos);
-    return { f, cliente, producto };
+
+    // Manejar múltiples productos correctamente
+    let productosTexto = "";
+    if (f.productos && f.productos.length > 0) {
+      // Si tiene array de productos (ventas múltiples)
+      productosTexto = f.productos
+        .map((p) => {
+          const nombreProducto = getProductoNombre(p.productoId, productos);
+          return `${nombreProducto} (x${p.cantidad})`;
+        })
+        .join(", ");
+    } else {
+      // Fallback para ventas antiguas con un solo producto
+      productosTexto = getProductoNombre(f.productoId, productos);
+    }
+
+    return { f, cliente, productos: productosTexto };
   });
 
   const handleVerFactura = (venta: VentaContado) => {
@@ -109,7 +137,7 @@ export default function VentasContadoPage() {
           <p className='text-gray-600'>No hay ventas al contado registradas.</p>
         ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-            {items.map(({ f, cliente, producto }) => (
+            {items.map(({ f, cliente, productos }) => (
               <div
                 key={f.id}
                 className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow duration-200'
@@ -128,7 +156,7 @@ export default function VentasContadoPage() {
                   <p className='font-semibold text-gray-900'>
                     {cliente?.nombre}
                   </p>
-                  <p className='text-sm text-gray-600'>{producto}</p>
+                  <p className='text-sm text-gray-600'>{productos}</p>
                 </div>
 
                 <div className='flex justify-between items-center mt-auto'>
@@ -179,11 +207,7 @@ export default function VentasContadoPage() {
                           (c) => c.id === ventaSeleccionada.clienteId
                         ) || null
                       }
-                      producto={
-                        productos.find(
-                          (p) => p.id === ventaSeleccionada.productoId
-                        ) || null
-                      }
+                      productos={productos}
                     />
                   }
                   fileName={`factura-${formatNumeroControl(
@@ -219,11 +243,7 @@ export default function VentasContadoPage() {
                         (c) => c.id === ventaSeleccionada.clienteId
                       ) || null
                     }
-                    producto={
-                      productos.find(
-                        (p) => p.id === ventaSeleccionada.productoId
-                      ) || null
-                    }
+                    productos={productos}
                   />
                 </PDFViewer>
               </div>
