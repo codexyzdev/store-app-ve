@@ -4,7 +4,7 @@ import {
   ViewColumnsIcon,
   ListBulletIcon,
 } from "@heroicons/react/24/outline";
-import { FiltrosCobrosDelDia } from "@/store/slices/cobrosDelDiaSlice";
+import type { FiltrosCobrosDelDia } from "@/store/slices/cobrosDelDiaSlice";
 
 interface FiltrosCobrosDelDiaProps {
   filters: FiltrosCobrosDelDia;

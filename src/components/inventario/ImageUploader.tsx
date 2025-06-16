@@ -123,7 +123,7 @@ export function ImageUploader({
       <div className='flex items-center gap-4'>
         <button
           type='button'
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => fileInputRef.current && fileInputRef.current.click()}
           disabled={subiendo || imagenes.length >= maxImagenes}
           className='inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
         >
@@ -228,7 +228,6 @@ export function ImageUploader({
               )}
 
               {/* Indicador si es imagen temporal */}
-             
             </div>
           ))}
         </div>
@@ -241,7 +240,6 @@ export function ImageUploader({
         <p>• Las imágenes se optimizan automáticamente</p>
         <p>• La primera imagen será la imagen principal del producto</p>
         <p>• Puedes reordenar las imágenes con las flechas</p>
-        
       </div>
     </div>
   );

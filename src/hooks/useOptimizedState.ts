@@ -70,12 +70,12 @@ export const useOptimizedArray = <T>(
   });
 
   const actions = useMemo(() => ({
-    add: (item: T) => setArray(prev => [...prev, item]),
-    remove: (key: string | number) => setArray(prev => 
-      prev.filter(item => keyExtractor(item) !== key)
+    add: (item: T) => setArray((prev: T[]) => [...prev, item]),
+    remove: (key: string | number) => setArray((prev: T[]) => 
+      prev.filter((item: T) => keyExtractor(item) !== key)
     ),
-    update: (key: string | number, updatedItem: T) => setArray(prev =>
-      prev.map(item => keyExtractor(item) === key ? updatedItem : item)
+    update: (key: string | number, updatedItem: T) => setArray((prev: T[]) =>
+      prev.map((item: T) => keyExtractor(item) === key ? updatedItem : item)
     ),
     clear: () => setArray([]),
     replace: (newArray: T[]) => setArray(newArray)
@@ -100,7 +100,7 @@ export const useOptimizedForm = <T extends Record<string, any>>(
   const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({});
 
   const updateField = useCallback((field: keyof T, value: T[keyof T]) => {
-    setValues(prev => ({ ...prev, [field]: value }));
+    setValues((prev: T) => ({ ...prev, [field]: value }));
     
     // Limpiar error cuando el usuario empiece a escribir
     if (errors[field]) {

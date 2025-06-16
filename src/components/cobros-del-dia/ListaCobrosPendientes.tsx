@@ -2,7 +2,7 @@ import React from "react";
 import {
   PhoneIcon,
   CurrencyDollarIcon,
-  UserIcon,
+  UsersIcon as UserIcon,
   MapPinIcon,
 } from "@heroicons/react/24/outline";
 import { CobroPendienteDetallado } from "@/store/slices/cobrosDelDiaSlice";

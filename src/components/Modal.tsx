@@ -16,7 +16,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
     }
   };
 
-  const handleContentClick = (event: React.MouseEvent) => {
+  const handleContentClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
   };
 

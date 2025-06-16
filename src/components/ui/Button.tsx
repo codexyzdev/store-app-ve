@@ -40,7 +40,7 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   icon: Icon,
   iconPosition = "left",
-  disabled,
+  disabled = false,
   className = "",
   children,
   ...props

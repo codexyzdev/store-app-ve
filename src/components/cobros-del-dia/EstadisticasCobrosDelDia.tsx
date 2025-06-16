@@ -5,7 +5,7 @@ import {
   CurrencyDollarIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
-import { EstadisticasCobrosDelDia } from "@/store/slices/cobrosDelDiaSlice";
+import type { EstadisticasCobrosDelDia } from "@/store/slices/cobrosDelDiaSlice";
 
 interface EstadisticasCobrosDelDiaProps {
   estadisticas: EstadisticasCobrosDelDia;

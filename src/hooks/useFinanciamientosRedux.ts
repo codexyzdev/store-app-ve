@@ -196,7 +196,7 @@ export const useFinanciamientosRedux = () => {
     dispatch(clearFilters());
   }, [dispatch]);
 
-  const updateFiltersWithData = useCallback((clientes: any[], productos: any[]) => {
+  const updateFiltersWithData = useCallback((clientes: Cliente[], productos: Producto[]) => {
     dispatch(updateFilteredFinanciamientos({ clientes, productos }));
   }, [dispatch]);
 
@@ -222,7 +222,7 @@ export const useFinanciamientosRedux = () => {
     const inicioDelDia = new Date(fechaTarget.getFullYear(), fechaTarget.getMonth(), fechaTarget.getDate()).getTime();
     const finDelDia = inicioDelDia + (24 * 60 * 60 * 1000) - 1;
 
-    return cobros.filter(c => {
+    return cobros.filter((c: Cobro) => {
       const fechaCobro = c.fecha;
       return fechaCobro >= inicioDelDia && fechaCobro <= finDelDia;
     });
@@ -246,7 +246,7 @@ export const useFinanciamientosRedux = () => {
   // Calcular información financiera de un financiamiento específico
   const calcularInfoFinanciamiento = useCallback((financiamiento: FinanciamientoCuota) => {
     const cobrosFinanciamiento = getCobrosFinanciamiento(financiamiento.id);
-    const cobrosValidos = cobrosFinanciamiento.filter(c => 
+    const cobrosValidos = cobrosFinanciamiento.filter((c: Cobro) => 
       (c.tipo === 'cuota' || c.tipo === 'inicial') && 
       c.id && c.id !== 'temp'
     );
@@ -255,7 +255,7 @@ export const useFinanciamientosRedux = () => {
       ? financiamiento.monto / financiamiento.cuotas 
       : financiamiento.monto;
 
-    const totalCobrado = cobrosValidos.reduce((sum, cobro) => sum + cobro.monto, 0);
+    const totalCobrado = cobrosValidos.reduce((sum: number, cobro: Cobro) => sum + cobro.monto, 0);
     const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
     const progreso = financiamiento.monto > 0 ? (totalCobrado / financiamiento.monto) * 100 : 0;
 

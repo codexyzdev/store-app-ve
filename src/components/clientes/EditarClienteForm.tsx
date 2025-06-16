@@ -85,10 +85,8 @@ const EditarClienteForm: React.FC<EditarClienteFormProps> = ({
         const cedulaInput = document.querySelector(
           'input[title="Solo números, mínimo 6 dígitos"]'
         ) as HTMLInputElement | null;
-        if (cedulaInput) {
-          cedulaInput.focus();
-          cedulaInput.select();
-        }
+        cedulaInput?.focus();
+        cedulaInput?.select();
       } else {
         setError(errorMessage);
       }

@@ -21,7 +21,7 @@ interface FinanciamientoCardProps {
   clienteInfo: ClienteInfo;
   productoNombre: string;
   calculado: FinanciamientoCalculado;
-  index: number;
+  index?: number;
 }
 
 export const FinanciamientoCard = ({
@@ -29,7 +29,7 @@ export const FinanciamientoCard = ({
   clienteInfo,
   productoNombre,
   calculado,
-  index,
+  index = 0,
 }: FinanciamientoCardProps) => {
   const {
     montoPendiente,

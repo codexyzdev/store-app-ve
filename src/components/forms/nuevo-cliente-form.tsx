@@ -139,7 +139,7 @@ export function NuevoClienteForm() {
           />
         </div>
 
-        <Button className='w-full' disabled={loading} {...{ type: "submit" }}>
+        <Button type='submit' className='w-full' disabled={loading}>
           {loading ? "Guardando..." : "Guardar Cliente"}
         </Button>
       </form>
