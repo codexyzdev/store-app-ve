@@ -182,7 +182,7 @@ export const FinanciamientoSummaryCard = memo(
           </div>
 
           {/* Información de cuotas */}
-          <div className='bg-gray-50 rounded-xl p-4 mb-6'>
+          <div className='bg-gray-50 rounded-xl '>
             <div className='flex items-center justify-between mb-3'>
               <span className='text-sm font-medium text-gray-700'>
                 Progreso de Cuotas
