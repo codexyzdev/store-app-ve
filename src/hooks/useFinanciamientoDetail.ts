@@ -110,13 +110,7 @@ export const useFinanciamientoDetail = () => {
   // Función para imprimir plan de pagos
   const imprimirPlanPagos = useCallback((financiamientoId: string) => {
     modals.openModal(`impresion-${financiamientoId}`);
-    setTimeout(() => {
-      const originalTitle = document.title;
-      document.title = `Plan de Pagos - ${cliente?.nombre || "Cliente"}`;
-      window.print();
-      document.title = originalTitle;
-    }, 500);
-  }, [modals, cliente?.nombre]);
+  }, [modals]);
 
   // Estado de carga
   const isLoading = financiamientosLoading || clientesLoading;

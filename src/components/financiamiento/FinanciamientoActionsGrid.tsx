@@ -57,13 +57,13 @@ export const FinanciamientoActionsGrid = memo(
       },
       {
         id: "imprimir",
-        label: "Imprimir Plan",
-        icon: "🖨️",
+        label: "Ver PDF",
+        icon: "📄",
         onClick: onImprimir,
         disabled: false,
         className:
           "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white",
-        description: "Imprimir plan de pagos",
+        description: "Ver previa del plan de pagos en PDF",
       },
     ];
 
@@ -91,7 +91,7 @@ export const FinanciamientoActionsGrid = memo(
                 onClick={onImprimir}
                 className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'
               >
-                🖨️ Imprimir
+                📄 Ver PDF
               </button>
             </div>
           </div>
@@ -136,8 +136,6 @@ export const FinanciamientoActionsGrid = memo(
             </button>
           ))}
         </div>
-
-        
       </div>
     );
   }

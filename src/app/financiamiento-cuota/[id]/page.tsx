@@ -138,33 +138,9 @@ const FinanciamientoDetailContent = () => {
           key={`print-${financiamiento.id}`}
           isOpen={modals.isOpen(`impresion-${financiamiento.id}`)}
           onClose={() => modals.closeModal(`impresion-${financiamiento.id}`)}
-          title={`Imprimir Plan de Pagos - ${cliente?.nombre || "Cliente"}`}
+          title={`Plan de Pagos - ${cliente?.nombre || "Cliente"}`}
         >
           <div className='print-container'>
-            <div className='no-print mb-4 text-center'>
-              <p className='text-gray-600 mb-3'>
-                Haz clic en "Imprimir" o usa Ctrl+P para imprimir este plan de
-                pagos.
-              </p>
-              <div className='flex gap-2 justify-center'>
-                <button
-                  onClick={() => window.print()}
-                  className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2'
-                >
-                  <span>🖨️</span>
-                  Imprimir
-                </button>
-                <button
-                  onClick={() =>
-                    modals.closeModal(`impresion-${financiamiento.id}`)
-                  }
-                  className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-
             {cliente && (
               <PlanPagosPrint
                 financiamiento={financiamiento}
