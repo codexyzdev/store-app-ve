@@ -502,8 +502,8 @@ const PlanPagosPDFDocument: React.FC<{
           <View style={styles.signatures}>
             <View style={styles.signatureBlock}>
               <View style={styles.signatureLine} />
-              <Text style={styles.signatureText}>COMERCIANTE</Text>
-              <Text style={styles.signatureSubtext}>Alejandro Baez</Text>
+              <Text style={styles.signatureText}>COMERCIO</Text>
+              <Text style={styles.signatureSubtext}>LOS TIBURONES</Text>
             </View>
             <View style={styles.signatureBlock}>
               <View style={styles.signatureLine} />

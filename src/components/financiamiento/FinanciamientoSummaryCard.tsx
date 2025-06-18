@@ -84,23 +84,25 @@ export const FinanciamientoSummaryCard = memo(
                 <span className='text-lg font-bold'>#{index + 1}</span>
               </div>
               <div>
-                <h3 className='text-lg font-bold text-gray-900 line-clamp-1'>
+                <h3 className='text-sm font-bold text-gray-900 line-clamp-1'>
                   {productoNombre}
                 </h3>
-                <p className='text-sm text-gray-600'>
+                <p className='text-xs text-gray-600'>
                   Creado el {new Date(fechaInicio).toLocaleDateString("es-ES")}
                 </p>
               </div>
             </div>
             <div
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${colors.bg} ${colors.text} border ${colors.border}`}
+              className={`p-2 flex items-center justify-center gap-2 rounded-full text-xs font-semibold ${colors.bg} ${colors.text} border ${colors.border}`}
             >
-              {colors.icon}{" "}
-              {cuotasAtrasadas > 0
-                ? "Atrasado"
-                : montoPendiente <= 0
-                ? "Completado"
-                : "Activo"}
+              <span>{colors.icon} </span>
+              <span>
+                {cuotasAtrasadas > 0
+                  ? "Atrasado"
+                  : montoPendiente <= 0
+                  ? "Completado"
+                  : "Activo"}
+              </span>
             </div>
           </div>
         </div>
@@ -182,7 +184,7 @@ export const FinanciamientoSummaryCard = memo(
           </div>
 
           {/* Información de cuotas */}
-          <div className='bg-gray-50 rounded-xl '>
+          <div className='rounded-xl '>
             <div className='flex items-center justify-between mb-3'>
               <span className='text-sm font-medium text-gray-700'>
                 Progreso de Cuotas
