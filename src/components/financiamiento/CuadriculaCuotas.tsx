@@ -79,7 +79,7 @@ const CuadriculaCuotas: React.FC<CuadriculaCuotasProps> = ({
       <h3 className='text-lg font-semibold text-gray-800 mb-4'>
         Plan de Pagos Semanales
       </h3>
-      <div className='grid grid-cols-2' style={{ minWidth: 0 }}>
+      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5' style={{ minWidth: 0 }}>
         {cuotas.map((cuota) => (
           <div
             key={cuota.numero}

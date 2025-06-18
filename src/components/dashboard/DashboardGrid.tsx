@@ -34,7 +34,7 @@ export const DashboardGrid = () => {
             href='/clientes'
           />
           <DashboardCard
-            title='Financiamiento a Cuota'
+            title='Financiamiento a Cuotas'
             icon={<span className='text-4xl'>💰</span>}
             href='/financiamiento-cuota'
           />

@@ -12,7 +12,6 @@ import { InventarioCard } from "@/components/inventario/InventarioCard";
 import { InventarioStatsExpanded } from "@/components/inventario/InventarioStatsExpanded";
 import { InventarioFilters } from "@/components/inventario/InventarioFilters";
 import Modal from "@/components/Modal";
-import InventarioPrint from "@/components/inventario/InventarioPrint";
 import InventarioPDFViewer from "@/components/inventario/InventarioPDFViewer";
 import {
   setProductos,
@@ -26,7 +25,7 @@ import {
   clearError,
 } from "@/store/inventarioSlice";
 
-type ViewMode = "grid" | "list";
+
 type TabType = "productos" | "categorias" | "proveedores" | "movimientos";
 
 export default function InventarioPage() {

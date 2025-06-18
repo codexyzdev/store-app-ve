@@ -144,7 +144,7 @@ export default function FinanciamientoCuotaPage() {
                     <span className='text-2xl sm:text-3xl text-white'>💰</span>
                   </div>
                   <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent'>
-                    Financiamiento a Cuota
+                    Financiamiento a Cuotas
                   </h1>
                 </div>
                 <p className='text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl'>
