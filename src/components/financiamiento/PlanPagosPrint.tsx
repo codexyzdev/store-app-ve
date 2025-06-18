@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Document,
   Page,
@@ -538,19 +538,276 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
     financiamiento.numeroControl || financiamiento.id
   }.pdf`;
 
+  // Generar las cuotas del plan de pagos
+  const generarCuotas = (): Cuota[] => {
+    const cobrosIniciales = cobros.filter((c) => c.tipo === "inicial");
+    const cobrosRegulares = cobros.filter((c) => c.tipo === "cuota");
+
+    const cuotas: Cuota[] = Array.from(
+      { length: financiamiento.cuotas },
+      (_, i) => {
+        const fechaTentativa = new Date(financiamiento.fechaInicio);
+        fechaTentativa.setDate(fechaTentativa.getDate() + (i + 1) * 7);
+
+        return {
+          numero: i + 1,
+          fechaTentativa,
+          estado: "pendiente",
+          tipo: "regular",
+        };
+      }
+    );
+
+    // Marcar cuotas como pagadas
+    [...cobrosIniciales, ...cobrosRegulares].forEach((cobro) => {
+      if (
+        cobro.numeroCuota &&
+        cobro.numeroCuota >= 1 &&
+        cobro.numeroCuota <= financiamiento.cuotas
+      ) {
+        const cuotaIndex = cobro.numeroCuota - 1;
+        cuotas[cuotaIndex].estado = "pagada";
+        cuotas[cuotaIndex].fechaPago = new Date(cobro.fecha);
+        cuotas[cuotaIndex].tipo =
+          cobro.tipo === "inicial" ? "inicial" : "regular";
+      }
+    });
+
+    return cuotas;
+  };
+
+  const getProductosEnumerados = (): { texto: string; etiqueta: string } => {
+    if (financiamiento.productos && financiamiento.productos.length > 0) {
+      const productosContados: {
+        [key: string]: { nombre: string; cantidad: number };
+      } = {};
+
+      financiamiento.productos.forEach((prodFinanciamiento) => {
+        const producto = productos.find(
+          (p) => p.id === prodFinanciamiento.productoId
+        );
+        const nombre = producto?.nombre || "Producto no encontrado";
+
+        if (productosContados[nombre]) {
+          productosContados[nombre].cantidad += prodFinanciamiento.cantidad;
+        } else {
+          productosContados[nombre] = {
+            nombre,
+            cantidad: prodFinanciamiento.cantidad,
+          };
+        }
+      });
+
+      const productosArray = Object.values(productosContados);
+      const totalProductosUnicos = productosArray.length;
+      const cantidadTotalProductos = productosArray.reduce(
+        (total, item) => total + item.cantidad,
+        0
+      );
+
+      const textoProductos = productosArray
+        .map((item) =>
+          item.cantidad > 1 ? `${item.nombre} (${item.cantidad})` : item.nombre
+        )
+        .join(", ");
+
+      const esPlural = totalProductosUnicos > 1 || cantidadTotalProductos > 1;
+
+      return {
+        texto: textoProductos,
+        etiqueta: esPlural ? "Productos" : "Producto",
+      };
+    } else {
+      const producto = productos.find(
+        (p) => p.id === financiamiento.productoId
+      );
+      return {
+        texto: producto?.nombre || "Producto no encontrado",
+        etiqueta: "Producto",
+      };
+    }
+  };
+
+  const cuotas = generarCuotas();
+  const cuotasPagadas = cuotas.filter((c) => c.estado === "pagada").length;
+  const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
+  const montoPendiente = cuotasPendientes * valorCuota;
+  const proximaCuota = cuotas.find((c) => c.estado === "pendiente");
+  const productosInfo = getProductosEnumerados();
+
+  const formatearFecha = (fecha: Date) => {
+    return fecha.toLocaleDateString("es-VE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
   return (
     <div className='plan-pagos-print'>
-      {/* Visor del PDF */}
-      <div className='pdf-viewer mb-4' style={{ height: "500px" }}>
-        <PDFViewer width='100%' height='100%'>
-          <PlanPagosPDFDocument
-            financiamiento={financiamiento}
-            cliente={cliente}
-            cobros={cobros}
-            valorCuota={valorCuota}
-            productos={productos}
-          />
-        </PDFViewer>
+      {/* Previa HTML del plan de pagos */}
+      <div
+        className='bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-4'
+        style={{ maxHeight: "500px", overflowY: "auto" }}
+      >
+        {/* Header */}
+        <div className='text-center mb-6 pb-4 border-b border-gray-200'>
+          <h1 className='text-2xl font-bold text-blue-600 mb-1'>
+            LOS TIBURONES
+          </h1>
+          <h2 className='text-lg font-semibold text-gray-800 mb-2'>
+            PLAN DE PAGOS
+          </h2>
+          <p className='text-sm text-gray-500'>
+            Fecha: {new Date().toLocaleDateString("es-VE")}
+          </p>
+        </div>
+
+        {/* Información del cliente y financiamiento */}
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+          <div className='border border-gray-200 p-4 rounded-lg'>
+            <h3 className='font-bold text-gray-800 mb-3 border-b border-gray-200 pb-1'>
+              CLIENTE
+            </h3>
+            <div className='space-y-1 text-sm'>
+              <p>
+                <span className='font-semibold'>Nombre:</span> {cliente.nombre}
+              </p>
+              <p>
+                <span className='font-semibold'>Cédula:</span>{" "}
+                {cliente.cedula || "N/A"}
+              </p>
+              <p>
+                <span className='font-semibold'>Código:</span>{" "}
+                {cliente?.numeroControl
+                  ? formatNumeroControl(cliente.numeroControl, "C")
+                  : "N/A"}
+              </p>
+            </div>
+          </div>
+
+          <div className='border border-gray-200 p-4 rounded-lg'>
+            <h3 className='font-bold text-gray-800 mb-3 border-b border-gray-200 pb-1'>
+              FINANCIAMIENTO
+            </h3>
+            <div className='space-y-1 text-sm'>
+              {financiamiento.numeroControl && (
+                <p>
+                  <span className='font-semibold'>Control:</span>{" "}
+                  {formatNumeroControl(financiamiento.numeroControl, "F")}
+                </p>
+              )}
+              <p>
+                <span className='font-semibold'>{productosInfo.etiqueta}:</span>{" "}
+                {productosInfo.texto}
+              </p>
+              <p>
+                <span className='font-semibold'>Total:</span> $
+                {financiamiento.monto.toFixed(0)}
+              </p>
+              <p>
+                <span className='font-semibold'>Cuotas:</span>{" "}
+                {financiamiento.cuotas} x ${valorCuota.toFixed(0)}
+              </p>
+              <p>
+                <span className='font-semibold'>Inicio:</span>{" "}
+                {formatearFecha(new Date(financiamiento.fechaInicio))}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabla de pagos */}
+        <div className='mb-6'>
+          <div className='overflow-x-auto'>
+            <table className='w-full border-collapse border border-gray-300 text-sm'>
+              <thead>
+                <tr className='bg-gray-100'>
+                  <th className='border border-gray-300 px-2 py-2 text-center font-bold'>
+                    #
+                  </th>
+                  <th className='border border-gray-300 px-2 py-2 text-center font-bold'>
+                    FECHA
+                  </th>
+                  <th className='border border-gray-300 px-2 py-2 text-center font-bold'>
+                    MONTO
+                  </th>
+                  <th className='border border-gray-300 px-2 py-2 text-center font-bold'>
+                    ESTADO
+                  </th>
+                  <th className='border border-gray-300 px-2 py-2 text-center font-bold'>
+                    PAGADO
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {cuotas.map((cuota) => (
+                  <tr
+                    key={cuota.numero}
+                    className={cuota.estado === "pagada" ? "bg-blue-50" : ""}
+                  >
+                    <td className='border border-gray-300 px-2 py-1 text-center font-semibold'>
+                      {cuota.numero}
+                    </td>
+                    <td className='border border-gray-300 px-2 py-1 text-center'>
+                      {formatearFecha(cuota.fechaTentativa)}
+                    </td>
+                    <td className='border border-gray-300 px-2 py-1 text-center'>
+                      ${valorCuota.toFixed(0)}
+                    </td>
+                    <td className='border border-gray-300 px-2 py-1 text-center'>
+                      {cuota.estado === "pagada"
+                        ? cuota.tipo === "inicial"
+                          ? "INICIAL ✓"
+                          : "REGULAR ✓"
+                        : "PENDIENTE"}
+                    </td>
+                    <td className='border border-gray-300 px-2 py-1 text-center'>
+                      {cuota.fechaPago ? formatearFecha(cuota.fechaPago) : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Resumen */}
+        <div className='bg-gray-50 p-4 rounded-lg mb-4'>
+          <h3 className='font-bold text-gray-800 mb-3'>RESUMEN</h3>
+          <div className='grid grid-cols-2 gap-4 text-sm'>
+            <div>
+              <p>
+                Pagadas: {cuotasPagadas}/{financiamiento.cuotas}
+              </p>
+              <p>Pendientes: {cuotasPendientes}</p>
+            </div>
+            <div>
+              <p>Pagado: ${(cuotasPagadas * valorCuota).toFixed(0)}</p>
+              <p>Pendiente: ${montoPendiente.toFixed(0)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Próximo pago */}
+        {proximaCuota && (
+          <div className='bg-yellow-100 p-3 rounded-lg mb-4'>
+            <p className='text-center font-semibold text-yellow-800'>
+              PRÓXIMO: {formatearFecha(proximaCuota.fechaTentativa)} - $
+              {valorCuota.toFixed(0)}
+            </p>
+          </div>
+        )}
+
+        {/* Términos */}
+        <div className='border-t border-gray-200 pt-4'>
+          <h4 className='font-bold text-gray-800 mb-2'>TÉRMINOS:</h4>
+          <ul className='text-xs text-gray-600 space-y-1 list-disc list-inside'>
+            <li>Pagos puntuales en fechas establecidas</li>
+            <li>Conservar documento como comprobante</li>
+            <li>Documento válido con firmas</li>
+          </ul>
+        </div>
       </div>
 
       {/* Botón de descarga */}
@@ -566,10 +823,10 @@ const PlanPagosPrint: React.FC<PlanPagosPrintProps> = ({
             />
           }
           fileName={nombreArchivo}
-          className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors'
+          className='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2'
         >
           {({ loading }: { loading: boolean }) =>
-            loading ? "Generando PDF..." : "Descargar PDF"
+            loading ? "⏳ Generando..." : "📄 Descargar PDF"
           }
         </PDFDownloadLink>
       </div>
