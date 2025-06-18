@@ -106,7 +106,7 @@ export const FinanciamientoActionsGrid = memo(
           Acciones Rápidas
         </h4>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3'>
           {actions.map((action) => (
             <button
               key={action.id}
@@ -137,16 +137,7 @@ export const FinanciamientoActionsGrid = memo(
           ))}
         </div>
 
-        {/* Mensaje de ayuda */}
-        <div className='bg-blue-50 rounded-lg p-3 border border-blue-200'>
-          <p className='text-sm text-blue-700 flex items-center gap-2'>
-            <span>💡</span>
-            <span>
-              Usa las acciones rápidas para gestionar el financiamiento de
-              manera eficiente.
-            </span>
-          </p>
-        </div>
+        
       </div>
     );
   }
