@@ -37,7 +37,7 @@ export const FinanciamientoActionsGrid = memo(
       },
       {
         id: "plan",
-        label: isPlanOpen ? "Ocultar Plan" : "Ver Plan",
+        label: isPlanOpen ? "Ocultar Plan" : "Plan",
         icon: "📅",
         onClick: onTogglePlan,
         disabled: false,
@@ -47,7 +47,7 @@ export const FinanciamientoActionsGrid = memo(
       },
       {
         id: "historial",
-        label: isHistorialOpen ? "Ocultar Historial" : "Ver Historial",
+        label: isHistorialOpen ? "Ocultar Historial" : "Historial",
         icon: "📋",
         onClick: onToggleHistorial,
         disabled: false,
@@ -57,7 +57,7 @@ export const FinanciamientoActionsGrid = memo(
       },
       {
         id: "imprimir",
-        label: "Ver PDF",
+        label: "Plan de Pagos",
         icon: "📄",
         onClick: onImprimir,
         disabled: false,
