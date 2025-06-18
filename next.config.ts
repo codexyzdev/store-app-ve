@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
   
   /* Optimizaciones de compilación */
   compiler: {
-    /* Remover console.log en producción */
+    /* Remover console.log SOLO en producción */
     removeConsole: process.env.NODE_ENV === "production",
   },
   
