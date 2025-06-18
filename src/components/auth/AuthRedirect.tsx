@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export const AuthRedirect = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -20,6 +20,6 @@ export const AuthRedirect = () => {
   }, [isAuthenticated, isLoading, router]);
 
   return (
-    <LoadingSpinner size='lg' color='white' text='Redirigiendo...' fullScreen />
+    <LoadingSpinner message='Redirigiendo...' size='lg' fullScreen={true} />
   );
 };
