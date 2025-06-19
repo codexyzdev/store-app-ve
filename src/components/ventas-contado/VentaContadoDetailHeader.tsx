@@ -10,10 +10,10 @@ export const VentaContadoDetailHeader = () => {
           </div>
           <div className='text-left min-w-0'>
             <h1 className='text-lg sm:text-2xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent truncate'>
-              Nueva Venta al Contado
+              Nueva Venta
             </h1>
             <p className='text-xs sm:text-sm text-gray-600'>
-              Registra una venta pagada inmediatamente
+              Registra una venta al contado
             </p>
           </div>
         </div>
