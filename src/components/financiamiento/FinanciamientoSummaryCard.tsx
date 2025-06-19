@@ -81,7 +81,7 @@ export const FinanciamientoSummaryCard = memo(
                     : "bg-blue-500"
                 } text-white`}
               >
-                <span className='text-lg font-bold'>#{index + 1}</span>
+                <span className='text-base font-bold'>#{index + 1}</span>
               </div>
               <div>
                 <h3 className='text-sm font-bold text-gray-900 line-clamp-1'>

@@ -66,7 +66,8 @@ export const useCuotasAtrasadasRedux = () => {
 
       const resultados: FinanciamientoConDatos[] = financiamientos
         .map((financiamiento) => {
-          if (financiamiento.tipoVenta !== 'cuotas' || financiamiento.estado !== 'activo')
+          if (financiamiento.tipoVenta !== 'cuotas' || 
+              (financiamiento.estado !== 'activo' && financiamiento.estado !== 'atrasado'))
             return null;
 
           const cliente = clientes.find((c) => c.id === financiamiento.clienteId);
@@ -78,6 +79,18 @@ export const useCuotasAtrasadasRedux = () => {
           );
 
           const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobros);
+          
+          // Debug: Log para identificar financiamientos procesados
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[CuotasAtrasadas] Financiamiento ${financiamiento.numeroControl}:`, {
+              tipoVenta: financiamiento.tipoVenta,
+              estado: financiamiento.estado,
+              cuotasAtrasadas,
+              clienteNombre: cliente?.nombre,
+              productoNombre: producto?.nombre,
+            });
+          }
+          
           if (cuotasAtrasadas === 0) return null;
 
           const valorCuota = Math.round(financiamiento.monto / financiamiento.cuotas);
@@ -85,15 +98,19 @@ export const useCuotasAtrasadasRedux = () => {
 
           const ultimaCuota = cobrosFin.sort((a, b) => b.fecha - a.fecha)[0] || null;
 
-          // Dias de atraso aproximados
+          // Días de atraso más precisos
           const fechaInicio = new Date(financiamiento.fechaInicio);
           const hoy = new Date();
           const semanas = Math.floor(
             (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
           );
-          const cuotasPagadas = cobrosFin.length;
-          const cuotasEsperadas = Math.min(semanas, financiamiento.cuotas);
-          const diasAtraso = Math.max(0, (cuotasEsperadas - cuotasPagadas) * 7);
+          
+          // Contar solo las cuotas regulares pagadas (no iniciales)
+          const cuotasRegularesPagadas = cobrosFin.filter(c => c.tipo === 'cuota').length;
+          const cuotasIniciales = cobrosFin.filter(c => c.tipo === 'inicial').length;
+          const cuotasEfectivas = financiamiento.cuotas - cuotasIniciales;
+          const cuotasEsperadas = Math.min(semanas, cuotasEfectivas);
+          const diasAtraso = Math.max(0, (cuotasEsperadas - cuotasRegularesPagadas) * 7);
 
           // Severidad
           let severidad: 'baja' | 'media' | 'alta' | 'critica' = 'baja';
