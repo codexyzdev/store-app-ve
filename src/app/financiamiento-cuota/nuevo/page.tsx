@@ -315,18 +315,10 @@ export default function NuevoFinanciamientoPage() {
       <div className='container mx-auto px-4 py-4 sm:py-8'>
         {/* Header - Optimizado para móvil */}
         <div className='mb-4 sm:mb-6'>
-          <div className='flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6'>
-            <Link
-              href='/financiamiento-cuota'
-              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors text-sm sm:text-base'
-            >
-              <span className='text-lg sm:text-xl'>←</span>
-              <span className='font-medium'>Volver a Financiamientos</span>
-            </Link>
-          </div>
+          
 
           <div className='text-center mb-4 sm:mb-6'>
-            <div className='inline-flex items-center gap-2 sm:gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-blue-100 max-w-full'>
+            <div className='inline-flex items-center gap-2 sm:gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-blue-100 w-full'>
               <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0'>
                 <span className='text-lg sm:text-xl text-white'>💰</span>
               </div>
