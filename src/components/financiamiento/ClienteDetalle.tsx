@@ -100,8 +100,10 @@ export default function ClienteDetalle({ cliente }: ClienteDetalleProps) {
               </span>
               {cliente.cedula && (
                 <span className='flex items-center justify-center sm:justify-start gap-2'>
-                  <span>🆔</span>
-                  {cliente.cedula}
+                  <span>
+                    V-
+                    {cliente.cedula}
+                  </span>
                 </span>
               )}
             </div>
@@ -155,7 +157,6 @@ export default function ClienteDetalle({ cliente }: ClienteDetalleProps) {
               {cliente.fotoCedulaUrl && (
                 <div className='space-y-3'>
                   <h4 className='text-base font-semibold text-gray-900 flex items-center gap-2'>
-                    <span>🆔</span>
                     Documento de Identidad
                   </h4>
                   <div className='bg-sky-50 rounded-xl p-4 transform transition-all duration-500 hover:scale-105'>
