@@ -231,10 +231,10 @@ export function ProductoModal({
               <span className='text-2xl'>📦</span>
             </div>
             <div>
-              <h2 className='text-2xl font-bold'>
+              <h2 className='text-xl font-bold'>
                 {producto ? "Editar Producto" : "Nuevo Producto"}
               </h2>
-              <p className='text-white/80 text-sm'>
+              <p className='text-white/80 text-xs'>
                 {producto
                   ? "Modifica la información del producto"
                   : "Agrega un nuevo producto al inventario"}
@@ -310,14 +310,8 @@ export function ProductoModal({
                   >
                     <option value=''>Seleccionar categoría</option>
                     <option value='Electrónicos'>Electrónicos</option>
-                    <option value='Ropa'>Ropa</option>
                     <option value='Hogar'>Hogar</option>
                     <option value='Deportes'>Deportes</option>
-                    <option value='Libros'>Libros</option>
-                    <option value='Juguetes'>Juguetes</option>
-                    <option value='Automóviles'>Automóviles</option>
-                    <option value='Salud'>Salud</option>
-                    <option value='Belleza'>Belleza</option>
                     <option value='Otros'>Otros</option>
                   </select>
                   {validationErrors.categoria && (
@@ -458,7 +452,7 @@ export function ProductoModal({
               <button
                 type='button'
                 onClick={onClose}
-                className='px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium transition-colors'
+                className='px-4  text-sm border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium transition-colors'
               >
                 Cancelar
               </button>
@@ -474,8 +468,10 @@ export function ProductoModal({
                   </>
                 ) : (
                   <>
-                    <span className='text-lg'>💾</span>
-                    {producto ? "Actualizar" : "Crear"} Producto
+                    <span className='text-sm'>💾</span>
+                    <span className='text-sm'>
+                      {producto ? "Actualizar" : "Crear"} Producto
+                    </span>
                   </>
                 )}
               </button>

@@ -144,11 +144,7 @@ export function ImageUploader({
           {imagenes.length}/{maxImagenes} imágenes
         </span>
 
-        {!productoId && (
-          <span className='text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded'>
-            Las imágenes se guardarán al crear el producto
-          </span>
-        )}
+       
       </div>
 
       <input
