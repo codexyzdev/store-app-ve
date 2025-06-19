@@ -159,31 +159,9 @@ export default function CuotasAtrasadasPage() {
       <Modal
         isOpen={mostrarImpresion}
         onClose={() => setMostrarImpresion(false)}
-        title='Imprimir Clientes Morosos'
+        title='Reporte de Clientes Morosos'
       >
         <div className='print-container'>
-          <div className='no-print mb-4 text-center'>
-            <p className='text-gray-600 mb-3'>
-              Haz clic en "Imprimir" o usa Ctrl+P para imprimir la lista de
-              clientes morosos.
-            </p>
-            <div className='flex gap-2 justify-center'>
-              <button
-                onClick={() => window.print()}
-                className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2'
-              >
-                <span>🖨️</span>
-                Imprimir
-              </button>
-              <button
-                onClick={() => setMostrarImpresion(false)}
-                className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition'
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-
           <CuotasMorosasPrint financiamientos={financiamientosOrdenados} />
         </div>
       </Modal>
