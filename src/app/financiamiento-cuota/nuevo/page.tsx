@@ -287,16 +287,16 @@ export default function NuevoFinanciamientoPage() {
 
   if (showSuccess) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 flex items-center justify-center'>
-        <div className='bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto text-center'>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 flex items-center justify-center p-4'>
+        <div className='bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md mx-auto text-center w-full'>
           <div className='mb-6'>
-            <div className='w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse'>
-              <span className='text-3xl text-white'>✅</span>
+            <div className='w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse'>
+              <span className='text-2xl sm:text-3xl text-white'>✅</span>
             </div>
-            <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+            <h2 className='text-xl sm:text-2xl font-bold text-gray-900 mb-2'>
               ¡Financiamiento Creado!
             </h2>
-            <p className='text-gray-600'>
+            <p className='text-gray-600 text-sm sm:text-base'>
               El financiamiento ha sido registrado exitosamente en el sistema.
             </p>
           </div>
@@ -312,29 +312,29 @@ export default function NuevoFinanciamientoPage() {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
-      <div className='container mx-auto px-4 py-8'>
-        {/* Header */}
-        <div className='mb-8'>
-          <div className='flex items-center gap-4 mb-6'>
+      <div className='container mx-auto px-4 py-4 sm:py-8'>
+        {/* Header - Optimizado para móvil */}
+        <div className='mb-4 sm:mb-6'>
+          <div className='flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6'>
             <Link
               href='/financiamiento-cuota'
-              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors'
+              className='inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors text-sm sm:text-base'
             >
-              <span className='text-xl'>←</span>
+              <span className='text-lg sm:text-xl'>←</span>
               <span className='font-medium'>Volver a Financiamientos</span>
             </Link>
           </div>
 
-          <div className='text-center mb-8'>
-            <div className='inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-sm border border-blue-100 mb-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center'>
-                <span className='text-xl text-white'>💰</span>
+          <div className='text-center mb-4 sm:mb-6'>
+            <div className='inline-flex items-center gap-2 sm:gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-blue-100 max-w-full'>
+              <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0'>
+                <span className='text-lg sm:text-xl text-white'>💰</span>
               </div>
-              <div className='text-left'>
-                <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
+              <div className='text-left min-w-0'>
+                <h1 className='text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate'>
                   Nuevo Financiamiento
                 </h1>
-                <p className='text-sm text-gray-600'>
+                <p className='text-xs sm:text-sm text-gray-600'>
                   Crea un nuevo financiamiento
                 </p>
               </div>
@@ -342,53 +342,20 @@ export default function NuevoFinanciamientoPage() {
           </div>
         </div>
 
-        {/* Pasos del proceso */}
-        <div className='max-w-6xl mx-auto mb-8'>
-          <div className='flex items-center justify-center gap-4 mb-8'>
-            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
-              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
-                1
-              </span>
-              Cliente
-            </div>
-            <div className='w-8 h-px bg-gray-300'></div>
-            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
-              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
-                2
-              </span>
-              Productos
-            </div>
-            <div className='w-8 h-px bg-gray-300'></div>
-            <div className='flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium'>
-              <span className='w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold'>
-                3
-              </span>
-              Condiciones
-            </div>
-            <div className='w-8 h-px bg-gray-300'></div>
-            <div className='flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm font-medium'>
-              <span className='w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs font-bold'>
-                4
-              </span>
-              Confirmación
-            </div>
-          </div>
-        </div>
-
         {/* Contenido principal */}
         <div className='max-w-6xl mx-auto'>
-          <div className='bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
+          <div className='bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden'>
             {/* Header del formulario */}
-            <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6'>
-              <div className='flex items-center gap-4'>
-                <div className='w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center'>
-                  <span className='text-2xl text-white'>🛒</span>
+            <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-4 sm:px-8 py-4 sm:py-6'>
+              <div className='flex items-center gap-3 sm:gap-4'>
+                <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0'>
+                  <span className='text-lg sm:text-2xl text-white'>🛒</span>
                 </div>
-                <div className='text-white'>
-                  <h2 className='text-xl font-bold mb-1'>
+                <div className='text-white min-w-0'>
+                  <h2 className='text-lg sm:text-xl font-bold mb-1'>
                     Información del Financiamiento
                   </h2>
-                  <p className='text-blue-100'>
+                  <p className='text-blue-100 text-sm sm:text-base'>
                     Completa todos los campos requeridos
                   </p>
                 </div>
@@ -396,25 +363,27 @@ export default function NuevoFinanciamientoPage() {
             </div>
 
             {/* Formulario */}
-            <div className='p-8'>
-              <form onSubmit={handleSubmit} className='space-y-8'>
-                <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+            <div className='p-4 sm:p-8'>
+              <form onSubmit={handleSubmit} className='space-y-6 sm:space-y-8'>
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8'>
                   {/* Cliente */}
                   <div className='space-y-4'>
                     <div className='flex items-center gap-2 mb-4'>
-                      <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
-                        <span className='text-blue-600 font-bold'>1</span>
+                      <div className='w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                        <span className='text-blue-600 font-bold text-sm sm:text-base'>
+                          1
+                        </span>
                       </div>
-                      <h3 className='text-lg font-semibold text-gray-900'>
+                      <h3 className='text-base sm:text-lg font-semibold text-gray-900'>
                         Seleccionar Cliente
                       </h3>
                     </div>
 
                     <div className='relative'>
-                      <div className='flex gap-3'>
+                      <div className='flex flex-col sm:flex-row gap-3'>
                         <input
                           type='text'
-                          placeholder='Buscar cliente por nombre, teléfono o dirección...'
+                          placeholder='Buscar cliente...'
                           value={busquedaCliente}
                           onChange={(e: ChangeEvent<HTMLInputElement>) => {
                             setBusquedaCliente(e.target.value);
@@ -425,13 +394,13 @@ export default function NuevoFinanciamientoPage() {
                               setClienteSeleccionado(null);
                             }
                           }}
-                          className='flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                          className='flex-1 px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base'
                           autoComplete='off'
                           required
                         />
                         <button
                           type='button'
-                          className='px-4 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors shadow-sm'
+                          className='px-4 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors shadow-sm text-sm sm:text-base whitespace-nowrap'
                           onClick={() => setModalNuevoCliente(true)}
                         >
                           + Cliente
@@ -495,7 +464,6 @@ export default function NuevoFinanciamientoPage() {
                               <div className='text-sm text-blue-700'>
                                 {clienteSeleccionado.telefono}
                               </div>
-                              
                             </div>
                             <span className='text-blue-600 text-xl'>✅</span>
                           </div>
@@ -507,10 +475,12 @@ export default function NuevoFinanciamientoPage() {
                   {/* Productos */}
                   <div className='space-y-4'>
                     <div className='flex items-center gap-2 mb-4'>
-                      <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
-                        <span className='text-blue-600 font-bold'>2</span>
+                      <div className='w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                        <span className='text-blue-600 font-bold text-sm sm:text-base'>
+                          2
+                        </span>
                       </div>
-                      <h3 className='text-lg font-semibold text-gray-900'>
+                      <h3 className='text-base sm:text-lg font-semibold text-gray-900'>
                         Agregar Productos
                       </h3>
                     </div>
@@ -519,7 +489,7 @@ export default function NuevoFinanciamientoPage() {
                     <div className='relative'>
                       <input
                         type='text'
-                        placeholder='Buscar producto del inventario...'
+                        placeholder='Buscar producto...'
                         value={busquedaProducto}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => {
                           setBusquedaProducto(e.target.value);
@@ -530,7 +500,7 @@ export default function NuevoFinanciamientoPage() {
                             setProductoSeleccionado(null);
                           }
                         }}
-                        className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                        className='w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base'
                         autoComplete='off'
                       />
 
@@ -593,32 +563,34 @@ export default function NuevoFinanciamientoPage() {
                             </span>
                           </div>
 
-                          <div className='flex items-center gap-3'>
+                          <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3'>
                             <label className='text-sm font-medium text-blue-700'>
                               Cantidad:
                             </label>
-                            <input
-                              type='number'
-                              min='1'
-                              max={productoSeleccionado.stock}
-                              value={cantidadProducto}
-                              onChange={(e) =>
-                                setCantidadProducto(
-                                  Math.max(1, parseInt(e.target.value) || 1)
-                                )
-                              }
-                              className='w-20 px-2 py-1 border border-blue-300 rounded text-center text-sm focus:ring-2 focus:ring-blue-500'
-                            />
-                            <button
-                              type='button'
-                              onClick={agregarProductoCarrito}
-                              disabled={
-                                productoSeleccionado.stock < cantidadProducto
-                              }
-                              className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed'
-                            >
-                              Agregar
-                            </button>
+                            <div className='flex items-center gap-3 w-full sm:w-auto'>
+                              <input
+                                type='number'
+                                min='1'
+                                max={productoSeleccionado.stock}
+                                value={cantidadProducto}
+                                onChange={(e) =>
+                                  setCantidadProducto(
+                                    Math.max(1, parseInt(e.target.value) || 1)
+                                  )
+                                }
+                                className='w-20 px-2 py-1 border border-blue-300 rounded text-center text-sm focus:ring-2 focus:ring-blue-500'
+                              />
+                              <button
+                                type='button'
+                                onClick={agregarProductoCarrito}
+                                disabled={
+                                  productoSeleccionado.stock < cantidadProducto
+                                }
+                                className='flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed'
+                              >
+                                Agregar
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -634,17 +606,17 @@ export default function NuevoFinanciamientoPage() {
                           {productosCarrito.map((item) => (
                             <div
                               key={item.productoId}
-                              className='flex items-center justify-between bg-white p-3 rounded-lg border'
+                              className='flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 rounded-lg border gap-3'
                             >
-                              <div className='flex-1'>
-                                <div className='font-medium text-gray-900'>
+                              <div className='flex-1 min-w-0'>
+                                <div className='font-medium text-gray-900 truncate'>
                                   {getProductoNombre(item.productoId)}
                                 </div>
                                 <div className='text-sm text-gray-600'>
                                   ${item.precioUnitario.toFixed(0)} c/u
                                 </div>
                               </div>
-                              <div className='flex items-center gap-3'>
+                              <div className='flex items-center justify-between sm:justify-end gap-3'>
                                 <div className='flex items-center gap-2'>
                                   <button
                                     type='button'
@@ -707,17 +679,19 @@ export default function NuevoFinanciamientoPage() {
 
                 {/* Condiciones del financiamiento */}
                 {productosCarrito.length > 0 && (
-                  <div className='border-t border-gray-200 pt-8'>
-                    <div className='flex items-center gap-2 mb-6'>
-                      <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
-                        <span className='text-blue-600 font-bold'>3</span>
+                  <div className='border-t border-gray-200 pt-6 sm:pt-8'>
+                    <div className='flex items-center gap-2 mb-4 sm:mb-6'>
+                      <div className='w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                        <span className='text-blue-600 font-bold text-sm sm:text-base'>
+                          3
+                        </span>
                       </div>
-                      <h3 className='text-lg font-semibold text-gray-900'>
+                      <h3 className='text-base sm:text-lg font-semibold text-gray-900'>
                         Condiciones del Financiamiento
                       </h3>
                     </div>
 
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
                       {/* Monto */}
                       <div>
                         <label className='block text-sm font-semibold text-gray-700 mb-2'>
@@ -800,7 +774,7 @@ export default function NuevoFinanciamientoPage() {
                       </div>
 
                       {/* Fecha de inicio */}
-                      <div className='md:col-span-3'>
+                      <div className='sm:col-span-2 lg:col-span-3'>
                         <label className='block text-sm font-semibold text-gray-700 mb-2'>
                           Fecha de Inicio
                         </label>
@@ -813,7 +787,7 @@ export default function NuevoFinanciamientoPage() {
                               fechaInicio: e.target.value,
                             })
                           }
-                          className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                          className='w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base'
                           required
                         />
                       </div>
@@ -848,11 +822,11 @@ export default function NuevoFinanciamientoPage() {
 
                 {/* Resumen final */}
                 {productosCarrito.length > 0 && (
-                  <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
-                    <h3 className='text-lg font-bold text-blue-900 mb-4 flex items-center gap-2'>
+                  <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 sm:p-6 border border-blue-200'>
+                    <h3 className='text-base sm:text-lg font-bold text-blue-900 mb-3 sm:mb-4 flex items-center gap-2'>
                       📋 Resumen del Financiamiento
                     </h3>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm'>
                       <div className='space-y-2'>
                         <div className='flex justify-between'>
                           <span className='text-gray-700'>Productos:</span>
@@ -915,31 +889,35 @@ export default function NuevoFinanciamientoPage() {
                 )}
 
                 {/* Botones */}
-                <div className='flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-gray-200'>
+                <div className='flex flex-col-reverse sm:flex-row gap-3 pt-4 sm:pt-6 border-t border-gray-200'>
                   <button
                     type='button'
                     onClick={() => router.push("/financiamiento-cuota")}
                     disabled={loading}
-                    className='flex-1 sm:flex-none px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='flex-1 sm:flex-none px-4 sm:px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base'
                   >
                     Cancelar
                   </button>
                   <button
                     type='submit'
                     disabled={loading || productosCarrito.length === 0}
-                    className='flex-1 sm:flex-none px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                    className='flex-1 sm:flex-none px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'
                   >
                     {loading ? (
                       <>
                         <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                        Procesando...
+                        <span className='hidden sm:inline'>Procesando...</span>
+                        <span className='sm:hidden'>Procesando</span>
                       </>
                     ) : (
                       <>
                         <span>💾</span>
-                        {`Crear Financiamiento (${
-                          productosCarrito.length
-                        } producto${productosCarrito.length > 1 ? "s" : ""})`}
+                        <span className='hidden sm:inline'>
+                          {`Crear Financiamiento (${
+                            productosCarrito.length
+                          } producto${productosCarrito.length > 1 ? "s" : ""})`}
+                        </span>
+                        <span className='sm:hidden'>Crear</span>
                       </>
                     )}
                   </button>
