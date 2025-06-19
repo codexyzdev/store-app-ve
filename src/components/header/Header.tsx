@@ -9,8 +9,7 @@ import {
   ListBulletIcon,
   ArchiveBoxIcon,
   ChartBarIcon,
-  BanknotesIcon as CurrencyDollarIcon,
-  ArrowPathRoundedSquareIcon as ArrowsRightLeftIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import {
   Bars3Icon,
@@ -151,14 +150,14 @@ const Header = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 transform w-80 max-w-[85vw] bg-white border-r shadow-2xl transition-transform duration-300 ease-in-out z-50 ${
+        className={`fixed inset-y-0 left-0 transform w-80 max-w-[85vw] bg-white border-r shadow-2xl transition-transform duration-300 ease-in-out z-50 flex flex-col ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         role='navigation'
         aria-label='Menú principal de navegación'
       >
         {/* Header del Sidebar */}
-        <div className='flex items-center justify-between p-6 border-b bg-gray-50'>
+        <div className='flex items-center justify-between p-6 border-b bg-gray-50 flex-shrink-0'>
           <h2 className='text-xl font-bold text-gray-800'>Navegación</h2>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -170,85 +169,87 @@ const Header = () => {
         </div>
 
         {/* Contenido del Sidebar */}
-        <div className='p-6 h-full overflow-y-auto'>
-          <nav className='flex flex-col gap-3'>
-            <NavigationButton
-              onClick={() => handleNavigateTo("/dashboard")}
-              icon={FolderIcon}
-              label='Inicio'
-              ariaLabel='Ir al panel de inicio'
-            />
+        <div className='flex-1 overflow-y-auto'>
+          <div className='p-6'>
+            <nav className='flex flex-col gap-3'>
+              <NavigationButton
+                onClick={() => handleNavigateTo("/dashboard")}
+                icon={FolderIcon}
+                label='Inicio'
+                ariaLabel='Ir al panel de inicio'
+              />
 
-            {/* Separador */}
-            <div className='border-t border-gray-200 my-2'></div>
-            <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
-              Cobranza
-            </div>
+              {/* Separador */}
+              <div className='border-t border-gray-200 my-2'></div>
+              <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
+                Cobranza
+              </div>
 
-            <NavigationButton
-              onClick={() => handleNavigateTo("/cobros-del-dia")}
-              icon={CalendarDaysIcon}
-              label='Cobros del día'
-              ariaLabel='Ir a cobros del día'
-            />
-            <NavigationButton
-              onClick={() => handleNavigateTo("/cuotas-atrasadas")}
-              icon={ExclamationCircleIcon}
-              label='Cuotas atrasadas'
-              ariaLabel='Ir a cuotas atrasadas'
-            />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/cobros-del-dia")}
+                icon={CalendarDaysIcon}
+                label='Cobros del día'
+                ariaLabel='Ir a cobros del día'
+              />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/cuotas-atrasadas")}
+                icon={ExclamationCircleIcon}
+                label='Cuotas atrasadas'
+                ariaLabel='Ir a cuotas atrasadas'
+              />
 
-            {/* Separador */}
-            <div className='border-t border-gray-200 my-2'></div>
-            <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
-              Gestión
-            </div>
+              {/* Separador */}
+              <div className='border-t border-gray-200 my-2'></div>
+              <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
+                Gestión
+              </div>
 
-            <NavigationButton
-              onClick={() => handleNavigateTo("/clientes")}
-              icon={UsersIcon}
-              label='Clientes'
-              ariaLabel='Ir a gestión de clientes'
-            />
-            <NavigationButton
-              onClick={() => handleNavigateTo("/financiamiento-cuota")}
-              icon={ListBulletIcon}
-              label='Financiamiento a Cuota'
-              ariaLabel='Ir a financiamiento a cuota'
-            />
-            <NavigationButton
-              onClick={() => handleNavigateTo("/ventas-contado")}
-              icon={CurrencyDollarIcon}
-              label='Ventas al Contado'
-              ariaLabel='Ir a ventas al contado'
-            />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/clientes")}
+                icon={UsersIcon}
+                label='Clientes'
+                ariaLabel='Ir a gestión de clientes'
+              />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/financiamiento-cuota")}
+                icon={ListBulletIcon}
+                label='Financiamiento a Cuota'
+                ariaLabel='Ir a financiamiento a cuota'
+              />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/ventas-contado")}
+                icon={CurrencyDollarIcon}
+                label='Ventas al Contado'
+                ariaLabel='Ir a ventas al contado'
+              />
 
-            {/* Separador */}
-            <div className='border-t border-gray-200 my-2'></div>
-            <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
-              Inventario y Análisis
-            </div>
+              {/* Separador */}
+              <div className='border-t border-gray-200 my-2'></div>
+              <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2'>
+                Inventario y Análisis
+              </div>
 
-            <NavigationButton
-              onClick={() => handleNavigateTo("/inventario")}
-              icon={ArchiveBoxIcon}
-              label='Inventario'
-              ariaLabel='Ir a gestión de inventario'
-            />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/inventario")}
+                icon={ArchiveBoxIcon}
+                label='Inventario'
+                ariaLabel='Ir a gestión de inventario'
+              />
 
-            <NavigationButton
-              onClick={() => handleNavigateTo("/transacciones")}
-              icon={ArrowsRightLeftIcon}
-              label='Transacciones'
-              ariaLabel='Ir a historial de transacciones'
-            />
-            <NavigationButton
-              onClick={() => handleNavigateTo("/estadisticas")}
-              icon={ChartBarIcon}
-              label='Estadísticas'
-              ariaLabel='Ir a dashboard de estadísticas'
-            />
-          </nav>
+              <NavigationButton
+                onClick={() => handleNavigateTo("/transacciones")}
+                icon={ListBulletIcon}
+                label='Transacciones'
+                ariaLabel='Ir a historial de transacciones'
+              />
+              <NavigationButton
+                onClick={() => handleNavigateTo("/estadisticas")}
+                icon={ChartBarIcon}
+                label='Estadísticas'
+                ariaLabel='Ir a dashboard de estadísticas'
+              />
+            </nav>
+          </div>
         </div>
       </div>
 
