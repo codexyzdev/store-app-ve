@@ -4,7 +4,6 @@ import React from "react";
 import Modal from "@/components/Modal";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import {
-  FinanciamientoDetailHeader,
   ClienteDetalle,
   FinanciamientosListContainer,
   EmptyFinanciamientosState,
@@ -42,12 +41,8 @@ const FinanciamientoDetailContent = () => {
 
   return (
     <div className='min-h-screen bg-gray-50'>
-      <div className='container mx-auto px-4 py-6'>
-        {/* Header mejorado */}
-        <FinanciamientoDetailHeader
-          clienteNombre={cliente?.nombre}
-          loading={isLoading}
-        />
+      <div className=' mx-auto px-4 py-6'>
+       
 
         {/* Información del cliente */}
         {cliente ? (

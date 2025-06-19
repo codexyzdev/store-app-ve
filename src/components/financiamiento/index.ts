@@ -9,7 +9,6 @@ export { default as ModalPagoCuota } from "./ModalPagoCuota";
 export { default as AbonarCuotaForm } from "./AbonarCuotaForm";
 
 // Componentes nuevos mejorados
-export { FinanciamientoDetailHeader } from "./FinanciamientoDetailHeader";
 export { FinanciamientoSummaryCard } from "./FinanciamientoSummaryCard";
 export { FinanciamientoActionsGrid } from "./FinanciamientoActionsGrid";
 export { EmptyFinanciamientosState } from "./EmptyFinanciamientosState";
