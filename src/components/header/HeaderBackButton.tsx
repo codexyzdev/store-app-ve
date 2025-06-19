@@ -12,10 +12,9 @@ export default function HeaderBackButton() {
   return (
     <button
       onClick={() => router.back()}
-      className='inline-flex items-center px-3 py-2 border border-white/20 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/30 transition-all duration-200'
+      className='inline-flex items-center px-2 border border-white/20 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/30 transition-all duration-200'
     >
-      <span className='mr-2'>←</span>
-      Volver
+      <span className='text-lg'>←</span>
     </button>
   );
 }
