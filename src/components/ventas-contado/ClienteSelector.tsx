@@ -103,13 +103,9 @@ export const ClienteSelector = ({
                   {clienteSeleccionado.nombre}
                 </div>
                 <div className='text-sm text-sky-700'>
-                  {clienteSeleccionado.telefono}
+                  V-{clienteSeleccionado.cedula}
                 </div>
-                {clienteSeleccionado.direccion && (
-                  <div className='text-sm text-sky-600'>
-                    {clienteSeleccionado.direccion}
-                  </div>
-                )}
+                
               </div>
               <span className='text-sky-600 text-xl'>✅</span>
             </div>
