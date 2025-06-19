@@ -201,11 +201,11 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
             // Estado inicial - sin imagen
             <div
               onClick={() => fileInputRef.current?.click()}
-              className='w-full border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer group'
+              className='w-full border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer group'
             >
               <div className='flex flex-col items-center gap-3'>
-                <div className='w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors'>
-                  <span className='text-2xl'>📷</span>
+                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors'>
+                  <span className='text-lg sm:text-2xl'>📷</span>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-gray-700 group-hover:text-indigo-700'>
@@ -216,23 +216,23 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
               </div>
             </div>
           ) : (
-            // Estado con imagen seleccionada
-            <div className='border border-gray-200 rounded-lg p-4 bg-gray-50'>
-              <div className='flex items-center gap-4'>
+            // Estado con imagen seleccionada - Optimizado para móvil
+            <div className='border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4'>
                 {/* Preview de la imagen */}
                 {previewUrl && (
-                  <div className='flex-shrink-0'>
+                  <div className='flex-shrink-0 self-center sm:self-start'>
                     <img
                       src={previewUrl}
                       alt='Preview de cédula'
-                      className='w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm'
+                      className='w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200 shadow-sm'
                     />
                   </div>
                 )}
 
                 {/* Información del archivo */}
-                <div className='flex-1 min-w-0'>
-                  <div className='flex items-center gap-2 mb-1'>
+                <div className='flex-1 min-w-0 text-center sm:text-left'>
+                  <div className='flex items-center justify-center sm:justify-start gap-2 mb-1'>
                     <span className='text-green-500 text-lg'>✅</span>
                     <span className='text-sm font-medium text-gray-900'>
                       Imagen seleccionada
@@ -242,26 +242,26 @@ const NuevoClienteForm: React.FC<NuevoClienteFormProps> = ({
                     className='text-xs text-gray-600 truncate'
                     title={fotoCedula.name}
                   >
-                    {acortarNombreArchivo(fotoCedula.name)}
+                    {acortarNombreArchivo(fotoCedula.name, 20)}
                   </p>
                   <p className='text-xs text-gray-500 mt-1'>
                     {(fotoCedula.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
 
-                {/* Botones de acción */}
-                <div className='flex gap-2'>
+                {/* Botones de acción - Stack en móvil */}
+                <div className='flex flex-row sm:flex-col gap-2 w-full sm:w-auto justify-center sm:justify-start'>
                   <button
                     type='button'
                     onClick={() => fileInputRef.current?.click()}
-                    className='px-3 py-2 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 transition-colors'
+                    className='flex-1 sm:flex-none px-3 py-2 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 transition-colors'
                   >
                     Cambiar
                   </button>
                   <button
                     type='button'
                     onClick={removerImagen}
-                    className='px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors'
+                    className='flex-1 sm:flex-none px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors'
                   >
                     Quitar
                   </button>
