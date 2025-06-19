@@ -10,6 +10,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -17,12 +18,17 @@ export function LoginForm() {
 
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
 
+  // Marcar como montado para evitar problemas de hidratación
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Redirigir si ya está autenticado
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (isMounted && !authLoading && isAuthenticated) {
       router.push(returnUrl);
     }
-  }, [isAuthenticated, authLoading, router, returnUrl]);
+  }, [isAuthenticated, authLoading, router, returnUrl, isMounted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +48,13 @@ export function LoginForm() {
     setIsLoading(false);
   };
 
-  // Usar la misma estructura de contenedor para resolver problemas de hidratación
-  if (authLoading) {
+  // Mostrar loading durante la hidratación inicial y cuando authLoading es true
+  if (!isMounted || authLoading) {
     return (
       <div className='bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/30 overflow-hidden p-8'>
         <div className='text-center mb-8'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto' />
+          <p className='text-gray-600 mt-4'>Cargando...</p>
         </div>
       </div>
     );
