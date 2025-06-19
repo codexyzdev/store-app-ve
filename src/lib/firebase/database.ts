@@ -159,7 +159,7 @@ export const clientesDB = {
 export const financiamientoDB = {
   async crear(financiamiento: Omit<FinanciamientoCuota, 'id' | 'numeroControl'>) {
     // Obtener contador adecuado según tipo de venta
-    const tipoEntidad = financiamiento.tipoVenta === 'contado' ? 'ventasContado' : 'financiamientos';
+    const tipoEntidad = 'financiamientos';
     const numeroControl = await contadoresDB.obtenerSiguiente(tipoEntidad as any);
     
     const financiamientosRef = ref(database, 'financiamientos');
