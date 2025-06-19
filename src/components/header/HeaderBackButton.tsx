@@ -7,7 +7,7 @@ export default function HeaderBackButton() {
   const pathname = usePathname();
 
   // No mostrar el botón en el dashboard
-  if (pathname === "/dashboard") return null;
+  if (pathname === "/dashboard" || pathname === "/login") return null;
 
   return (
     <button

@@ -19,12 +19,14 @@ import {
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useUI } from "@/hooks/useUI";
 import { logoutUser } from "@/lib/firebase/auth";
+import { useRouter, usePathname } from "next/navigation";
 
 const Header = () => {
+  const pathname = usePathname();
+
   // Early return si no hay autenticación
   const { userProfile, isAuthenticated } = useAuth();
 
@@ -85,9 +87,15 @@ const Header = () => {
     };
   }, [isSidebarOpen, showUserMenu, setSidebarOpen]);
 
+  const itIsLogin = pathname === "/login";
+
   return (
     <>
-      <header className='sticky top-0 z-40 flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-slate-800 to-sky-500 text-white shadow-lg'>
+      <header
+        className={`sticky top-0 z-40 flex justify-between items-center p-4 gap-4 h-16 border-b bg-gradient-to-r from-slate-800 to-sky-500 text-white shadow-lg ${
+          itIsLogin ? "hidden" : ""
+        }`}
+      >
         <div className='flex items-center gap-4'>
           <button
             onClick={() => toggleSidebar()}
