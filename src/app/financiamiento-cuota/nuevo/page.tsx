@@ -56,18 +56,32 @@ export default function NuevoFinanciamientoPage() {
     useState<Cliente | null>(null);
   const [modalNuevoCliente, setModalNuevoCliente] = useState(false);
 
+  // Nuevos estados para amortización de capital
+  const [amortizacionActiva, setAmortizacionActiva] = useState(false);
+  const [montoAmortizacion, setMontoAmortizacion] = useState<string>("");
+
   // Calcular monto total basado en productos del carrito
   useEffect(() => {
     const montoTotal = productosCarrito.reduce(
       (acc, item) => acc + item.subtotal,
       0
     );
-    const montoConRecargo = montoTotal * 1.5; // siempre recargo 50%
+
+    // Si la amortización está activa, calcular el monto a financiar
+    let montoFinal: number;
+    if (amortizacionActiva && montoAmortizacion) {
+      const amortizacionValue = parseFloat(montoAmortizacion) || 0;
+      const montoAFinanciar = Math.max(0, montoTotal - amortizacionValue);
+      montoFinal = montoAFinanciar * 1.5; // Recargo 50% solo sobre el monto a financiar
+    } else {
+      montoFinal = montoTotal * 1.5; // Recargo 50% sobre el total (comportamiento original)
+    }
+
     setFormData((prev) => ({
       ...prev,
-      monto: Math.round(montoConRecargo).toString(),
+      monto: Math.round(montoFinal).toString(),
     }));
-  }, [productosCarrito]);
+  }, [productosCarrito, amortizacionActiva, montoAmortizacion]);
 
   // Actualiza formData cuando se selecciona un cliente
   useEffect(() => {
@@ -172,6 +186,23 @@ export default function NuevoFinanciamientoPage() {
       return;
     }
 
+    // Validar amortización si está activa
+    if (amortizacionActiva) {
+      const montoAmortizacionValue = parseFloat(montoAmortizacion) || 0;
+      if (montoAmortizacionValue <= 0) {
+        alert("El monto de amortización debe ser mayor a 0.");
+        setLoading(false);
+        return;
+      }
+      if (montoAmortizacionValue >= montoTotal) {
+        alert(
+          "El monto de amortización no puede ser igual o mayor al precio total de los productos."
+        );
+        setLoading(false);
+        return;
+      }
+    }
+
     // Validar stock para todos los productos
     for (const item of productosCarrito) {
       const producto = productos.find((p) => p.id === item.productoId);
@@ -223,8 +254,8 @@ export default function NuevoFinanciamientoPage() {
 
       const nuevoFinanciamiento = await crearFinanciamiento(financiamientoData);
 
-      // Si hay cuotas iniciales, crear cobros para las últimas cuotas
-      if (cuotasIniciales > 0) {
+      // Si hay cuotas iniciales y NO hay amortización activa, crear cobros para las últimas cuotas
+      if (!amortizacionActiva && cuotasIniciales > 0) {
         const valorCuota = parseFloat(formData.monto) / 15;
 
         for (let i = 0; i < cuotasIniciales; i++) {
@@ -239,6 +270,25 @@ export default function NuevoFinanciamientoPage() {
           });
         }
       }
+
+      // Si hay amortización de capital, crear cobro inicial por el monto de amortización
+      if (
+        amortizacionActiva &&
+        montoAmortizacion &&
+        parseFloat(montoAmortizacion) > 0
+      ) {
+        await crearCobro({
+          financiamientoId: nuevoFinanciamiento.id,
+          monto: parseFloat(montoAmortizacion),
+          fecha: fechaInicio,
+          tipo: "inicial",
+          tipoPago: "efectivo", // Asumimos efectivo para amortización
+          nota: `Amortización de capital - Abono inicial de $${parseFloat(
+            montoAmortizacion
+          ).toFixed(0)}`,
+        });
+      }
+
       setShowSuccess(true);
       setTimeout(() => {
         router.push("/financiamiento-cuota");
@@ -315,8 +365,6 @@ export default function NuevoFinanciamientoPage() {
       <div className='container mx-auto px-4 py-4 sm:py-8'>
         {/* Header - Optimizado para móvil */}
         <div className='mb-4 sm:mb-6'>
-          
-
           <div className='text-center mb-4 sm:mb-6'>
             <div className='inline-flex items-center gap-2 sm:gap-3 bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-sm border border-blue-100 w-full'>
               <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0'>
@@ -683,11 +731,155 @@ export default function NuevoFinanciamientoPage() {
                       </h3>
                     </div>
 
+                    {/* Amortización de Capital */}
+                    <div className='mb-6 p-4 border border-blue-200 rounded-xl bg-blue-50'>
+                      <div className='flex items-center justify-between mb-4'>
+                        <div className='flex items-center gap-3'>
+                          <div className='w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center'>
+                            <span className='text-white text-lg'>💰</span>
+                          </div>
+                          <div>
+                            <h4 className='font-semibold text-blue-900'>
+                              Amortización de Capital
+                            </h4>
+                            <p className='text-sm text-blue-700'>
+                              Permitir abono inicial para reducir el monto a
+                              financiar
+                            </p>
+                          </div>
+                        </div>
+                        <label className='relative inline-flex items-center cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            className='sr-only peer'
+                            checked={amortizacionActiva}
+                            onChange={(e) => {
+                              setAmortizacionActiva(e.target.checked);
+                              if (!e.target.checked) {
+                                setMontoAmortizacion("");
+                              } else {
+                                // Si se activa amortización, resetear cuotas iniciales a 1
+                                setCuotasIniciales(1);
+                              }
+                            }}
+                          />
+                          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <span className='ml-3 text-sm font-medium text-blue-900'>
+                            {amortizacionActiva ? "Activo" : "Inactivo"}
+                          </span>
+                        </label>
+                      </div>
+
+                      {amortizacionActiva && (
+                        <div className='space-y-4'>
+                          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                            <div>
+                              <label className='block text-sm font-semibold text-blue-800 mb-2'>
+                                Monto de Amortización
+                              </label>
+                              <div className='relative'>
+                                <span className='absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500'>
+                                  $
+                                </span>
+                                <input
+                                  type='number'
+                                  min='0'
+                                  max={montoTotal}
+                                  value={montoAmortizacion}
+                                  onChange={(
+                                    e: ChangeEvent<HTMLInputElement>
+                                  ) => {
+                                    const valor = e.target.value;
+                                    if (parseFloat(valor) <= montoTotal) {
+                                      setMontoAmortizacion(valor);
+                                    }
+                                  }}
+                                  className='w-full pl-8 pr-4 py-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                                  placeholder='0'
+                                />
+                              </div>
+                              <p className='text-xs text-blue-600 mt-1'>
+                                Máximo: ${montoTotal.toFixed(0)}
+                              </p>
+                            </div>
+                            <div>
+                              <label className='block text-sm font-semibold text-blue-800 mb-2'>
+                                Monto a Financiar
+                              </label>
+                              <div className='w-full px-4 py-3 border border-blue-300 rounded-xl bg-blue-100 text-blue-900 font-semibold'>
+                                $
+                                {Math.max(
+                                  0,
+                                  montoTotal -
+                                    (parseFloat(montoAmortizacion) || 0)
+                                ).toFixed(0)}
+                              </div>
+                              <p className='text-xs text-blue-600 mt-1'>
+                                Con recargo 50%: $
+                                {Math.round(
+                                  Math.max(
+                                    0,
+                                    montoTotal -
+                                      (parseFloat(montoAmortizacion) || 0)
+                                  ) * 1.5
+                                ).toFixed(0)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className='bg-blue-100 p-3 rounded-lg'>
+                            <h5 className='font-semibold text-blue-900 mb-2'>
+                              💡 Ejemplo de Cálculo:
+                            </h5>
+                            <div className='text-sm text-blue-800 space-y-1'>
+                              <div>• Precio base: ${montoTotal.toFixed(0)}</div>
+                              <div>
+                                • Abono inicial: $
+                                {parseFloat(montoAmortizacion) || 0}
+                              </div>
+                              <div>
+                                • Monto a financiar: $
+                                {Math.max(
+                                  0,
+                                  montoTotal -
+                                    (parseFloat(montoAmortizacion) || 0)
+                                ).toFixed(0)}
+                              </div>
+                              <div>
+                                • Con recargo (50%): $
+                                {Math.round(
+                                  Math.max(
+                                    0,
+                                    montoTotal -
+                                      (parseFloat(montoAmortizacion) || 0)
+                                  ) * 1.5
+                                ).toFixed(0)}
+                              </div>
+                              <div>
+                                • Cuota semanal: $
+                                {Math.round(
+                                  (Math.max(
+                                    0,
+                                    montoTotal -
+                                      (parseFloat(montoAmortizacion) || 0)
+                                  ) *
+                                    1.5) /
+                                    15
+                                ).toFixed(0)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
                       {/* Monto */}
                       <div>
                         <label className='block text-sm font-semibold text-gray-700 mb-2'>
-                          Monto Final
+                          {amortizacionActiva
+                            ? "Monto Final a Financiar"
+                            : "Monto Final"}
                         </label>
                         <div className='relative'>
                           <span className='absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500'>
@@ -707,7 +899,13 @@ export default function NuevoFinanciamientoPage() {
                           />
                         </div>
                         <p className='text-xs text-gray-500 mt-1'>
-                          Calculado automáticamente (+50% recargo)
+                          {amortizacionActiva
+                            ? `Calculado: (${Math.max(
+                                0,
+                                montoTotal -
+                                  (parseFloat(montoAmortizacion) || 0)
+                              ).toFixed(0)} + 50% recargo)`
+                            : "Calculado automáticamente (+50% recargo)"}
                         </p>
                       </div>
 
@@ -730,23 +928,43 @@ export default function NuevoFinanciamientoPage() {
                       </div>
 
                       {/* Cuotas Iniciales */}
-                      <div>
-                        <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                      <div className={amortizacionActiva ? "opacity-50" : ""}>
+                        <label className='block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2'>
                           Cuotas Iniciales
+                          {amortizacionActiva && (
+                            <span className='text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full'>
+                              Deshabilitado
+                            </span>
+                          )}
                         </label>
                         <select
                           value={cuotasIniciales}
                           onChange={(e) =>
                             setCuotasIniciales(parseInt(e.target.value))
                           }
-                          className='w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
+                          disabled={amortizacionActiva}
+                          className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                            amortizacionActiva
+                              ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          }`}
                         >
                           <option value={1}>1 cuota inicial</option>
                           <option value={2}>2 cuotas iniciales</option>
                           <option value={3}>3 cuotas iniciales</option>
                           <option value={4}>4 cuotas iniciales</option>
                         </select>
-                        {cuotasIniciales > 0 &&
+                        {amortizacionActiva ? (
+                          <div className='mt-2 p-2 bg-orange-50 border border-orange-200 rounded-lg'>
+                            <p className='text-xs text-orange-700 flex items-center gap-1'>
+                              <span>⚠️</span>
+                              Las cuotas iniciales están deshabilitadas cuando
+                              se usa amortización de capital para evitar
+                              conflictos de pagos iniciales.
+                            </p>
+                          </div>
+                        ) : (
+                          cuotasIniciales > 0 &&
                           parseFloat(formData.monto) > 0 && (
                             <div className='mt-2 space-y-1'>
                               <p className='text-xs text-blue-600 font-medium'>
@@ -762,7 +980,8 @@ export default function NuevoFinanciamientoPage() {
                                 {cuotasIniciales > 1 ? "s" : ""} del plan
                               </p>
                             </div>
-                          )}
+                          )
+                        )}
                       </div>
 
                       {/* Fecha de inicio */}
@@ -832,10 +1051,45 @@ export default function NuevoFinanciamientoPage() {
                             ${montoTotal.toFixed(0)}
                           </span>
                         </div>
+                        {amortizacionActiva &&
+                          montoAmortizacion &&
+                          parseFloat(montoAmortizacion) > 0 && (
+                            <>
+                              <div className='flex justify-between'>
+                                <span className='text-gray-700'>
+                                  Amortización:
+                                </span>
+                                <span className='font-semibold text-green-600'>
+                                  -${parseFloat(montoAmortizacion).toFixed(0)}
+                                </span>
+                              </div>
+                              <div className='flex justify-between'>
+                                <span className='text-gray-700'>
+                                  Subtotal a financiar:
+                                </span>
+                                <span className='font-semibold'>
+                                  $
+                                  {Math.max(
+                                    0,
+                                    montoTotal - parseFloat(montoAmortizacion)
+                                  ).toFixed(0)}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         <div className='flex justify-between'>
                           <span className='text-gray-700'>Recargo (50%):</span>
                           <span className='font-semibold text-orange-600'>
-                            +${(montoTotal * 0.5).toFixed(0)}
+                            {amortizacionActiva &&
+                            montoAmortizacion &&
+                            parseFloat(montoAmortizacion) > 0
+                              ? `+${(
+                                  Math.max(
+                                    0,
+                                    montoTotal - parseFloat(montoAmortizacion)
+                                  ) * 0.5
+                                ).toFixed(0)}`
+                              : `+${(montoTotal * 0.5).toFixed(0)}`}
                           </span>
                         </div>
                       </div>
@@ -855,7 +1109,19 @@ export default function NuevoFinanciamientoPage() {
                             ).toLocaleString()}
                           </span>
                         </div>
-                        {cuotasIniciales > 0 && (
+                        {amortizacionActiva &&
+                          montoAmortizacion &&
+                          parseFloat(montoAmortizacion) > 0 && (
+                            <div className='flex justify-between'>
+                              <span className='text-gray-700'>
+                                Abono inicial (amortización):
+                              </span>
+                              <span className='font-semibold text-green-600'>
+                                ${parseFloat(montoAmortizacion).toFixed(0)}
+                              </span>
+                            </div>
+                          )}
+                        {!amortizacionActiva && cuotasIniciales > 0 && (
                           <div className='flex justify-between'>
                             <span className='text-gray-700'>Pago inicial:</span>
                             <span className='font-semibold text-blue-600'>
@@ -875,6 +1141,24 @@ export default function NuevoFinanciamientoPage() {
                             15 Cuotas Semanales
                           </span>
                         </div>
+                        {amortizacionActiva &&
+                          montoAmortizacion &&
+                          parseFloat(montoAmortizacion) > 0 && (
+                            <div className='mt-2 pt-2 border-t border-blue-200'>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm font-medium text-green-700'>
+                                  Total a pagar al cliente:
+                                </span>
+                                <span className='font-bold text-lg text-green-700'>
+                                  ${parseFloat(montoAmortizacion).toFixed(0)}
+                                </span>
+                              </div>
+                              <p className='text-xs text-green-600 mt-1'>
+                                Solo amortización de capital (cuotas iniciales
+                                deshabilitadas)
+                              </p>
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -905,11 +1189,27 @@ export default function NuevoFinanciamientoPage() {
                       <>
                         <span>💾</span>
                         <span className='hidden sm:inline'>
-                          {`Crear Financiamiento (${
-                            productosCarrito.length
-                          } producto${productosCarrito.length > 1 ? "s" : ""})`}
+                          {amortizacionActiva &&
+                          montoAmortizacion &&
+                          parseFloat(montoAmortizacion) > 0
+                            ? `Crear Financiamiento con Amortización (${
+                                productosCarrito.length
+                              } producto${
+                                productosCarrito.length > 1 ? "s" : ""
+                              })`
+                            : `Crear Financiamiento (${
+                                productosCarrito.length
+                              } producto${
+                                productosCarrito.length > 1 ? "s" : ""
+                              })`}
                         </span>
-                        <span className='sm:hidden'>Crear</span>
+                        <span className='sm:hidden'>
+                          {amortizacionActiva &&
+                          montoAmortizacion &&
+                          parseFloat(montoAmortizacion) > 0
+                            ? "Crear c/Amort."
+                            : "Crear"}
+                        </span>
                       </>
                     )}
                   </button>
