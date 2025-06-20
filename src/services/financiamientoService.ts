@@ -123,62 +123,34 @@ export class FinanciamientoService {
     }
   }
 
-  // Calcular información detallada de un financiamiento
+  // Calcular información detallada de un financiamiento usando función unificada
   static calcularInfoFinanciamiento(
     financiamiento: FinanciamientoCuota, 
     cobros: Cobro[]
   ) {
-    const cobrosValidos = cobros.filter(
-      c => c.financiamientoId === financiamiento.id && 
-           (c.tipo === "cuota" || c.tipo === "inicial") &&
-           c.id && c.id !== "temp"
-    );
+    // Usar la función unificada para garantizar consistencia
+    const { calcularInfoFinanciamiento: calcularInfoFinanciamientoUtils } = require('@/utils/financiamiento');
+    const info = calcularInfoFinanciamientoUtils(financiamiento, cobros);
 
-    const valorCuota = financiamiento.tipoVenta === "contado" 
-      ? 0 
-      : Math.round(financiamiento.monto / financiamiento.cuotas);
-
-    const totalCobrado = cobrosValidos.reduce((acc, cobro) => 
-      acc + (typeof cobro.monto === "number" && !isNaN(cobro.monto) ? cobro.monto : 0), 0
-    );
-
-    const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
-    
-    // Calcular cuotas atrasadas (lógica específica del servicio)
-    let cuotasAtrasadas = 0;
-    if (financiamiento.tipoVenta === "cuotas") {
-      const fechaActual = new Date();
-      const fechaInicio = new Date(financiamiento.fechaInicio);
-      const semanasTranscurridas = Math.floor(
-        (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
-      );
-      const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, financiamiento.cuotas));
-      const cuotasPagadas = cobrosValidos.length;
-      cuotasAtrasadas = Math.max(0, cuotasEsperadas - cuotasPagadas);
-    }
-    
-    const progreso = montoPendiente > 0 
-      ? ((financiamiento.monto - montoPendiente) / financiamiento.monto) * 100 
-      : 100;
-
-    // Separar para diferentes propósitos
-    const cuotasRegulares = cobrosValidos.filter(c => c.tipo === "cuota").length;
-    const cuotasIniciales = cobrosValidos.filter(c => c.tipo === "inicial").length;
-    const cuotasPagadas = cuotasRegulares; // Solo cuotas regulares para consistencia con lógica de atrasos
-    const cuotasPendientes = Math.max(0, financiamiento.cuotas - cuotasRegulares);
+    // Mantener compatibilidad con la interfaz existente del servicio
+    const cuotasRegulares = info.cobrosRegulares;
+    const cuotasIniciales = info.cobrosIniciales;
+    const cuotasPagadas = info.cuotasPagadas;
+    const cuotasPendientes = info.cuotasPendientes;
 
     return {
-      cobrosValidos,
-      valorCuota,
-      totalCobrado,
-      montoPendiente,
-      cuotasAtrasadas,
-      progreso,
+      cobrosValidos: info.cobrosValidos,
+      valorCuota: info.valorCuota,
+      totalCobrado: info.totalCobrado,
+      montoPendiente: info.montoPendiente,
+      cuotasAtrasadas: info.cuotasAtrasadas,
+      progreso: info.progreso,
       cuotasPagadas,
       cuotasPendientes,
       cuotasRegulares,
       cuotasIniciales,
-      totalCuotas: cuotasRegulares + cuotasIniciales
+      totalCuotas: cuotasRegulares + cuotasIniciales,
+      montoAtrasado: info.cuotasAtrasadas * info.valorCuota,
     };
   }
 

@@ -1,5 +1,5 @@
 import { FinanciamientoCuota, Cliente, Producto, Cobro } from "@/lib/firebase/database";
-import { calcularCuotasAtrasadas } from "@/utils/financiamiento";
+import { calcularCuotasAtrasadas, calcularInfoFinanciamiento as calcularInfoFinanciamientoUtils } from "@/utils/financiamiento";
 import { normalizarNumeroControl, esFormatoNumeroControl } from "@/utils/format";
 
 export interface ClienteInfo {
@@ -48,28 +48,23 @@ export const calcularFinanciamiento = (
   financiamiento: FinanciamientoCuota,
   cobros: Cobro[]
 ): FinanciamientoCalculado => {
-  const cobrosValidos = getCobrosFinanciamiento(financiamiento.id, cobros);
-  const totalCobrado = cobrosValidos.reduce((acc, cobro) => acc + cobro.monto, 0);
-  const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
-  const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobrosValidos);
-  const valorCuota = Math.round(financiamiento.monto / financiamiento.cuotas);
-  const cuotasPagadas = cobrosValidos.length;
-  const progreso = financiamiento.monto > 0 ? (totalCobrado / financiamiento.monto) * 100 : 0;
+  // Usar la función unificada para garantizar consistencia
+  const info = calcularInfoFinanciamientoUtils(financiamiento, cobros);
 
   const estadoInfo =
-    cuotasAtrasadas > 0
+    info.cuotasAtrasadas > 0
       ? { color: "red", texto: "Atrasado", icon: "⚠️" }
-      : montoPendiente <= 0
+      : info.montoPendiente <= 0
       ? { color: "green", texto: "Completado", icon: "✅" }
       : { color: "blue", texto: "Al día", icon: "💰" };
 
   return {
-    totalCobrado,
-    montoPendiente,
-    cuotasAtrasadas,
-    valorCuota,
-    cuotasPagadas,
-    progreso: Math.min(100, progreso),
+    totalCobrado: info.totalCobrado,
+    montoPendiente: info.montoPendiente,
+    cuotasAtrasadas: info.cuotasAtrasadas,
+    valorCuota: info.valorCuota,
+    cuotasPagadas: info.cuotasPagadas,
+    progreso: info.progreso,
     estadoInfo,
   };
 };

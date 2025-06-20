@@ -42,8 +42,6 @@ const FinanciamientoDetailContent = () => {
   return (
     <div className='min-h-screen bg-gray-50'>
       <div className=' mx-auto px-4 py-6'>
-       
-
         {/* Información del cliente */}
         {cliente ? (
           <div className='mb-8'>
@@ -106,46 +104,48 @@ const FinanciamientoDetailContent = () => {
         const info = calcularInfoFinanciamiento(financiamiento);
 
         return (
-          <ModalPagoCuota
-            key={`modal-${financiamiento.id}`}
-            isOpen={modals.isOpen(`pago-${financiamiento.id}`)}
-            onClose={() => modals.closeModal(`pago-${financiamiento.id}`)}
-            prestamo={{
-              id: financiamiento.id,
-              monto: financiamiento.monto,
-              cuotas: financiamiento.cuotas,
-            }}
-            valorCuota={info.valorCuota}
-            cuotasPendientes={info.cuotasPendientes || 0}
-            cuotasAtrasadas={info.cuotasAtrasadas}
-            cuotasPagadas={info.cuotasPagadas}
-            onPagar={(data: PagoData) =>
-              handlePagarCuota(financiamiento.id, data)
-            }
-            cargando={!!abonando[financiamiento.id]}
-          />
+          <div key={`modal-pago-${financiamiento.id}`}>
+            <ModalPagoCuota
+              isOpen={modals.isOpen(`pago-${financiamiento.id}`)}
+              onClose={() => modals.closeModal(`pago-${financiamiento.id}`)}
+              prestamo={{
+                id: financiamiento.id,
+                monto: financiamiento.monto,
+                cuotas: financiamiento.cuotas,
+              }}
+              valorCuota={info.valorCuota}
+              cuotasPendientes={info.cuotasPendientes || 0}
+              cuotasAtrasadas={info.cuotasAtrasadas}
+              cuotasPagadas={info.cuotasPagadas}
+              onPagar={(data: PagoData) =>
+                handlePagarCuota(financiamiento.id, data)
+              }
+              cargando={!!abonando[financiamiento.id]}
+            />
+          </div>
         );
       })}
 
       {/* Modales de impresión */}
       {financiamientosCliente.map((financiamiento) => (
-        <Modal
-          key={`print-${financiamiento.id}`}
-          isOpen={modals.isOpen(`impresion-${financiamiento.id}`)}
-          onClose={() => modals.closeModal(`impresion-${financiamiento.id}`)}
-          title={`Plan de Pagos - ${cliente?.nombre || "Cliente"}`}
-        >
-          <div className='print-container'>
-            {cliente && (
-              <PlanPagosPrint
-                financiamiento={financiamiento}
-                cliente={cliente}
-                cobros={getCobrosFinanciamiento(financiamiento.id)}
-                valorCuota={financiamiento.monto / financiamiento.cuotas}
-              />
-            )}
-          </div>
-        </Modal>
+        <div key={`modal-impresion-${financiamiento.id}`}>
+          <Modal
+            isOpen={modals.isOpen(`impresion-${financiamiento.id}`)}
+            onClose={() => modals.closeModal(`impresion-${financiamiento.id}`)}
+            title={`Plan de Pagos - ${cliente?.nombre || "Cliente"}`}
+          >
+            <div className='print-container'>
+              {cliente && (
+                <PlanPagosPrint
+                  financiamiento={financiamiento}
+                  cliente={cliente}
+                  cobros={getCobrosFinanciamiento(financiamiento.id)}
+                  valorCuota={financiamiento.monto / financiamiento.cuotas}
+                />
+              )}
+            </div>
+          </Modal>
+        </div>
       ))}
 
       {/* Estilos para impresión */}
@@ -179,11 +179,7 @@ const FinanciamientoDetailContent = () => {
 
 // Componente principal exportado
 const FinanciamientoClientePage = () => {
-  return (
-    <ProtectedRoute>
-      <FinanciamientoDetailContent />
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute children={<FinanciamientoDetailContent />} />;
 };
 
 export default FinanciamientoClientePage;

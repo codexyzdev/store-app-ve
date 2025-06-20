@@ -7,6 +7,7 @@ import {
   FinanciamientoCuota, 
   Cobro 
 } from '@/lib/firebase/database';
+import { calcularInfoFinanciamiento as calcularInfoFinanciamientoUtils } from '@/utils/financiamiento';
 import {
   setLoading,
   setError,
@@ -243,44 +244,22 @@ export const useFinanciamientosRedux = () => {
     dispatch(setError(null));
   }, [dispatch]);
 
-  // Calcular información financiera de un financiamiento específico
+  // Calcular información financiera de un financiamiento específico usando función unificada
   const calcularInfoFinanciamiento = useCallback((financiamiento: FinanciamientoCuota) => {
     const cobrosFinanciamiento = getCobrosFinanciamiento(financiamiento.id);
-    const cobrosValidos = cobrosFinanciamiento.filter((c: Cobro) => 
-      (c.tipo === 'cuota' || c.tipo === 'inicial') && 
-      c.id && c.id !== 'temp'
-    );
-
-    const valorCuota = financiamiento.tipoVenta === 'cuotas' 
-      ? financiamiento.monto / financiamiento.cuotas 
-      : financiamiento.monto;
-
-    const totalCobrado = cobrosValidos.reduce((sum: number, cobro: Cobro) => sum + cobro.monto, 0);
-    const montoPendiente = Math.max(0, financiamiento.monto - totalCobrado);
-    const progreso = financiamiento.monto > 0 ? (totalCobrado / financiamiento.monto) * 100 : 0;
-
-    // Calcular cuotas atrasadas manteniendo la lógica original
-    let cuotasAtrasadas = 0;
-    if (financiamiento.tipoVenta === 'cuotas') {
-      const fechaActual = new Date();
-      const fechaInicio = new Date(financiamiento.fechaInicio);
-      const semanasTranscurridas = Math.floor(
-        (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
-      );
-      const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, financiamiento.cuotas));
-      const cuotasPagadas = cobrosValidos.length;
-      cuotasAtrasadas = Math.max(0, cuotasEsperadas - cuotasPagadas);
-    }
-
+    
+    // Usar la función unificada del utils para garantizar consistencia
+    const info = calcularInfoFinanciamientoUtils(financiamiento, cobrosFinanciamiento);
+    
     return {
-      cobrosValidos,
-      valorCuota,
-      totalCobrado,
-      montoPendiente,
-      progreso,
-      cuotasAtrasadas,
-      cuotasPagadas: cobrosValidos.length,
-      cuotasPendientes: Math.max(0, financiamiento.cuotas - cobrosValidos.length),
+      cobrosValidos: info.cobrosValidos,
+      valorCuota: info.valorCuota,
+      totalCobrado: info.totalCobrado,
+      montoPendiente: info.montoPendiente,
+      progreso: info.progreso,
+      cuotasAtrasadas: info.cuotasAtrasadas,
+      cuotasPagadas: info.cuotasPagadas,
+      cuotasPendientes: info.cuotasPendientes,
     };
   }, [getCobrosFinanciamiento]);
 

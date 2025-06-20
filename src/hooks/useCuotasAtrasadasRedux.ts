@@ -14,7 +14,7 @@ import {
   Producto,
   Cobro,
 } from '@/lib/firebase/database';
-import { calcularCuotasAtrasadas } from '@/utils/financiamiento';
+import { calcularCuotasAtrasadas, calcularMontoAtrasado } from '@/utils/financiamiento';
 // Definición de tipos necesarios
 export interface FinanciamientoConDatos extends FinanciamientoCuota {
   cliente: Cliente;
@@ -74,10 +74,7 @@ export const useCuotasAtrasadasRedux = () => {
           const producto = productos.find((p) => p.id === financiamiento.productoId);
           if (!cliente || !producto) return null;
 
-          const cobrosFin = cobros.filter(
-            (c) => c.financiamientoId === financiamiento.id && c.tipo === 'cuota'
-          );
-
+          // Usar función unificada para calcular cuotas atrasadas
           const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobros);
           
           // Debug: Log para identificar financiamientos procesados
@@ -93,24 +90,20 @@ export const useCuotasAtrasadasRedux = () => {
           
           if (cuotasAtrasadas === 0) return null;
 
+          // Usar función unificada para calcular monto atrasado
           const valorCuota = Math.round(financiamiento.monto / financiamiento.cuotas);
-          const montoAtrasado = valorCuota * cuotasAtrasadas;
+          const montoAtrasado = calcularMontoAtrasado(financiamiento, cobros);
 
-          const ultimaCuota = cobrosFin.sort((a, b) => b.fecha - a.fecha)[0] || null;
-
-          // Días de atraso más precisos
-          const fechaInicio = new Date(financiamiento.fechaInicio);
-          const hoy = new Date();
-          const semanas = Math.floor(
-            (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
+          // Obtener cobros para historial
+          const cobrosFin = cobros.filter(
+            (c) => c.financiamientoId === financiamiento.id && (c.tipo === 'cuota' || c.tipo === 'inicial')
           );
-          
-          // Contar solo las cuotas regulares pagadas (no iniciales)
-          const cuotasRegularesPagadas = cobrosFin.filter(c => c.tipo === 'cuota').length;
-          const cuotasIniciales = cobrosFin.filter(c => c.tipo === 'inicial').length;
-          const cuotasEfectivas = financiamiento.cuotas - cuotasIniciales;
-          const cuotasEsperadas = Math.min(semanas, cuotasEfectivas);
-          const diasAtraso = Math.max(0, (cuotasEsperadas - cuotasRegularesPagadas) * 7);
+          const ultimaCuota = cobrosFin
+            .filter(c => c.tipo === 'cuota')
+            .sort((a, b) => b.fecha - a.fecha)[0] || null;
+
+          // Calcular días de atraso de manera consistente
+          const diasAtraso = cuotasAtrasadas * 7; // Cada cuota atrasada representa 7 días
 
           // Severidad
           let severidad: 'baja' | 'media' | 'alta' | 'critica' = 'baja';

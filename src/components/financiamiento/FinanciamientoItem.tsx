@@ -19,6 +19,7 @@ interface FinanciamientoItemProps {
     progreso: number;
     totalCuotas?: number;
     cuotasPendientes?: number;
+    cobrosIniciales?: number;
   };
   cobros: any[];
   onPagarCuota: () => void;

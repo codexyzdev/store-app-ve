@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FinanciamientoCuota, Cobro } from '@/lib/firebase/database';
 import { normalizarNumeroControl, esFormatoNumeroControl } from '@/utils/format';
+import { calcularCuotasAtrasadas, determinarEstadoFinanciamiento } from '@/utils/financiamiento';
 
 export interface FinanciamientosFilters {
   busqueda: string;
@@ -67,38 +68,12 @@ const initialState: FinanciamientosState = {
   initialized: false,
 };
 
-// Función para calcular estado del financiamiento
-const calcularEstadoFinanciamiento = (
+// Usar la función unificada para calcular el estado del financiamiento
+const calcularEstadoFinanciamientoLocal = (
   financiamiento: FinanciamientoCuota,
   cobros: Cobro[]
 ): 'activo' | 'atrasado' | 'completado' => {
-  if (financiamiento.tipoVenta === 'contado') {
-    return 'completado';
-  }
-
-  const cobrosFinanciamiento = cobros.filter(
-    c => c.financiamientoId === financiamiento.id && 
-         (c.tipo === 'cuota' || c.tipo === 'inicial') &&
-         c.id && c.id !== 'temp'
-  );
-
-  const cuotasPagadas = cobrosFinanciamiento.length;
-  const totalCuotas = financiamiento.cuotas;
-
-  if (cuotasPagadas >= totalCuotas) {
-    return 'completado';
-  }
-
-  // Calcular si hay atrasos (restaurando lógica original)
-  const fechaActual = new Date();
-  const fechaInicio = new Date(financiamiento.fechaInicio);
-  const semanasTranscurridas = Math.floor(
-    (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
-  );
-  
-  const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, totalCuotas));
-  
-  return cuotasPagadas < cuotasEsperadas ? 'atrasado' : 'activo';
+  return determinarEstadoFinanciamiento(financiamiento, cobros);
 };
 
 // Función para filtrar financiamientos
@@ -152,7 +127,7 @@ const filtrarFinanciamientos = (
   // Filtro por estado
   if (filters.estado !== 'todos') {
     filtrados = filtrados.filter(financiamiento => {
-      const estado = calcularEstadoFinanciamiento(financiamiento, cobros);
+      const estado = calcularEstadoFinanciamientoLocal(financiamiento, cobros);
       return estado === filters.estado;
     });
   }
@@ -216,8 +191,8 @@ const filtrarFinanciamientos = (
         comparacion = clienteA.localeCompare(clienteB);
         break;
       case 'estado':
-        const estadoA = calcularEstadoFinanciamiento(a, cobros);
-        const estadoB = calcularEstadoFinanciamiento(b, cobros);
+        const estadoA = calcularEstadoFinanciamientoLocal(a, cobros);
+        const estadoB = calcularEstadoFinanciamientoLocal(b, cobros);
         comparacion = estadoA.localeCompare(estadoB);
         break;
     }
@@ -243,7 +218,7 @@ const calcularEstadisticas = (
   let cuotasVencidas = 0;
 
   financiamientos.forEach(financiamiento => {
-    const estado = calcularEstadoFinanciamiento(financiamiento, cobros);
+    const estado = calcularEstadoFinanciamientoLocal(financiamiento, cobros);
     montoTotal += financiamiento.monto;
 
     // Calcular cobros del financiamiento
@@ -260,24 +235,15 @@ const calcularEstadisticas = (
     montoRecaudado += montoFinanciamientoRecaudado;
     montoPendiente += (financiamiento.monto - montoFinanciamientoRecaudado);
 
-    // Contar estados
+    // Contar estados usando función unificada
     switch (estado) {
       case 'activo':
         activos++;
         break;
       case 'atrasado':
         atrasados++;
-        // Calcular cuotas vencidas (restaurando lógica original)
-        if (financiamiento.tipoVenta === 'cuotas') {
-          const fechaActual = new Date();
-          const fechaInicio = new Date(financiamiento.fechaInicio);
-          const semanasTranscurridas = Math.floor(
-            (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
-          );
-          const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, financiamiento.cuotas));
-          const cuotasPagadas = cobrosFinanciamiento.length;
-          cuotasVencidas += Math.max(0, cuotasEsperadas - cuotasPagadas);
-        }
+        // Usar función unificada para calcular cuotas vencidas
+        cuotasVencidas += calcularCuotasAtrasadas(financiamiento, cobros);
         break;
       case 'completado':
         completados++;
