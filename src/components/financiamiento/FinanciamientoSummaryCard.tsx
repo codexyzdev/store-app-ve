@@ -113,7 +113,6 @@ export const FinanciamientoSummaryCard = memo(
             {/* Monto total */}
             <div className='bg-blue-50 rounded-xl p-4 border border-blue-100'>
               <div className='flex items-center gap-2 mb-2'>
-                <span className='text-blue-600'>💰</span>
                 <span className='text-xs font-medium text-blue-600 uppercase tracking-wide'>
                   Total
                 </span>
@@ -126,7 +125,6 @@ export const FinanciamientoSummaryCard = memo(
             {/* Monto cobrado */}
             <div className='bg-green-50 rounded-xl p-4 border border-green-100'>
               <div className='flex items-center gap-2 mb-2'>
-                <span className='text-green-600'>✅</span>
                 <span className='text-xs font-medium text-green-600 uppercase tracking-wide'>
                   Cobrado
                 </span>
@@ -145,13 +143,6 @@ export const FinanciamientoSummaryCard = memo(
               } rounded-xl p-4 border`}
             >
               <div className='flex items-center gap-2 mb-2'>
-                <span
-                  className={
-                    montoPendiente > 0 ? "text-red-600" : "text-green-600"
-                  }
-                >
-                  {montoPendiente > 0 ? "⏳" : "🎉"}
-                </span>
                 <span
                   className={`text-xs font-medium uppercase tracking-wide ${
                     montoPendiente > 0 ? "text-red-600" : "text-green-600"
@@ -172,9 +163,8 @@ export const FinanciamientoSummaryCard = memo(
             {/* Valor cuota */}
             <div className='bg-purple-50 rounded-xl p-4 border border-purple-100'>
               <div className='flex items-center gap-2 mb-2'>
-                <span className='text-purple-600'>📅</span>
                 <span className='text-xs font-medium text-purple-600 uppercase tracking-wide'>
-                  Por Cuota
+                  Cuota
                 </span>
               </div>
               <span className='text-xl font-bold text-purple-900'>
@@ -186,10 +176,10 @@ export const FinanciamientoSummaryCard = memo(
           {/* Información de cuotas */}
           <div className='rounded-xl '>
             <div className='flex items-center justify-between mb-3'>
-              <span className='text-sm font-medium text-gray-700'>
+              <span className='text-xs md:text-sm font-medium text-gray-700'>
                 Progreso de Cuotas
               </span>
-              <span className='text-sm font-bold text-gray-900'>
+              <span className='text-xs md:text-sm font-bold text-gray-900'>
                 {cuotasPagadas}/{cuotasTotales} ({progreso.toFixed(1)}%)
               </span>
             </div>
