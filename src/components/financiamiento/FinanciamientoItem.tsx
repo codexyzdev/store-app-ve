@@ -23,11 +23,9 @@ interface FinanciamientoItemProps {
   };
   cobros: any[];
   onPagarCuota: () => void;
-  onTogglePlan: () => void;
-  onToggleHistorial: () => void;
+  onAbrirCalendario: () => void;
+  onAbrirHistorial: () => void;
   onImprimir: () => void;
-  isPlanOpen: boolean;
-  isHistorialOpen: boolean;
   cargando: boolean;
 }
 
@@ -39,11 +37,9 @@ export const FinanciamientoItem = memo(
     info,
     cobros,
     onPagarCuota,
-    onTogglePlan,
-    onToggleHistorial,
+    onAbrirCalendario,
+    onAbrirHistorial,
     onImprimir,
-    isPlanOpen,
-    isHistorialOpen,
     cargando,
   }: FinanciamientoItemProps) => {
     const financiamientoInfo = {
@@ -68,47 +64,12 @@ export const FinanciamientoItem = memo(
             financiamientoId={financiamiento.id}
             montoPendiente={info.montoPendiente}
             onPagarCuota={onPagarCuota}
-            onTogglePlan={onTogglePlan}
-            onToggleHistorial={onToggleHistorial}
+            onAbrirCalendario={onAbrirCalendario}
+            onAbrirHistorial={onAbrirHistorial}
             onImprimir={onImprimir}
-            isPlanOpen={isPlanOpen}
-            isHistorialOpen={isHistorialOpen}
             cargando={cargando}
           />
         </div>
-
-        {/* Plan de pagos - Mostrar solo si está abierto */}
-        {isPlanOpen && (
-          <div className='bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200'>
-            <h4 className='text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2'>
-              <span>📅</span>
-              Plan de Pagos
-            </h4>
-            <CuadriculaCuotas
-              fechaInicio={financiamiento.fechaInicio}
-              cobros={cobros}
-              valorCuota={info.valorCuota}
-            />
-          </div>
-        )}
-
-        {/* Historial de Pagos y Notas - Mostrar solo si está abierto */}
-        {isHistorialOpen && (
-          <div className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
-            <div className='xl:col-span-2'>
-              <HistorialPagos
-                pagos={cobros}
-                valorCuota={info.valorCuota}
-                titulo={`Historial de Pagos - ${productoNombre}`}
-              />
-            </div>
-            <div className='xl:col-span-1'>
-              <div className='bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200'>
-                <ListaNotas cobros={cobros} />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }

@@ -356,7 +356,7 @@ const PlanPagosPDFDocument: React.FC<{
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>LOS TIBURONES</Text>
-            <Text style={styles.subtitle}>PLAN DE PAGOS</Text>
+            <Text style={styles.subtitle}>CARTÓN DE PAGOS</Text>
           </View>
           <Text style={styles.fecha}>Fecha: {fechaEmision}</Text>
         </View>

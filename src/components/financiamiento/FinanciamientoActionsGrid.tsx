@@ -4,11 +4,9 @@ interface FinanciamientoActionsGridProps {
   financiamientoId: string;
   montoPendiente: number;
   onPagarCuota: () => void;
-  onTogglePlan: () => void;
-  onToggleHistorial: () => void;
+  onAbrirCalendario: () => void;
+  onAbrirHistorial: () => void;
   onImprimir: () => void;
-  isPlanOpen: boolean;
-  isHistorialOpen: boolean;
   cargando?: boolean;
 }
 
@@ -17,11 +15,9 @@ export const FinanciamientoActionsGrid = memo(
     financiamientoId,
     montoPendiente,
     onPagarCuota,
-    onTogglePlan,
-    onToggleHistorial,
+    onAbrirCalendario,
+    onAbrirHistorial,
     onImprimir,
-    isPlanOpen,
-    isHistorialOpen,
     cargando = false,
   }: FinanciamientoActionsGridProps) => {
     const actions = [
@@ -36,34 +32,34 @@ export const FinanciamientoActionsGrid = memo(
         description: "Registrar un pago de cuota",
       },
       {
-        id: "plan",
-        label: isPlanOpen ? "Ocultar Plan" : "Plan",
+        id: "calendario",
+        label: "Calendario",
         icon: "📅",
-        onClick: onTogglePlan,
+        onClick: onAbrirCalendario,
         disabled: false,
         className:
           "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white",
-        description: "Ver el plan de pagos detallado",
+        description: "Ver el calendario de pagos",
       },
       {
         id: "historial",
-        label: isHistorialOpen ? "Ocultar Historial" : "Historial",
+        label: "Historial de Pagos",
         icon: "📋",
-        onClick: onToggleHistorial,
+        onClick: onAbrirHistorial,
         disabled: false,
         className:
           "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white",
         description: "Ver historial de pagos",
       },
       {
-        id: "imprimir",
-        label: "Plan de Pagos",
+        id: "carton",
+        label: "Cartón de Pagos",
         icon: "📄",
         onClick: onImprimir,
         disabled: false,
         className:
           "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white",
-        description: "Ver previa del plan de pagos en PDF",
+        description: "Ver previa del cartón de pagos en PDF",
       },
     ];
 
@@ -82,7 +78,7 @@ export const FinanciamientoActionsGrid = memo(
             </p>
             <div className='flex gap-3 justify-center'>
               <button
-                onClick={onToggleHistorial}
+                onClick={onAbrirHistorial}
                 className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
               >
                 📋 Ver Historial
