@@ -31,7 +31,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
       tabIndex={-1}
     >
       <div
-        className='bg-white shadow-2xl rounded-2xl w-full max-w-2xl border border-gray-200 relative my-8 max-h-[95vh] flex flex-col'
+        className='bg-white shadow-2xl rounded-2xl w-full max-w-2xl border border-gray-200 relative my-8 max-h-[90vh] flex flex-col'
         onClick={handleContentClick}
       >
         <div className='flex-shrink-0 p-6 pb-4 border-b border-gray-100'>
@@ -50,7 +50,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
             </h2>
           )}
         </div>
-        <div className='flex-1 overflow-y-auto p-6 pt-4'>{children}</div>
+        <div className='flex-1 overflow-y-auto p-4 pt-4'>{children}</div>
       </div>
     </div>
   );
