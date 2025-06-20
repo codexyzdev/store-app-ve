@@ -95,7 +95,7 @@ export const FinanciamientoCard = ({
             {/* Información de amortización si existe */}
           {tieneAmortizacion && montoAmortizacion > 0 && (
             <div className='bg-green-50 border border-green-200 rounded-lg p-3'>
-              <div className='flex gap-2'>
+              <div className='flex flex-col gap-2'>
                 <span className='text-xs text-green-600 font-medium  tracking-wide flex items-center gap-1'>
                   Amortización
                 </span>
