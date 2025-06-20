@@ -32,6 +32,14 @@ const initialEstadisticas: EstadisticasCobranza = {
   casosAltoRiesgo: 0,
   promedioPorCuota: 0,
   promedioAtraso: 0,
+  totalClientes: 0,
+  montoTotal: 0,
+  porSeveridad: {
+    baja: 0,
+    media: 0,
+    alta: 0,
+    critica: 0,
+  },
 };
 
 const initialState: CuotasAtrasadasState = {

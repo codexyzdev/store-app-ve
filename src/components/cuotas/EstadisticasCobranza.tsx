@@ -9,6 +9,11 @@ interface EstadisticasCobranzaProps {
 export function EstadisticasCobranza({
   estadisticas,
 }: EstadisticasCobranzaProps) {
+  // Formatear números para mostrar sin decimales cuando sea apropiado
+  const formatearMonto = (monto: number) => {
+    return monto % 1 === 0 ? monto.toFixed(0) : monto.toFixed(2);
+  };
+
   return (
     <div className='grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6'>
       <div className='bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-lg'>
@@ -16,7 +21,7 @@ export function EstadisticasCobranza({
           <div>
             <p className='text-red-100 text-sm font-medium'>Total Atrasado</p>
             <p className='text-3xl font-bold'>
-              ${estadisticas.totalMontoAtrasado.toFixed(2)}
+              ${formatearMonto(estadisticas.totalMontoAtrasado)}
             </p>
           </div>
           <div className='bg-red-400 bg-opacity-30 rounded-full p-3'>

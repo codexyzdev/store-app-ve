@@ -57,10 +57,29 @@ export const useCuotasAtrasadasRedux = () => {
     let clientes: Cliente[] = [];
     let productos: Producto[] = [];
     let cobros: Cobro[] = [];
+    
+    // Control de carga: solo procesar cuando todos los datos estén disponibles
+    let dataLoadedFlags = {
+      financiamientos: false,
+      clientes: false,
+      productos: false,
+      cobros: false,
+    };
+
+    // Función para verificar si todos los datos están cargados
+    const allDataLoaded = () => {
+      return Object.values(dataLoadedFlags).every(Boolean);
+    };
 
     // Función para recalcular y despachar datos
     const recalcular = () => {
+      // Solo recalcular si todos los datos están disponibles
+      if (!allDataLoaded()) {
+        return;
+      }
+
       if (!financiamientos.length || !clientes.length || !productos.length) {
+        dispatch(setFinanciamientos([]));
         return;
       }
 
@@ -128,28 +147,30 @@ export const useCuotasAtrasadasRedux = () => {
       dispatch(setFinanciamientos(resultados));
     };
 
-    // Subscripciones
+    // Subscripciones con control de carga
     const unsubFin = financiamientoDB.suscribir((data) => {
       financiamientos = data;
+      dataLoadedFlags.financiamientos = true;
       recalcular();
     });
 
     const unsubCli = clientesDB.suscribir((data) => {
       clientes = data;
+      dataLoadedFlags.clientes = true;
       recalcular();
     });
 
     const unsubProd = inventarioDB.suscribir((data) => {
       productos = data;
+      dataLoadedFlags.productos = true;
       recalcular();
     });
 
     const unsubCobros = cobrosDB.suscribir((data) => {
       cobros = data;
+      dataLoadedFlags.cobros = true;
       recalcular();
     });
-
-    dispatch(setLoading(false));
 
     return () => {
       unsubFin();
