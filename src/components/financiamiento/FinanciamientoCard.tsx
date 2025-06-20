@@ -38,6 +38,8 @@ export const FinanciamientoCard = ({
     cuotasPagadas,
     progreso,
     estadoInfo,
+    tieneAmortizacion,
+    montoAmortizacion,
   } = calculado;
 
   return (
@@ -90,6 +92,20 @@ export const FinanciamientoCard = ({
                 V-{clienteInfo.cedula}
               </p>
             </div>
+            {/* Información de amortización si existe */}
+          {tieneAmortizacion && montoAmortizacion > 0 && (
+            <div className='bg-green-50 border border-green-200 rounded-lg p-3'>
+              <div className='flex gap-2'>
+                <span className='text-xs text-green-600 font-medium  tracking-wide flex items-center gap-1'>
+                  Amortización
+                </span>
+                <span className='text-xs font-bold text-green-900'>
+                  ${montoAmortizacion.toLocaleString()}
+                </span>
+              </div>
+              
+            </div>
+          )}
           </div>
         </div>
 
@@ -109,7 +125,7 @@ export const FinanciamientoCard = ({
           <div className='grid grid-cols-2 gap-3'>
             <div className='bg-blue-50 rounded-lg p-3'>
               <span className='text-xs text-blue-600 font-medium uppercase tracking-wide block mb-1'>
-                Monto Total
+                {tieneAmortizacion ? "Monto Financiado" : "Monto Total"}
               </span>
               <span className='text-lg font-bold text-blue-900'>
                 ${financiamiento.monto.toLocaleString()}
@@ -137,6 +153,8 @@ export const FinanciamientoCard = ({
               </span>
             </div>
           </div>
+
+          
 
           <div className='flex items-center justify-between py-2 border-b border-gray-100'>
             <span className='text-sm text-gray-600 flex items-center gap-2'>

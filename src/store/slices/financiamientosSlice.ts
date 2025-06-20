@@ -221,14 +221,22 @@ const calcularEstadisticas = (
     const estado = calcularEstadoFinanciamientoLocal(financiamiento, cobros);
     montoTotal += financiamiento.monto;
 
-    // Calcular cobros del financiamiento
-    const cobrosFinanciamiento = cobros.filter(
+    // Calcular cobros del financiamiento usando lógica unificada
+    const todosLosCobros = cobros.filter(
       c => c.financiamientoId === financiamiento.id && 
-           (c.tipo === 'cuota' || c.tipo === 'inicial') &&
            c.id && c.id !== 'temp'
     );
 
-    const montoFinanciamientoRecaudado = cobrosFinanciamiento.reduce(
+    // NUEVA LÓGICA: Separar tipos de cobros correctamente
+    const cobrosRegulares = todosLosCobros.filter(c => c.tipo === 'cuota');
+    const cobrosIniciales = todosLosCobros.filter(c => 
+      c.tipo === 'inicial' && 
+      (!c.nota || !c.nota.includes("Amortización de capital"))
+    );
+    
+    // Solo cobros de progreso cuentan para el monto recaudado
+    const cobrosProgreso = [...cobrosRegulares, ...cobrosIniciales];
+    const montoFinanciamientoRecaudado = cobrosProgreso.reduce(
       (sum, cobro) => sum + cobro.monto, 0
     );
     
@@ -242,8 +250,8 @@ const calcularEstadisticas = (
         break;
       case 'atrasado':
         atrasados++;
-        // Usar función unificada para calcular cuotas vencidas
-        cuotasVencidas += calcularCuotasAtrasadas(financiamiento, cobros);
+        // Usar función unificada para calcular cuotas vencidas (pasamos todos los cobros)
+        cuotasVencidas += calcularCuotasAtrasadas(financiamiento, todosLosCobros);
         break;
       case 'completado':
         completados++;

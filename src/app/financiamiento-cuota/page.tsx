@@ -76,32 +76,30 @@ export default function FinanciamientoCuotaPage() {
   const PAGE_SIZE = 25;
 
   const financiamientosConDatos: FinanciamientoConDatos[] =
-    React.useMemo(() => {
-      return financiamientosParaMostrar.map((financiamiento) => {
-        const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
-        const productoNombre = getProductoNombre(
-          financiamiento.productoId,
-          productos
-        );
-        const calculado = calcularFinanciamiento(financiamiento, cobros);
+    financiamientosParaMostrar.map((financiamiento) => {
+      const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
+      const productoNombre = getProductoNombre(
+        financiamiento.productoId,
+        productos
+      );
+      const calculado = calcularFinanciamiento(financiamiento, cobros);
 
-        return {
-          financiamiento,
-          clienteInfo,
-          productoNombre,
-          calculado,
-        };
-      });
-    }, [financiamientosParaMostrar, clientes, productos, cobros]);
+      return {
+        financiamiento,
+        clienteInfo,
+        productoNombre,
+        calculado,
+      };
+    });
 
   // Estado para control de items visibles
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const loadMore = React.useCallback(() => {
+  const loadMore = () => {
     setVisibleCount((prev) =>
       Math.min(prev + PAGE_SIZE, financiamientosConDatos.length)
     );
-  }, [financiamientosConDatos.length]);
+  };
 
   const sentinelRef = useInfiniteScroll(loadMore);
 
@@ -296,22 +294,24 @@ export default function FinanciamientoCuotaPage() {
             >
               {itemsToRender.map(
                 (item: FinanciamientoConDatos, index: number) => {
-                  return vistaCards ? (
-                    <FinanciamientoCard
-                      key={item.financiamiento.id}
-                      financiamiento={item.financiamiento}
-                      clienteInfo={item.clienteInfo}
-                      productoNombre={item.productoNombre}
-                      calculado={item.calculado}
-                    />
-                  ) : (
-                    <FinanciamientoListItem
-                      key={item.financiamiento.id}
-                      financiamiento={item.financiamiento}
-                      clienteInfo={item.clienteInfo}
-                      productoNombre={item.productoNombre}
-                      calculado={item.calculado}
-                    />
+                  return (
+                    <div key={item.financiamiento.id}>
+                      {vistaCards ? (
+                        <FinanciamientoCard
+                          financiamiento={item.financiamiento}
+                          clienteInfo={item.clienteInfo}
+                          productoNombre={item.productoNombre}
+                          calculado={item.calculado}
+                        />
+                      ) : (
+                        <FinanciamientoListItem
+                          financiamiento={item.financiamiento}
+                          clienteInfo={item.clienteInfo}
+                          productoNombre={item.productoNombre}
+                          calculado={item.calculado}
+                        />
+                      )}
+                    </div>
                   );
                 }
               )}

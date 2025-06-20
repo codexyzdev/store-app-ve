@@ -49,7 +49,7 @@ export default function NuevoFinanciamientoPage() {
   });
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [cantidadProducto, setCantidadProducto] = useState(1);
-  const [cuotasIniciales, setCuotasIniciales] = useState(1);
+  const [cuotasIniciales, setCuotasIniciales] = useState(0);
   // Estados para búsqueda y selección de cliente
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] =
@@ -758,8 +758,8 @@ export default function NuevoFinanciamientoPage() {
                               if (!e.target.checked) {
                                 setMontoAmortizacion("");
                               } else {
-                                // Si se activa amortización, resetear cuotas iniciales a 1
-                                setCuotasIniciales(1);
+                                // Si se activa amortización, resetear cuotas iniciales a 0
+                                setCuotasIniciales(0);
                               }
                             }}
                           />
@@ -949,6 +949,7 @@ export default function NuevoFinanciamientoPage() {
                               : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           }`}
                         >
+                          <option value={0}>Sin cuotas iniciales</option>
                           <option value={1}>1 cuota inicial</option>
                           <option value={2}>2 cuotas iniciales</option>
                           <option value={3}>3 cuotas iniciales</option>
@@ -960,28 +961,34 @@ export default function NuevoFinanciamientoPage() {
                               <span>⚠️</span>
                               Las cuotas iniciales están deshabilitadas cuando
                               se usa amortización de capital para evitar
-                              conflictos de pagos iniciales.
+.
                             </p>
                           </div>
-                        ) : (
-                          cuotasIniciales > 0 &&
-                          parseFloat(formData.monto) > 0 && (
-                            <div className='mt-2 space-y-1'>
-                              <p className='text-xs text-blue-600 font-medium'>
-                                💰 Pago inicial: $
-                                {Math.round(
-                                  (parseFloat(formData.monto) / 15) *
-                                    cuotasIniciales
-                                ).toLocaleString()}
-                              </p>
-                              <p className='text-xs text-gray-500'>
-                                Se marcarán como pagadas las últimas{" "}
-                                {cuotasIniciales} cuota
-                                {cuotasIniciales > 1 ? "s" : ""} del plan
-                              </p>
-                            </div>
-                          )
-                        )}
+                        ) : cuotasIniciales > 0 &&
+                          parseFloat(formData.monto) > 0 ? (
+                          <div className='mt-2 space-y-1'>
+                            <p className='text-xs text-blue-600 font-medium'>
+                              💰 Pago inicial: $
+                              {Math.round(
+                                (parseFloat(formData.monto) / 15) *
+                                  cuotasIniciales
+                              ).toLocaleString()}
+                            </p>
+                            <p className='text-xs text-gray-500'>
+                              Se marcarán como pagadas las últimas{" "}
+                              {cuotasIniciales} cuota
+                              {cuotasIniciales > 1 ? "s" : ""} del plan
+                            </p>
+                          </div>
+                        ) : cuotasIniciales === 0 ? (
+                          <div className='mt-2 p-2 bg-gray-50 border border-gray-200 rounded-lg'>
+                            <p className='text-xs text-gray-600 flex items-center gap-1'>
+                              <span>ℹ️</span>
+                              El cliente pagará todas las cuotas de acuerdo al
+                              plan semanal (sin pagos iniciales).
+                            </p>
+                          </div>
+                        ) : null}
                       </div>
 
                       {/* Fecha de inicio */}

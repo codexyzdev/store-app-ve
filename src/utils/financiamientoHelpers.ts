@@ -20,6 +20,9 @@ export interface FinanciamientoCalculado {
     texto: string;
     icon: string;
   };
+  tieneAmortizacion: boolean;
+  montoAmortizacion: number;
+  cobrosAmortizacion: number;
 }
 
 export const getClienteInfo = (clienteId: string, clientes: Cliente[]): ClienteInfo => {
@@ -40,7 +43,7 @@ export const getCobrosFinanciamiento = (financiamientoId: string, cobros: Cobro[
   return cobros.filter(
     (c) =>
       c.financiamientoId === financiamientoId &&
-      (c.tipo === "cuota" || c.tipo === "inicial")
+      c.id && c.id !== 'temp' // Solo cobros válidos persistidos
   );
 };
 
@@ -66,6 +69,9 @@ export const calcularFinanciamiento = (
     cuotasPagadas: info.cuotasPagadas,
     progreso: info.progreso,
     estadoInfo,
+    tieneAmortizacion: info.tieneAmortizacion,
+    montoAmortizacion: info.montoAmortizacion,
+    cobrosAmortizacion: info.cobrosAmortizacion,
   };
 };
 

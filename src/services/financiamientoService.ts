@@ -95,8 +95,17 @@ export class FinanciamientoService {
     cobrosExistentes: Cobro[],
     cuotasNuevas: number = 0
   ): Promise<void> {
+    // NUEVA LÓGICA: Separar tipos de cobros correctamente
+    const cobrosRegulares = cobrosExistentes.filter(c => c.tipo === "cuota");
+    const cobrosIniciales = cobrosExistentes.filter(c => 
+      c.tipo === "inicial" && 
+      (!c.nota || !c.nota.includes("Amortización de capital"))
+    );
+    
+    // Solo cobros de progreso cuentan para el cálculo de estado
+    const cobrosProgreso = [...cobrosRegulares, ...cobrosIniciales];
     const valorCuota = Math.round(financiamiento.monto / financiamiento.cuotas);
-    const totalAbonado = (cobrosExistentes.length + cuotasNuevas) * valorCuota;
+    const totalAbonado = (cobrosProgreso.length + cuotasNuevas) * valorCuota;
     const montoPendiente = Math.max(0, financiamiento.monto - totalAbonado);
 
     if (montoPendiente <= 0) {
@@ -104,16 +113,25 @@ export class FinanciamientoService {
         estado: "completado",
       });
     } else {
-      // Determinar el estado basado en la lógica original del servicio
-      const fechaActual = new Date();
-      const fechaInicio = new Date(financiamiento.fechaInicio);
-      const semanasTranscurridas = Math.floor(
-        (fechaActual.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24 * 7)
-      );
-      const cuotasEsperadas = Math.max(0, Math.min(semanasTranscurridas + 1, financiamiento.cuotas));
-      const cuotasPagadas = cobrosExistentes.length + cuotasNuevas;
+      // Determinar el estado basado en cuotas atrasadas usando función unificada
+      const { calcularCuotasAtrasadas } = require('@/utils/financiamiento');
       
-      const nuevoEstado = cuotasPagadas < cuotasEsperadas ? "atrasado" : "activo";
+      // Simular todos los cobros después del pago
+      const cobrosSimulados = [...cobrosExistentes];
+      for (let i = 0; i < cuotasNuevas; i++) {
+        cobrosSimulados.push({
+          id: `temp-${i}`,
+          financiamientoId: financiamientoId,
+          monto: valorCuota,
+          fecha: Date.now(),
+          tipo: "cuota",
+          tipoPago: "efectivo",
+          numeroCuota: cobrosRegulares.length + i + 1
+        } as Cobro);
+      }
+      
+      const cuotasAtrasadas = calcularCuotasAtrasadas(financiamiento, cobrosSimulados);
+      const nuevoEstado = cuotasAtrasadas > 0 ? "atrasado" : "activo";
       
       if (financiamiento.estado !== nuevoEstado) {
         await financiamientoDB.actualizar(financiamientoId, {

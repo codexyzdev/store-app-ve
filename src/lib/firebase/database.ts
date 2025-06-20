@@ -221,19 +221,30 @@ export const financiamientoDB = {
    * Calcula el saldo pendiente de un financiamiento
    * y actualiza su estado a "completado" cuando el saldo llegue a 0.
    * Devuelve el saldo pendiente calculado.
+   * ACTUALIZADA para usar lógica unificada y manejar amortización correctamente
    */
   async calcularSaldoPendiente(id: string): Promise<number> {
     // Obtener financiamiento
     const financiamiento = await this.obtener(id);
     if (!financiamiento) throw new Error('Financiamiento no encontrado');
 
-    // Obtener cobros relacionados (solo cuota o abono)
+    // Obtener TODOS los cobros relacionados
     const cobrosRelacionados = await cobrosDB.obtenerPorFinanciamiento(id);
-    const montoPagado = cobrosRelacionados
-      ? Object.values(cobrosRelacionados)
-          .filter(c => c.tipo === 'cuota' || c.tipo === 'abono' || c.tipo === 'inicial')
-          .reduce((total, c) => total + c.monto, 0)
-      : 0;
+    const cobrosArray = cobrosRelacionados ? Object.values(cobrosRelacionados) : [];
+    
+    // NUEVA LÓGICA: Separar tipos de cobros correctamente
+    const cobrosRegulares = cobrosArray.filter(c => c.tipo === 'cuota');
+    const cobrosIniciales = cobrosArray.filter(c => 
+      c.tipo === 'inicial' && 
+      (!c.nota || !c.nota.includes("Amortización de capital"))
+    );
+    
+    // Los cobros de amortización NO cuentan para el saldo pendiente
+    // porque son abonos iniciales que reducen el monto total, no pagos de cuotas
+    
+    // Solo cobros regulares e iniciales (cuotas iniciales tradicionales) cuentan
+    const cobrosProgreso = [...cobrosRegulares, ...cobrosIniciales];
+    const montoPagado = cobrosProgreso.reduce((total, c) => total + c.monto, 0);
 
     const saldoPendiente = financiamiento.monto - montoPagado;
 
