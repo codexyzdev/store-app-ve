@@ -13,6 +13,7 @@ interface HistorialPagosProps {
     imagenComprobante?: string;
     tipo?: string;
     numeroCuota?: number;
+    nota?: string;
   }[];
   valorCuota?: number;
   titulo?: string;
@@ -158,6 +159,64 @@ const getTipoPagoIcon = (tipoPago?: string) => {
   return tipo ? tipo.icon : "💳";
 };
 
+// Función para detectar si un pago es amortización de capital
+const esAmortizacionCapital = (pago: any): boolean => {
+  return (
+    pago.tipo === "inicial" &&
+    pago.nota &&
+    pago.nota.includes("Amortización de capital")
+  );
+};
+
+// Función para obtener información del tipo de pago
+const obtenerInfoTipoPago = (pago: any, valorCuota: number) => {
+  if (esAmortizacionCapital(pago)) {
+    return {
+      titulo: "Amortización de Capital",
+      icono: "💰",
+      descripcion: "Abono inicial",
+      color: "from-amber-500 to-orange-600",
+      bgColor: "bg-amber-100",
+      textColor: "text-amber-700",
+      detalle: "Reducción del monto total",
+    };
+  }
+
+  if (pago.tipo === "inicial") {
+    return {
+      titulo: pago.numeroCuota
+        ? `Cuota Inicial #${pago.numeroCuota}`
+        : "Pago Inicial",
+      icono: "🎯",
+      descripcion: "Cuota inicial",
+      color: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-100",
+      textColor: "text-purple-700",
+      detalle:
+        valorCuota > 0
+          ? `${Math.floor(pago.monto / valorCuota)} cuota${
+              Math.floor(pago.monto / valorCuota) > 1 ? "s" : ""
+            }`
+          : "",
+    };
+  }
+
+  return {
+    titulo: pago.numeroCuota ? `Cuota #${pago.numeroCuota}` : "Pago",
+    icono: "✅",
+    descripcion: "Cuota regular",
+    color: "from-green-500 to-green-600",
+    bgColor: "bg-green-100",
+    textColor: "text-green-700",
+    detalle:
+      valorCuota > 0
+        ? `${Math.floor(pago.monto / valorCuota)} cuota${
+            Math.floor(pago.monto / valorCuota) > 1 ? "s" : ""
+          }`
+        : "",
+  };
+};
+
 const HistorialPagos: React.FC<HistorialPagosProps> = ({
   pagos,
   valorCuota = 0,
@@ -191,8 +250,21 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
     })
     .sort((a, b) => b.fecha - a.fecha); // Más recientes primero
 
+  // Calcular estadísticas correctamente separando amortización
   const totalPagado = pagosFiltrados.reduce((sum, p) => sum + p.monto, 0);
-  const totalCuotas = pagosFiltrados.length;
+  const cobrosAmortizacion = pagosFiltrados.filter((p) =>
+    esAmortizacionCapital(p)
+  );
+  const cobrosRegulares = pagosFiltrados.filter(
+    (p) => !esAmortizacionCapital(p)
+  );
+
+  const totalCuotas = cobrosRegulares.length; // Solo cuotas regulares e iniciales
+  const montoAmortizacion = cobrosAmortizacion.reduce(
+    (sum, p) => sum + p.monto,
+    0
+  );
+  const montoCuotas = cobrosRegulares.reduce((sum, p) => sum + p.monto, 0);
 
   // Función para descargar CSV
   const descargarCSV = () => {
@@ -286,10 +358,27 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
             </div>
             <div>
               <h3 className='text-lg font-bold text-gray-900'>{titulo}</h3>
-              <p className='text-sm text-gray-600'>
-                {totalCuotas} pago{totalCuotas !== 1 ? "s" : ""} • $
-                {totalPagado.toFixed(0)} total
-              </p>
+              <div className='flex flex-wrap gap-2 text-sm text-gray-600'>
+                {totalCuotas > 0 && (
+                  <span>
+                    {totalCuotas} cuota{totalCuotas !== 1 ? "s" : ""} • $
+                    {montoCuotas.toFixed(0)}
+                  </span>
+                )}
+                {cobrosAmortizacion.length > 0 && (
+                  <span className='text-amber-600'>
+                    {totalCuotas > 0 && " • "}
+                    Amortización: ${montoAmortizacion.toFixed(0)}
+                  </span>
+                )}
+                {pagosFiltrados.length > 0 && (
+                  <span className='font-medium'>
+                    {(totalCuotas > 0 || cobrosAmortizacion.length > 0) &&
+                      " • "}
+                    Total: ${totalPagado.toFixed(0)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -404,100 +493,117 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
         ) : vistaDetallada ? (
           /* Vista detallada */
           <div className='space-y-4'>
-            {pagosFiltrados.map((pago, index) => (
-              <div
-                key={pago.id}
-                className='bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-all duration-200'
-              >
-                <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-                  {/* Información principal */}
-                  <div className='lg:col-span-2'>
-                    <div className='flex items-start justify-between mb-4'>
-                      <div className='flex items-center gap-3'>
-                        <div className='w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg'>
-                          <span className='text-white text-lg'>✅</span>
+            {pagosFiltrados.map((pago, index) => {
+              const infoPago = obtenerInfoTipoPago(pago, valorCuota);
+
+              return (
+                <div
+                  key={pago.id}
+                  className='bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-all duration-200'
+                >
+                  <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+                    {/* Información principal */}
+                    <div className='lg:col-span-2'>
+                      <div className='flex items-start justify-between mb-4'>
+                        <div className='flex items-center gap-3'>
+                          <div
+                            className={`w-12 h-12 bg-gradient-to-br ${infoPago.color} rounded-xl flex items-center justify-center shadow-lg`}
+                          >
+                            <span className='text-white text-lg'>
+                              {infoPago.icono}
+                            </span>
+                          </div>
+                          <div>
+                            <h4 className='text-lg font-bold text-gray-900'>
+                              {infoPago.titulo}
+                            </h4>
+                            <p className='text-sm text-gray-600'>
+                              {formatearFechaCompleta(pago.fecha)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className='text-lg font-bold text-gray-900'>
-                            {pago.numeroCuota
-                              ? `${
-                                  pago.tipo === "inicial" ? "Inicial" : "Cuota"
-                                } #${pago.numeroCuota}`
-                              : "Pago"}
-                          </h4>
-                          <p className='text-sm text-gray-600'>
-                            {formatearFechaCompleta(pago.fecha)}
+                        <div className='text-right'>
+                          <p className='text-2xl font-bold text-green-600'>
+                            ${pago.monto.toFixed(0)}
                           </p>
+                          {infoPago.detalle && (
+                            <p className='text-sm text-gray-600'>
+                              {infoPago.detalle}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <div className='text-right'>
-                        <p className='text-2xl font-bold text-green-600'>
-                          ${pago.monto.toFixed(0)}
-                        </p>
-                        {valorCuota > 0 && (
-                          <p className='text-sm text-gray-600'>
-                            {Math.floor(pago.monto / valorCuota)} cuota
-                            {Math.floor(pago.monto / valorCuota) > 1 ? "s" : ""}
+
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                        <div className='bg-blue-50 rounded-lg p-3'>
+                          <p className='text-blue-600 font-medium mb-1'>
+                            Método de Pago
                           </p>
+                          <p className='font-semibold text-gray-900 flex items-center gap-2'>
+                            <span>{getTipoPagoIcon(pago.tipoPago)}</span>
+                            {getTipoPagoLabel(pago.tipoPago)
+                              .replace(/[📊💵🏦📱🏧💳]/g, "")
+                              .trim()}
+                          </p>
+                        </div>
+
+                        {pago.comprobante && (
+                          <div className='bg-amber-50 rounded-lg p-3'>
+                            <p className='text-amber-600 font-medium mb-1'>
+                              Comprobante
+                            </p>
+                            <p className='font-semibold text-gray-900 font-mono'>
+                              {pago.comprobante}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Mostrar información adicional para amortización */}
+                        {esAmortizacionCapital(pago) && (
+                          <div className='bg-amber-50 rounded-lg p-3 sm:col-span-2'>
+                            <p className='text-amber-600 font-medium mb-1'>
+                              Información Adicional
+                            </p>
+                            <p className='text-sm text-gray-700'>
+                              Este abono inicial reduce el monto total del
+                              financiamiento. No cuenta como pago de cuotas
+                              regulares.
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
 
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                      <div className='bg-blue-50 rounded-lg p-3'>
-                        <p className='text-blue-600 font-medium mb-1'>
-                          Método de Pago
-                        </p>
-                        <p className='font-semibold text-gray-900 flex items-center gap-2'>
-                          <span>{getTipoPagoIcon(pago.tipoPago)}</span>
-                          {getTipoPagoLabel(pago.tipoPago)
-                            .replace(/[📊💵🏦📱🏧💳]/g, "")
-                            .trim()}
-                        </p>
-                      </div>
-
-                      {pago.comprobante && (
-                        <div className='bg-amber-50 rounded-lg p-3'>
-                          <p className='text-amber-600 font-medium mb-1'>
+                    {/* Comprobante de pago */}
+                    {pago.imagenComprobante && (
+                      <div className='lg:col-span-1'>
+                        <div className='bg-gray-50 rounded-lg p-3'>
+                          <p className='text-gray-600 font-medium mb-3 text-sm'>
                             Comprobante
                           </p>
-                          <p className='font-semibold text-gray-900 font-mono'>
-                            {pago.comprobante}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Comprobante de pago */}
-                  {pago.imagenComprobante && (
-                    <div className='lg:col-span-1'>
-                      <div className='bg-gray-50 rounded-lg p-3'>
-                        <p className='text-gray-600 font-medium mb-3 text-sm'>
-                          Comprobante
-                        </p>
-                        <div className='relative group'>
-                          <img
-                            src={pago.imagenComprobante}
-                            alt='Comprobante'
-                            className='w-full h-32 object-cover rounded-lg shadow-sm cursor-pointer group-hover:shadow-md transition-shadow'
-                            onClick={() => abrirComprobanteModal(pago)}
-                          />
-                          <div className='absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center'>
-                            <button
+                          <div className='relative group'>
+                            <img
+                              src={pago.imagenComprobante}
+                              alt='Comprobante'
+                              className='w-full h-32 object-cover rounded-lg shadow-sm cursor-pointer group-hover:shadow-md transition-shadow'
                               onClick={() => abrirComprobanteModal(pago)}
-                              className='opacity-0 group-hover:opacity-100 bg-white/90 hover:bg-white text-gray-800 px-3 py-2 rounded-lg font-medium text-sm transition-all shadow-lg'
-                            >
-                              🔍 Ver Completo
-                            </button>
+                            />
+                            <div className='absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center'>
+                              <button
+                                onClick={() => abrirComprobanteModal(pago)}
+                                className='opacity-0 group-hover:opacity-100 bg-white/90 hover:bg-white text-gray-800 px-3 py-2 rounded-lg font-medium text-sm transition-all shadow-lg'
+                              >
+                                🔍 Ver Completo
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           /* Vista compacta */
@@ -526,66 +632,67 @@ const HistorialPagos: React.FC<HistorialPagosProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {pagosFiltrados.map((pago) => (
-                  <tr
-                    key={pago.id}
-                    className='border-b border-gray-100 hover:bg-gray-50'
-                  >
-                    <td className='py-3 px-2'>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                          pago.tipo === "inicial"
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {pago.tipo === "inicial" ? "🎯" : "✅"}
-                        {pago.numeroCuota
-                          ? `${
-                              pago.tipo === "inicial" ? "Inicial" : "Cuota"
-                            } #${pago.numeroCuota}`
-                          : "Pago"}
-                      </span>
-                    </td>
-                    <td className='py-3 px-2 text-gray-900 font-medium'>
-                      {formatearFecha(pago.fecha)}
-                    </td>
-                    <td className='py-3 px-2'>
-                      <span className='font-bold text-green-600'>
-                        ${pago.monto.toFixed(0)}
-                      </span>
-                    </td>
-                    <td className='py-3 px-2'>
-                      <span className='inline-flex items-center gap-1 text-xs'>
-                        {getTipoPagoIcon(pago.tipoPago)}
-                        {getTipoPagoLabel(pago.tipoPago)
-                          .replace(/[📊💵🏦📱🏧💳]/g, "")
-                          .trim()}
-                      </span>
-                    </td>
-                    <td className='py-3 px-2'>
-                      {pago.comprobante ? (
-                        <span className='font-mono text-xs bg-gray-100 px-2 py-1 rounded'>
-                          {pago.comprobante}
-                        </span>
-                      ) : (
-                        <span className='text-gray-400 text-xs'>-</span>
-                      )}
-                    </td>
-                    <td className='py-3 px-2 text-center'>
-                      {pago.imagenComprobante ? (
-                        <button
-                          onClick={() => abrirComprobanteModal(pago)}
-                          className='inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium'
+                {pagosFiltrados.map((pago) => {
+                  const infoPago = obtenerInfoTipoPago(pago, valorCuota);
+
+                  return (
+                    <tr
+                      key={pago.id}
+                      className='border-b border-gray-100 hover:bg-gray-50'
+                    >
+                      <td className='py-3 px-2'>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${infoPago.bgColor} ${infoPago.textColor}`}
                         >
-                          🔍 Ver
-                        </button>
-                      ) : (
-                        <span className='text-gray-400 text-xs'>-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {infoPago.icono}
+                          {infoPago.titulo}
+                        </span>
+                      </td>
+                      <td className='py-3 px-2 text-gray-900 font-medium'>
+                        {formatearFecha(pago.fecha)}
+                      </td>
+                      <td className='py-3 px-2'>
+                        <span className='font-bold text-green-600'>
+                          ${pago.monto.toFixed(0)}
+                        </span>
+                        {infoPago.detalle && (
+                          <div className='text-xs text-gray-500 mt-1'>
+                            {infoPago.detalle}
+                          </div>
+                        )}
+                      </td>
+                      <td className='py-3 px-2'>
+                        <span className='inline-flex items-center gap-1 text-xs'>
+                          {getTipoPagoIcon(pago.tipoPago)}
+                          {getTipoPagoLabel(pago.tipoPago)
+                            .replace(/[📊💵🏦📱🏧💳]/g, "")
+                            .trim()}
+                        </span>
+                      </td>
+                      <td className='py-3 px-2'>
+                        {pago.comprobante ? (
+                          <span className='font-mono text-xs bg-gray-100 px-2 py-1 rounded'>
+                            {pago.comprobante}
+                          </span>
+                        ) : (
+                          <span className='text-gray-400 text-xs'>-</span>
+                        )}
+                      </td>
+                      <td className='py-3 px-2 text-center'>
+                        {pago.imagenComprobante ? (
+                          <button
+                            onClick={() => abrirComprobanteModal(pago)}
+                            className='inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium'
+                          >
+                            🔍 Ver
+                          </button>
+                        ) : (
+                          <span className='text-gray-400 text-xs'>-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
