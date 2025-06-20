@@ -10,7 +10,7 @@ interface CuotasMorosasPrintProps {
 const CuotasMorosasPrint: React.FC<CuotasMorosasPrintProps> = ({
   financiamientos,
 }) => {
-  const morosos = financiamientos.filter((f) => f.cuotasAtrasadas >= 2);
+  const morosos = financiamientos.filter((f) => f.cuotasAtrasadas >= 1);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const handleDownloadPDF = async () => {
