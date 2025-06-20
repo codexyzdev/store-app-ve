@@ -155,7 +155,7 @@ interface CuotasMorosasPDFProps {
 const CuotasMorosasPDF: React.FC<CuotasMorosasPDFProps> = ({
   financiamientos,
 }) => {
-  const morosos = financiamientos.filter((f) => f.cuotasAtrasadas >= 2);
+  const morosos = financiamientos.filter((f) => f.cuotasAtrasadas >= 1);
 
   const totalMorosos = morosos.length;
   const montoTotalAtrasado = morosos.reduce(
