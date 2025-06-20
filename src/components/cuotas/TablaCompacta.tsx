@@ -6,6 +6,7 @@ import {
   formatearTelefono,
   generarMensajeWhatsApp,
 } from "@/utils/whatsappUtils";
+import { formatNumeroControl } from "@/utils/format";
 
 interface TablaCompactaProps {
   financiamientos: FinanciamientoConDatos[];
@@ -68,7 +69,8 @@ export function TablaCompacta({ financiamientos }: TablaCompactaProps) {
                       {item.producto.nombre}
                     </p>
                     <p className='text-sm text-gray-500'>
-                      Financiamiento #F-{item.numeroControl}
+                      Financiamiento #
+                      {formatNumeroControl(item.numeroControl, "F")}
                     </p>
                   </td>
                   <td className='px-4 py-4 text-center'>

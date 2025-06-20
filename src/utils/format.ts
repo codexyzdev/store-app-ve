@@ -28,3 +28,18 @@ export const esFormatoNumeroControl = (entrada: string): boolean => {
   const patron = /^[fc]?-?\d+$/i;
   return patron.test(entradaLimpia);
 }; 
+
+// Función para formatear cédulas con separadores de miles
+export const formatearCedula = (cedula: string | number): string => {
+  // Convertir a string y limpiar cualquier carácter no numérico
+  const cedulaLimpia = cedula.toString().replace(/\D/g, '');
+  
+  // Si está vacía o no es válida, retornar tal como está
+  if (!cedulaLimpia || cedulaLimpia.length === 0) {
+    return cedula.toString();
+  }
+  
+  // Formatear con puntos como separadores de miles
+  // Ej: "26541412" → "26.541.412"
+  return cedulaLimpia.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};

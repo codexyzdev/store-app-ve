@@ -1,5 +1,6 @@
 import { FinanciamientoConDatos } from "@/hooks/useCuotasAtrasadasRedux";
 import type { CobroPendienteDetallado } from "@/store/slices/cobrosDelDiaSlice";
+import { formatNumeroControl } from "./format";
 
 export function formatearTelefono(telefono: string): string {
   const numeroLimpio = telefono.replace(/\D/g, "");
@@ -14,9 +15,10 @@ Te escribo desde Los Tiburones para recordarte que tienes ${
       item.cuotasAtrasadas
     } cuota${item.cuotasAtrasadas > 1 ? "s" : ""} atrasada${
       item.cuotasAtrasadas > 1 ? "s" : ""
-    } de tu financiamiento #F-${
-      item.numeroControl
-    } por un monto de $${item.montoAtrasado.toFixed(2)}.
+    } de tu financiamiento #${formatNumeroControl(
+      item.numeroControl,
+      "F"
+    )} por un monto de $${item.montoAtrasado.toFixed(2)}.
 
 📋 Detalles:
 • Producto: ${item.producto.nombre}

@@ -6,6 +6,7 @@ import {
   formatearTelefono,
   generarMensajeWhatsApp,
 } from "@/utils/whatsappUtils";
+import { formatNumeroControl, formatearCedula } from "@/utils/format";
 
 interface TarjetaCuotaAtrasadaProps {
   item: FinanciamientoConDatos;
@@ -35,15 +36,19 @@ export const TarjetaCuotaAtrasada: React.FC<TarjetaCuotaAtrasadaProps> = ({
             </div>
             <div className='min-w-0 flex-1'>
               <h3
-                className={`font-bold text-base sm:text-lg ${config.textColor} truncate`}
+                className={`font-bold text-base sm:text-xl ${config.textColor} truncate`}
               >
                 {item.cliente.nombre}
               </h3>
               <p
-                className={`text-xs sm:text-sm opacity-80 ${config.textColor} truncate`}
+                className={`text-xs flex flex-col  sm:text-sm opacity-80 ${config.textColor} truncate`}
               >
-                Cliente #{item.cliente.numeroControl} • C.I.{" "}
-                {item.cliente.cedula}
+                <span>
+                  Cliente #
+                  {formatNumeroControl(item.cliente.numeroControl, "C")}
+                </span>
+                
+                <span>C.I. {formatearCedula(item.cliente.cedula)}</span>
               </p>
             </div>
           </div>
@@ -67,23 +72,23 @@ export const TarjetaCuotaAtrasada: React.FC<TarjetaCuotaAtrasadaProps> = ({
               {item.producto.nombre}
             </p>
             <p className='text-xs sm:text-sm text-gray-500'>
-              Financiamiento #F-{item.numeroControl}
+              Financiamiento #{formatNumeroControl(item.numeroControl, "F")}
             </p>
           </div>
         </div>
 
         {/* Métricas principales */}
         <div className='grid grid-cols-2 gap-2 sm:gap-4'>
-          <div className='text-center p-3 sm:p-4 bg-red-50 rounded-xl border border-red-200'>
-            <div className='text-2xl sm:text-3xl font-bold text-red-600 mb-1'>
+          <div className='text-center p-2 flex flex-col justify-center gap-2 bg-red-50 rounded-xl border border-red-200'>
+            <div className='text-xl sm:text-2xl font-bold text-red-600'>
               {item.cuotasAtrasadas}
             </div>
             <div className='text-xs sm:text-sm text-red-700 font-medium'>
               Cuotas Atrasadas
             </div>
           </div>
-          <div className='text-center p-3 sm:p-4 bg-orange-50 rounded-xl border border-orange-200'>
-            <div className='text-xl sm:text-2xl font-bold text-orange-600 mb-1'>
+          <div className='text-center p-2 flex flex-col justify-center gap-2 bg-orange-50 rounded-xl border border-orange-200'>
+            <div className='text-xl sm:text-2xl font-bold text-orange-600'>
               ${item.montoAtrasado.toFixed(2)}
             </div>
             <div className='text-xs sm:text-sm text-orange-700 font-medium'>
@@ -124,7 +129,7 @@ export const TarjetaCuotaAtrasada: React.FC<TarjetaCuotaAtrasadaProps> = ({
         <div className='flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-3 sm:pt-4 border-t border-gray-200'>
           <Link
             href={`/financiamiento-cuota/${item.clienteId}`}
-            className='flex-1 bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors text-center flex items-center justify-center space-x-1 sm:space-x-2 text-sm sm:text-base'
+            className='flex-1 bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded-xl font-semibold hover:bg-blue-700 transition-colors text-center flex items-center justify-center space-x-1 sm:space-x-2 text-sm sm:text-base'
           >
             <span>👁️</span>
             <span>Ver Detalles</span>
@@ -136,7 +141,7 @@ export const TarjetaCuotaAtrasada: React.FC<TarjetaCuotaAtrasadaProps> = ({
               )}?text=${generarMensajeWhatsApp(item)}`}
               target='_blank'
               rel='noopener noreferrer'
-              className='flex-1 bg-green-600 text-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors text-center flex items-center justify-center space-x-1 sm:space-x-2 text-sm sm:text-base'
+              className='flex-1 bg-green-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors text-center flex items-center justify-center space-x-1 sm:space-x-2 text-sm sm:text-base'
             >
               <span>📱</span>
               <span>WhatsApp</span>
