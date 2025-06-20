@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
 
   return (
     <div
-      className='fixed inset-0 z-50 px-4  flex items-center justify-center bg-black/30  overflow-y-auto'
+      className='fixed inset-0 z-50  flex items-center justify-center bg-black/30  overflow-y-auto'
       onClick={onClose}
       onKeyDown={handleKeyDown}
       role='dialog'
@@ -31,7 +31,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
       tabIndex={-1}
     >
       <div
-        className='bg-white shadow-2xl rounded-2xl w-full max-w-2xl border border-gray-200 relative my-8 max-h-[95vh] flex flex-col'
+        className='bg-white shadow-2xl md:rounded-2xl w-full max-w-2xl border border-gray-200 relative my-8 max-h-[100vh] md:max-h-[95vh] flex flex-col'
         onClick={handleContentClick}
       >
         <div className='flex-shrink-0 p-6 pb-4 border-b border-gray-100'>
