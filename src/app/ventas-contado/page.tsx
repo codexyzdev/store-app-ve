@@ -11,6 +11,7 @@ import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
 import FacturaVentaContadoPDF from "@/components/pdf/FacturaVentaContadoPDF";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ventasContadoDB, VentaContado } from "@/lib/firebase/database";
+import { formatearCedula } from "@/utils/format";
 
 export default function VentasContadoPage() {
   const { clientes, loading: clientesLoading } = useClientesRedux();
@@ -45,10 +46,11 @@ export default function VentasContadoPage() {
       cliente?.nombre.toLowerCase().includes(terminoBusqueda) ||
       cliente?.cedula?.toLowerCase().includes(terminoBusqueda) ||
       numeroControl.toLowerCase().includes(terminoBusqueda) ||
-      venta.productos.some((p) => {
-        const producto = productos.find((prod) => prod.id === p.productoId);
-        return producto?.nombre.toLowerCase().includes(terminoBusqueda);
-      })
+      (venta.productos &&
+        venta.productos.some((p) => {
+          const producto = productos.find((prod) => prod.id === p.productoId);
+          return producto?.nombre.toLowerCase().includes(terminoBusqueda);
+        }))
     );
   });
 
@@ -57,7 +59,9 @@ export default function VentasContadoPage() {
     setMostrarPDF(true);
   };
 
-  const getProductosTexto = (productosVenta: any[]) => {
+  const getProductosTexto = (productosVenta: any[] | undefined) => {
+    if (!productosVenta) return "Sin productos";
+
     return productosVenta
       .map((p) => {
         const producto = productos.find((prod) => prod.id === p.productoId);
@@ -75,7 +79,7 @@ export default function VentasContadoPage() {
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
           <div className='flex items-center justify-center h-64'>
-            <LoadingSpinner size='large' />
+            <LoadingSpinner size='lg' />
           </div>
         </div>
       </div>
@@ -132,7 +136,9 @@ export default function VentasContadoPage() {
             <input
               type='text'
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setBusqueda(e.target.value)
+              }
               placeholder='Buscar por cliente, producto, cédula o N° de venta...'
               className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors'
             />
@@ -198,6 +204,7 @@ export default function VentasContadoPage() {
                     <div className='space-y-1'>
                       <p className='font-semibold text-gray-900'>
                         {cliente?.nombre || "Cliente no encontrado"}
+                        {cliente?.cedula && ` - V${formatearCedula(cliente.cedula)}`}
                       </p>
                       <p className='text-sm text-gray-600 line-clamp-2'>
                         {getProductosTexto(venta.productos)}
