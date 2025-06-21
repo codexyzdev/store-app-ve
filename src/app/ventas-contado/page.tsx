@@ -25,6 +25,11 @@ export default function VentasContadoPage() {
     useState<VentaContado | null>(null);
   const [mostrarPDF, setMostrarPDF] = useState(false);
 
+  // Estados para paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [elementosPorPagina] = useState(25);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
+
   // Suscripción tiempo real a ventas al contado
   useEffect(() => {
     const unsub = ventasContadoDB.suscribir((lista) => {
@@ -34,7 +39,7 @@ export default function VentasContadoPage() {
     return () => unsub();
   }, []);
 
-  // Filtrar ventas por búsqueda
+  // Filtrar ventas por búsqueda (BÚSQUEDA GLOBAL)
   const ventasFiltradas = ventas.filter((venta) => {
     if (!busqueda) return true;
 
@@ -53,6 +58,40 @@ export default function VentasContadoPage() {
         }))
     );
   });
+
+  // Lógica de paginación
+  const hayBusqueda = busqueda.trim() !== "";
+  const ventasParaMostrar =
+    hayBusqueda || mostrarTodos ? ventasFiltradas : ventasFiltradas;
+
+  // Si hay búsqueda o mostrar todos, mostrar todos los resultados
+  // Si no, aplicar paginación
+  const ventasFinales =
+    hayBusqueda || mostrarTodos
+      ? ventasParaMostrar
+      : ventasParaMostrar.slice(
+          (paginaActual - 1) * elementosPorPagina,
+          paginaActual * elementosPorPagina
+        );
+
+  // Calcular información de paginación
+  const totalPaginas = Math.ceil(ventasFiltradas.length / elementosPorPagina);
+  const indiceInicio = (paginaActual - 1) * elementosPorPagina + 1;
+  const indiceFin = Math.min(
+    paginaActual * elementosPorPagina,
+    ventasFiltradas.length
+  );
+
+  // Resetear página cuando cambie la búsqueda
+  useEffect(() => {
+    setPaginaActual(1);
+    setMostrarTodos(false);
+  }, [busqueda]);
+
+  // Funciones de navegación
+  const irAPagina = (pagina: number) => {
+    setPaginaActual(pagina);
+  };
 
   const handleVerFactura = (venta: VentaContado) => {
     setVentaSeleccionada(venta);
@@ -100,9 +139,30 @@ export default function VentasContadoPage() {
                 Ventas al Contado
               </h1>
               <p className='text-sm text-gray-600'>
-                {ventas.length > 0
-                  ? `${ventas.length} ventas registradas`
-                  : "Gestiona todas las ventas al contado"}
+                {hayBusqueda ? (
+                  <>
+                    <span className='text-sky-600 font-medium'>
+                      🔍 Búsqueda global activa:
+                    </span>{" "}
+                    {ventasFiltradas.length} resultado
+                    {ventasFiltradas.length !== 1 ? "s" : ""} de {ventas.length}{" "}
+                    ventas totales
+                  </>
+                ) : mostrarTodos ? (
+                  <>
+                    <span className='text-green-600 font-medium'>
+                      📋 Mostrando todas:
+                    </span>{" "}
+                    {ventas.length} ventas totales
+                  </>
+                ) : ventas.length > elementosPorPagina ? (
+                  <>
+                    Mostrando {indiceInicio}-{indiceFin} de {ventas.length}{" "}
+                    ventas (Página {paginaActual} de {totalPaginas})
+                  </>
+                ) : (
+                  `${ventas.length} ventas registradas`
+                )}
               </p>
             </div>
           </div>
@@ -145,19 +205,213 @@ export default function VentasContadoPage() {
           </div>
 
           {busqueda && (
-            <p className='text-sm text-gray-500 mt-2'>
-              {ventasFiltradas.length === 0
-                ? "No se encontraron resultados"
-                : `${ventasFiltradas.length} resultado${
-                    ventasFiltradas.length !== 1 ? "s" : ""
-                  } encontrado${ventasFiltradas.length !== 1 ? "s" : ""}`}
-            </p>
+            <div className='flex items-center justify-between mt-3'>
+              <p className='text-sm text-gray-500'>
+                {ventasFiltradas.length === 0
+                  ? "No se encontraron resultados"
+                  : `${ventasFiltradas.length} resultado${
+                      ventasFiltradas.length !== 1 ? "s" : ""
+                    } encontrado${ventasFiltradas.length !== 1 ? "s" : ""}`}
+              </p>
+              <span className='text-xs px-2 py-1 bg-sky-100 text-sky-700 rounded-full font-medium'>
+                🔍 Búsqueda Global
+              </span>
+            </div>
+          )}
+
+          {/* Controles de vista cuando no hay búsqueda */}
+          {!hayBusqueda && ventas.length > elementosPorPagina && (
+            <div className='flex items-center justify-between mt-4 pt-4 border-t border-gray-200'>
+              <div className='flex items-center gap-3'>
+                {!mostrarTodos ? (
+                  <button
+                    onClick={() => setMostrarTodos(true)}
+                    className='inline-flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium'
+                  >
+                    <span>📋</span>
+                    Ver todas las ventas
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMostrarTodos(false);
+                      setPaginaActual(1);
+                    }}
+                    className='inline-flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium'
+                  >
+                    <span>📄</span>
+                    Volver a paginación
+                  </button>
+                )}
+              </div>
+
+              {!mostrarTodos && (
+                <div className='text-sm text-gray-500'>
+                  Página {paginaActual} de {totalPaginas} • {ventas.length}{" "}
+                  ventas totales
+                </div>
+              )}
+            </div>
           )}
         </div>
 
+        {/* Controles de paginación (abajo) */}
+        {!hayBusqueda &&
+          !mostrarTodos &&
+          totalPaginas > 1 &&
+          ventasFinales.length > 0 && (
+            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mt-6'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <button
+                    onClick={() => irAPagina(1)}
+                    disabled={paginaActual === 1}
+                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    Primera
+                  </button>
+                  <button
+                    onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
+                    disabled={paginaActual === 1}
+                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    ← Anterior
+                  </button>
+                </div>
+
+                <div className='flex items-center gap-1'>
+                  {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                    let pagina;
+                    if (totalPaginas <= 5) {
+                      pagina = i + 1;
+                    } else if (paginaActual <= 3) {
+                      pagina = i + 1;
+                    } else if (paginaActual >= totalPaginas - 2) {
+                      pagina = totalPaginas - 4 + i;
+                    } else {
+                      pagina = paginaActual - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pagina}
+                        onClick={() => irAPagina(pagina)}
+                        className={`px-3 py-2 text-sm rounded-lg font-medium ${
+                          paginaActual === pagina
+                            ? "bg-sky-500 text-white"
+                            : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {pagina}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className='flex items-center gap-2'>
+                  <button
+                    onClick={() =>
+                      irAPagina(Math.min(totalPaginas, paginaActual + 1))
+                    }
+                    disabled={paginaActual === totalPaginas}
+                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    Siguiente →
+                  </button>
+                  <button
+                    onClick={() => irAPagina(totalPaginas)}
+                    disabled={paginaActual === totalPaginas}
+                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    Última
+                  </button>
+                </div>
+              </div>
+
+              <div className='text-center mt-3 pt-3 border-t border-gray-100'>
+                <p className='text-sm text-gray-500'>
+                  Mostrando {indiceInicio}-{indiceFin} de {ventas.length} ventas
+                  totales
+                </p>
+              </div>
+            </div>
+          )}
+
+        {/* Controles de paginación (arriba) */}
+        {!hayBusqueda && !mostrarTodos && totalPaginas > 1 && (
+          <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <button
+                  onClick={() => irAPagina(1)}
+                  disabled={paginaActual === 1}
+                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                >
+                  Primera
+                </button>
+                <button
+                  onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
+                  disabled={paginaActual === 1}
+                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                >
+                  ← Anterior
+                </button>
+              </div>
+
+              <div className='flex items-center gap-1'>
+                {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                  let pagina;
+                  if (totalPaginas <= 5) {
+                    pagina = i + 1;
+                  } else if (paginaActual <= 3) {
+                    pagina = i + 1;
+                  } else if (paginaActual >= totalPaginas - 2) {
+                    pagina = totalPaginas - 4 + i;
+                  } else {
+                    pagina = paginaActual - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pagina}
+                      onClick={() => irAPagina(pagina)}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium ${
+                        paginaActual === pagina
+                          ? "bg-sky-500 text-white"
+                          : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {pagina}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className='flex items-center gap-2'>
+                <button
+                  onClick={() =>
+                    irAPagina(Math.min(totalPaginas, paginaActual + 1))
+                  }
+                  disabled={paginaActual === totalPaginas}
+                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                >
+                  Siguiente →
+                </button>
+                <button
+                  onClick={() => irAPagina(totalPaginas)}
+                  disabled={paginaActual === totalPaginas}
+                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                >
+                  Última
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Lista de ventas */}
         <div className='mt-8'>
-          {ventasFiltradas.length === 0 ? (
+          {ventasFinales.length === 0 ? (
             <div className='text-center py-12'>
               <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-2xl'>💵</span>
@@ -181,7 +435,7 @@ export default function VentasContadoPage() {
             </div>
           ) : (
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
-              {ventasFiltradas.map((venta) => {
+              {ventasFinales.map((venta) => {
                 const cliente = clientes.find((c) => c.id === venta.clienteId);
                 const tieneDescuento =
                   venta.montoDescuento && venta.montoDescuento > 0;
@@ -204,7 +458,8 @@ export default function VentasContadoPage() {
                     <div className='space-y-1'>
                       <p className='font-semibold text-gray-900'>
                         {cliente?.nombre || "Cliente no encontrado"}
-                        {cliente?.cedula && ` - V${formatearCedula(cliente.cedula)}`}
+                        {cliente?.cedula &&
+                          ` - V${formatearCedula(cliente.cedula)}`}
                       </p>
                       <p className='text-sm text-gray-600 line-clamp-2'>
                         {getProductosTexto(venta.productos)}
