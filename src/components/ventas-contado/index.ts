@@ -7,4 +7,14 @@ export { VentaContadoDetalles } from "./VentaContadoDetalles";
 export { VentaContadoDescuento } from "./VentaContadoDescuento";
 export { VentaContadoSummary } from "./VentaContadoSummary";
 export { VentaContadoActionButtons } from "./VentaContadoActionButtons";
-export { VentaContadoSuccessScreen } from "./VentaContadoSuccessScreen"; 
+export { VentaContadoSuccessScreen } from "./VentaContadoSuccessScreen";
+
+// Componentes optimizados con scroll infinito
+export { BusquedaVentasContado, FiltrosVentasContado } from "./BusquedaVentasContado";
+export { EstadisticasVentasContado } from "./EstadisticasVentasContado";
+export { 
+  VentasContadoSkeleton, 
+  CargandoMasVentasSkeleton, 
+  EstadoVacioVentas,
+  EstadisticasSkeleton 
+} from "./VentasContadoSkeleton"; 
