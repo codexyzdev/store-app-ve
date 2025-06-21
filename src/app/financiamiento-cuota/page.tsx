@@ -48,6 +48,9 @@ export default function FinanciamientoCuotaPage() {
   // Estados locales
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("todos");
+  const [tipoBusqueda, setTipoBusqueda] = useState<
+    "nombre" | "cedula" | "numeroControl"
+  >("nombre");
 
   // Hooks Redux
   const {
@@ -79,34 +82,41 @@ export default function FinanciamientoCuotaPage() {
       };
     });
 
-  // Filtrar por búsqueda
+  // Filtrar por búsqueda según el tipo seleccionado
   const financiamientosFiltrados = financiamientosConDatos.filter((item) => {
     if (!busqueda) return true;
 
     const terminoBusqueda = busqueda.trim();
-    const numeroControlFormateado = formatNumeroControl(
-      item.financiamiento.numeroControl,
-      "F"
-    );
-
-    // Si el término de búsqueda parece ser un número de control, usar búsqueda especializada
-    if (esFormatoNumeroControl(terminoBusqueda)) {
-      const numeroNormalizado = normalizarNumeroControl(terminoBusqueda);
-      return (
-        numeroNormalizado !== null &&
-        item.financiamiento.numeroControl === numeroNormalizado
-      );
-    }
-
-    // Búsqueda general (texto libre)
     const terminoLower = terminoBusqueda.toLowerCase();
-    return (
-      item.clienteInfo.nombre.toLowerCase().includes(terminoLower) ||
-      item.clienteInfo.cedula.toLowerCase().includes(terminoLower) ||
-      numeroControlFormateado.toLowerCase().includes(terminoLower) ||
-      item.financiamiento.numeroControl.toString().includes(terminoLower) ||
-      item.productoNombre.toLowerCase().includes(terminoLower)
-    );
+
+    switch (tipoBusqueda) {
+      case "cedula":
+        // Búsqueda específica por cédula
+        return item.clienteInfo.cedula.toLowerCase().includes(terminoLower);
+
+      case "numeroControl":
+        // Búsqueda específica por número de control
+        const numeroControlFormateado = formatNumeroControl(
+          item.financiamiento.numeroControl,
+          "F"
+        );
+        if (esFormatoNumeroControl(terminoBusqueda)) {
+          const numeroNormalizado = normalizarNumeroControl(terminoBusqueda);
+          return (
+            numeroNormalizado !== null &&
+            item.financiamiento.numeroControl === numeroNormalizado
+          );
+        }
+        return (
+          numeroControlFormateado.toLowerCase().includes(terminoLower) ||
+          item.financiamiento.numeroControl.toString().includes(terminoLower)
+        );
+
+      case "nombre":
+      default:
+        // Búsqueda específica por nombre de cliente
+        return item.clienteInfo.nombre.toLowerCase().includes(terminoLower);
+    }
   });
 
   // Filtrar por estado
@@ -291,13 +301,53 @@ export default function FinanciamientoCuotaPage() {
 
         {/* Búsqueda */}
         <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6'>
-          <div className='flex items-center gap-3 mb-2'>
+          <div className='flex items-center gap-3 mb-4'>
             <span className='text-2xl'>🔍</span>
             <h2 className='text-xl font-semibold text-gray-800'>
               Buscar Financiamientos
             </h2>
           </div>
-        
+
+          {/* Botones de tipo de búsqueda */}
+          <div className='flex flex-wrap gap-2 mb-4'>
+            {[
+              {
+                key: "nombre",
+                label: "Por Nombre",
+                icon: "👤",
+                desc: "Solo nombres de clientes",
+              },
+              {
+                key: "cedula",
+                label: "Por Cédula",
+                icon: "🆔",
+                desc: "Solo cédulas de clientes",
+              },
+              {
+                key: "numeroControl",
+                label: "Por N° Control",
+                icon: "📄",
+                desc: "Solo números de financiamiento",
+              },
+            ].map((tipo) => (
+              <button
+                key={tipo.key}
+                onClick={() => {
+                  setTipoBusqueda(tipo.key as any);
+                  setBusqueda(""); // Limpiar búsqueda al cambiar tipo
+                }}
+                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                  tipoBusqueda === tipo.key
+                    ? "bg-sky-500 text-white border-sky-500 shadow-md"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                }`}
+                title={tipo.desc}
+              >
+                <span>{tipo.icon}</span>
+                <span>{tipo.label}</span>
+              </button>
+            ))}
+          </div>
 
           <div className='relative'>
             <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
@@ -309,7 +359,15 @@ export default function FinanciamientoCuotaPage() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setBusqueda(e.target.value)
               }
-              placeholder='Buscar por cliente, producto, cédula o número de control...'
+              placeholder={
+                tipoBusqueda === "nombre"
+                  ? "Buscar por nombre de cliente (ej: María García)..."
+                  : tipoBusqueda === "cedula"
+                  ? "Buscar por cédula (ej: 26541412)..."
+                  : tipoBusqueda === "numeroControl"
+                  ? "Buscar por número de control (ej: F-000001, f-000001, 1)..."
+                  : "Buscar por nombre de cliente..."
+              }
               className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors'
             />
           </div>
