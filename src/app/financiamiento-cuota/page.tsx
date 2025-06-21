@@ -184,6 +184,18 @@ export default function FinanciamientoCuotaPage() {
     financiamientosLoading || clientesLoading || productosLoading;
   const errorGeneral = financiamientosError;
 
+  // Verificar si todos los datos necesarios están disponibles para cálculos precisos
+  const datosCompletos =
+    !cargandoInicial &&
+    // Asegurar que los arrays existen (pueden estar vacíos pero no undefined)
+    Array.isArray(financiamientos) &&
+    Array.isArray(clientes) &&
+    Array.isArray(productos) &&
+    Array.isArray(cobros) &&
+    // Si hay financiamientos, debe haber al menos algunos clientes y productos
+    (financiamientos.length === 0 ||
+      (clientes.length > 0 && productos.length > 0));
+
   // Manejo de errores
   if (errorGeneral) {
     return (
@@ -194,13 +206,23 @@ export default function FinanciamientoCuotaPage() {
     );
   }
 
-  // Loading state inicial
-  if (cargandoInicial && financiamientos.length === 0) {
+  // Loading state inicial - mostrar mientras no tengamos datos completos
+  if (!datosCompletos) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
           <div className='flex items-center justify-center h-64'>
-            <LoadingSpinner size='lg' />
+            <div className='flex flex-col items-center gap-4'>
+              <LoadingSpinner size='lg' />
+              <p className='text-gray-600 font-medium'>
+                Cargando financiamientos y datos relacionados...
+              </p>
+              <div className='text-xs text-gray-500 mt-2'>
+                {financiamientosLoading && "📊 Financiamientos..."}
+                {clientesLoading && " 👥 Clientes..."}
+                {productosLoading && " 📦 Productos..."}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -248,7 +270,7 @@ export default function FinanciamientoCuotaPage() {
         </div>
 
         {/* Filtros rápidos */}
-        <div className='flex flex-wrap md:grid  md:grid-cols-4 gap-2 mb-6'>
+        <div className='flex flex-wrap justify-center md:grid  md:grid-cols-4 gap-2 mb-6'>
           {[
             {
               key: "todos",
