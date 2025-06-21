@@ -246,12 +246,12 @@ export default function FinanciamientoCuotaPage() {
               icon: "📊",
               count: estadisticas.todos,
             },
-            {
-              key: "activo",
-              label: "Activos",
-              icon: "✅",
-              count: estadisticas.activos,
-            },
+            // {
+            //   key: "activo",
+            //   label: "Activos",
+            //   icon: "✅",
+            //   count: estadisticas.activos,
+            // },
             {
               key: "atrasado",
               label: "Atrasados",
@@ -297,9 +297,7 @@ export default function FinanciamientoCuotaPage() {
               Buscar Financiamientos
             </h2>
           </div>
-          <p className='text-sm text-gray-600 mb-4'>
-            Busca por cliente, producto, cédula o número de control
-          </p>
+        
 
           <div className='relative'>
             <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
