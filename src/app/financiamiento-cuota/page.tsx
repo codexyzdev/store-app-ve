@@ -161,7 +161,7 @@ export default function FinanciamientoCuotaPage() {
               className='inline-flex items-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
             >
               <span className='text-xl'>💰</span>
-              <span className='hidden sm:inline'>Nuevo Financiamiento</span>
+              <span className='inline'>Nuevo Financiamiento</span>
             </Link>
           </div>
         </div>

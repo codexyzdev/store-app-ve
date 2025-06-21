@@ -140,7 +140,7 @@ export const FiltrosRapidos: React.FC<FiltrosRapidosProps> = ({
   ];
 
   return (
-    <div className='flex flex-wrap gap-2 mb-6'>
+    <div className='grid grid-cols-2 md:grid-cols-4 gap-2 mb-6'>
       {filtros.map((filtro) => (
         <button
           key={filtro.key}
