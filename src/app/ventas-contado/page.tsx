@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { formatNumeroControl } from "@/utils/format";
+import {
+  formatNumeroControl,
+  normalizarNumeroControl,
+  esFormatoNumeroControl,
+} from "@/utils/format";
 import Modal from "@/components/Modal";
 import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
 import FacturaVentaContadoPDF from "@/components/pdf/FacturaVentaContadoPDF";
@@ -21,6 +25,9 @@ export default function VentasContadoPage() {
   const [ventas, setVentas] = useState<VentaContado[]>([]);
   const [loadingVentas, setLoadingVentas] = useState(true);
   const [busqueda, setBusqueda] = useState("");
+  const [tipoBusqueda, setTipoBusqueda] = useState<
+    "nombre" | "cedula" | "numeroControl"
+  >("nombre");
   const [ventaSeleccionada, setVentaSeleccionada] =
     useState<VentaContado | null>(null);
   const [mostrarPDF, setMostrarPDF] = useState(false);
@@ -28,7 +35,6 @@ export default function VentasContadoPage() {
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const [elementosPorPagina] = useState(20);
-  const [mostrarTodos, setMostrarTodos] = useState(false);
 
   // Suscripción tiempo real a ventas al contado
   useEffect(() => {
@@ -39,54 +45,63 @@ export default function VentasContadoPage() {
     return () => unsub();
   }, []);
 
-  // Filtrar ventas por búsqueda (BÚSQUEDA GLOBAL)
+  // Reset página cuando cambie búsqueda
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [busqueda]);
+
+  // Filtrar ventas por búsqueda según el tipo seleccionado
   const ventasFiltradas = ventas.filter((venta) => {
     if (!busqueda) return true;
 
-    const terminoBusqueda = busqueda.toLowerCase();
-    const cliente = clientes.find((c) => c.id === venta.clienteId);
-    const numeroControl = formatNumeroControl(venta.numeroControl, "C");
+    const terminoBusqueda = busqueda.trim();
+    const terminoLower = terminoBusqueda.toLowerCase();
 
-    return (
-      cliente?.nombre.toLowerCase().includes(terminoBusqueda) ||
-      cliente?.cedula?.toLowerCase().includes(terminoBusqueda) ||
-      numeroControl.toLowerCase().includes(terminoBusqueda) ||
-      (venta.productos &&
-        venta.productos.some((p) => {
-          const producto = productos.find((prod) => prod.id === p.productoId);
-          return producto?.nombre.toLowerCase().includes(terminoBusqueda);
-        }))
-    );
-  });
+    switch (tipoBusqueda) {
+      case "cedula":
+        // Búsqueda específica por cédula
+        const cliente = clientes.find((c) => c.id === venta.clienteId);
+        return cliente?.cedula?.toLowerCase().includes(terminoLower);
 
-  // Lógica de paginación
-  const hayBusqueda = busqueda.trim() !== "";
-  const ventasParaMostrar =
-    hayBusqueda || mostrarTodos ? ventasFiltradas : ventasFiltradas;
-
-  // Si hay búsqueda o mostrar todos, mostrar todos los resultados
-  // Si no, aplicar paginación
-  const ventasFinales =
-    hayBusqueda || mostrarTodos
-      ? ventasParaMostrar
-      : ventasParaMostrar.slice(
-          (paginaActual - 1) * elementosPorPagina,
-          paginaActual * elementosPorPagina
+      case "numeroControl":
+        // Búsqueda específica por número de control
+        const numeroControlFormateado = formatNumeroControl(
+          venta.numeroControl,
+          "C"
+        );
+        if (esFormatoNumeroControl(terminoBusqueda)) {
+          const numeroNormalizado = normalizarNumeroControl(terminoBusqueda);
+          return (
+            numeroNormalizado !== null &&
+            venta.numeroControl === numeroNormalizado
+          );
+        }
+        return (
+          numeroControlFormateado.toLowerCase().includes(terminoLower) ||
+          venta.numeroControl.toString().includes(terminoLower)
         );
 
-  // Calcular información de paginación
-  const totalPaginas = Math.ceil(ventasFiltradas.length / elementosPorPagina);
-  const indiceInicio = (paginaActual - 1) * elementosPorPagina + 1;
-  const indiceFin = Math.min(
-    paginaActual * elementosPorPagina,
-    ventasFiltradas.length
-  );
+      case "nombre":
+      default:
+        // Búsqueda específica por nombre de cliente
+        const clienteNombre = clientes.find((c) => c.id === venta.clienteId);
+        return clienteNombre?.nombre.toLowerCase().includes(terminoLower);
+    }
+  });
 
-  // Resetear página cuando cambie la búsqueda
-  useEffect(() => {
-    setPaginaActual(1);
-    setMostrarTodos(false);
-  }, [busqueda]);
+  // Aplicar paginación si no se está buscando
+  const totalResultados = ventasFiltradas.length;
+  const deberiaUsarPaginacion =
+    !busqueda && totalResultados > elementosPorPagina;
+
+  const ventasParaMostrar = deberiaUsarPaginacion
+    ? ventasFiltradas.slice(
+        (paginaActual - 1) * elementosPorPagina,
+        paginaActual * elementosPorPagina
+      )
+    : ventasFiltradas;
+
+  const totalPaginas = Math.ceil(totalResultados / elementosPorPagina);
 
   // Funciones de navegación
   const irAPagina = (pagina: number) => {
@@ -139,32 +154,33 @@ export default function VentasContadoPage() {
                 Ventas al Contado
               </h1>
               <p className='text-sm text-gray-600'>
-                {hayBusqueda ? (
+                {totalResultados > 0 ? (
                   <>
-                    <span className='text-sky-600 font-medium'>
-                      🔍 Búsqueda global activa:
-                    </span>{" "}
-                    {ventasFiltradas.length} resultado
-                    {ventasFiltradas.length !== 1 ? "s" : ""} de {ventas.length}{" "}
-                    ventas totales
-                  </>
-                ) : mostrarTodos ? (
-                  <>
-                    <span className='text-green-600 font-medium'>
-                      📋 Mostrando todas:
-                    </span>{" "}
-                    {ventas.length} ventas totales
-                  </>
-                ) : ventas.length > elementosPorPagina ? (
-                  <>
-                    Mostrando {indiceInicio}-{indiceFin} de {ventas.length}{" "}
-                    <span className='block md:inline'>
-                    ventas (Página {paginaActual} de {totalPaginas})
-                    </span>
-
+                    {busqueda ? (
+                      // Mostrando resultados de búsqueda
+                      <>
+                        {totalResultados} resultado
+                        {totalResultados !== 1 ? "s" : ""} encontrado
+                        {totalResultados !== 1 ? "s" : ""} para "
+                        <span className='font-medium'>{busqueda}</span>"
+                      </>
+                    ) : deberiaUsarPaginacion ? (
+                      // Mostrando con paginación
+                      <>
+                        Mostrando {ventasParaMostrar.length} de{" "}
+                        {totalResultados} ventas (página {paginaActual} de{" "}
+                        {totalPaginas})
+                      </>
+                    ) : (
+                      // Mostrando todas
+                      <>
+                        {totalResultados} venta
+                        {totalResultados !== 1 ? "s" : ""} en total
+                      </>
+                    )}
                   </>
                 ) : (
-                  `${ventas.length} ventas registradas`
+                  "Gestiona las ventas al contado de tu negocio"
                 )}
               </p>
             </div>
@@ -182,13 +198,54 @@ export default function VentasContadoPage() {
 
         {/* Búsqueda */}
         <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6'>
-          <div className='flex items-center gap-3 mb-2'>
+          <div className='flex items-center gap-3 mb-4'>
             <span className='text-2xl'>🔍</span>
             <h2 className='text-xl font-semibold text-gray-800'>
               Buscar Ventas
             </h2>
           </div>
-         
+
+          {/* Botones de tipo de búsqueda */}
+          <div className='flex flex-wrap gap-2 mb-4'>
+            {[
+              {
+                key: "nombre",
+                label: "Por Nombre",
+                icon: "👤",
+                desc: "Solo nombres de clientes",
+              },
+              {
+                key: "cedula",
+                label: "Por Cédula",
+                icon: "🆔",
+                desc: "Solo cédulas de clientes",
+              },
+              {
+                key: "numeroControl",
+                label: "Por N° Control",
+                icon: "📄",
+                desc: "Solo números de venta",
+              },
+            ].map((tipo) => (
+              <button
+                key={tipo.key}
+                onClick={() => {
+                  setTipoBusqueda(tipo.key as any);
+                  setBusqueda(""); // Limpiar búsqueda al cambiar tipo
+                  setPaginaActual(1); // Reset página
+                }}
+                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                  tipoBusqueda === tipo.key
+                    ? "bg-sky-500 text-white border-sky-500 shadow-md"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                }`}
+                title={tipo.desc}
+              >
+                <span>{tipo.icon}</span>
+                <span>{tipo.label}</span>
+              </button>
+            ))}
+          </div>
 
           <div className='relative'>
             <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
@@ -200,56 +257,39 @@ export default function VentasContadoPage() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setBusqueda(e.target.value)
               }
-              placeholder='Busca por cliente, cédula o N° de venta...'
+              placeholder={
+                tipoBusqueda === "nombre"
+                  ? "Buscar por nombre de cliente (ej: María García)..."
+                  : tipoBusqueda === "cedula"
+                  ? "Buscar por cédula (ej: 26541412)..."
+                  : tipoBusqueda === "numeroControl"
+                  ? "Buscar por número de control (ej: C-000001, c-000001, 1)..."
+                  : "Buscar por nombre de cliente..."
+              }
               className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors'
             />
           </div>
 
           {busqueda && (
-            <div className='flex items-center justify-between mt-3'>
-              <p className='text-sm text-gray-500'>
-                {ventasFiltradas.length === 0
-                  ? "No se encontraron resultados"
-                  : `${ventasFiltradas.length} resultado${
-                      ventasFiltradas.length !== 1 ? "s" : ""
-                    } encontrado${ventasFiltradas.length !== 1 ? "s" : ""}`}
+            <div className='mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+              <p className='text-sm text-blue-800 font-medium'>
+                🔍 Búsqueda global activa
               </p>
-              <span className='text-xs px-2 py-1 bg-sky-100 text-sky-700 rounded-full font-medium'>
-                🔍 Búsqueda Global
-              </span>
-            </div>
-          )}
-
-          {/* Controles de vista cuando no hay búsqueda */}
-          {!hayBusqueda && ventas.length > elementosPorPagina && (
-            <div className='flex items-center justify-between mt-4 pt-4 border-t border-gray-200'>
-              <div className='flex items-center gap-3'>
-                {!mostrarTodos ? (
-                  <button
-                    onClick={() => setMostrarTodos(true)}
-                    className='inline-flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium'
-                  >
-                    <span>📋</span>
-                    Ver todas las ventas
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setMostrarTodos(false);
-                      setPaginaActual(1);
-                    }}
-                    className='inline-flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium'
-                  >
-                    <span>📄</span>
-                    Volver a paginación
-                  </button>
-                )}
-              </div>
+              <p className='text-xs text-blue-600 mt-1'>
+                {totalResultados === 0
+                  ? "No se encontraron resultados en toda la base de datos"
+                  : `${totalResultados} resultado${
+                      totalResultados !== 1 ? "s" : ""
+                    } encontrado${
+                      totalResultados !== 1 ? "s" : ""
+                    } de todas las ventas`}
+              </p>
             </div>
           )}
         </div>
+
         {/* Controles de paginación (arriba) */}
-        {!hayBusqueda && !mostrarTodos && totalPaginas > 1 && (
+        {deberiaUsarPaginacion && totalPaginas > 1 && (
           <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6'>
             {/* Vista móvil */}
             <div className='flex sm:hidden items-center justify-between'>
@@ -350,7 +390,7 @@ export default function VentasContadoPage() {
 
         {/* Lista de ventas */}
         <div className='mt-8'>
-          {ventasFinales.length === 0 ? (
+          {ventasParaMostrar.length === 0 ? (
             <div className='text-center py-12'>
               <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-2xl'>💵</span>
@@ -374,7 +414,7 @@ export default function VentasContadoPage() {
             </div>
           ) : (
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
-              {ventasFinales.map((venta) => {
+              {ventasParaMostrar.map((venta) => {
                 const cliente = clientes.find((c) => c.id === venta.clienteId);
                 const tieneDescuento =
                   venta.montoDescuento && venta.montoDescuento > 0;
@@ -453,11 +493,11 @@ export default function VentasContadoPage() {
               })}
             </div>
           )}
+
           {/* Controles de paginación (abajo) */}
-          {!hayBusqueda &&
-            !mostrarTodos &&
+          {deberiaUsarPaginacion &&
             totalPaginas > 1 &&
-            ventasFinales.length > 0 && (
+            ventasParaMostrar.length > 0 && (
               <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mt-6'>
                 {/* Vista móvil */}
                 <div className='flex sm:hidden items-center justify-between'>
@@ -559,8 +599,12 @@ export default function VentasContadoPage() {
 
                 <div className='text-center mt-3 pt-3 border-t border-gray-100'>
                   <p className='text-sm text-gray-500'>
-                    Mostrando {indiceInicio}-{indiceFin} de {ventas.length}{" "}
-                    ventas totales
+                    Mostrando {(paginaActual - 1) * elementosPorPagina + 1}-
+                    {Math.min(
+                      paginaActual * elementosPorPagina,
+                      totalResultados
+                    )}{" "}
+                    de {totalResultados} ventas totales
                   </p>
                 </div>
               </div>
