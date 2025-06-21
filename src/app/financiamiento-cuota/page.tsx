@@ -248,7 +248,7 @@ export default function FinanciamientoCuotaPage() {
         </div>
 
         {/* Filtros rápidos */}
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-2 mb-6'>
+        <div className='flex flex-wrap md:grid  md:grid-cols-4 gap-2 mb-6'>
           {[
             {
               key: "todos",
