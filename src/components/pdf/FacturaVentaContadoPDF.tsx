@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { VentaContado, Cliente, Producto } from "@/lib/firebase/database";
-import { formatNumeroControl } from "@/utils/format";
+import { formatNumeroControl, formatearCedula } from "@/utils/format";
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -117,7 +117,7 @@ const FacturaVentaContadoPDF: React.FC<FacturaVentaContadoPDFProps> = ({
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Cédula:</Text>
-          <Text style={styles.value}>{cliente?.cedula || "N/A"}</Text>
+          <Text style={styles.value}>V{formatearCedula(cliente?.cedula || "")}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Teléfono:</Text>
