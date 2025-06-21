@@ -158,7 +158,10 @@ export default function VentasContadoPage() {
                 ) : ventas.length > elementosPorPagina ? (
                   <>
                     Mostrando {indiceInicio}-{indiceFin} de {ventas.length}{" "}
+                    <span className='block md:inline'>
                     ventas (Página {paginaActual} de {totalPaginas})
+                    </span>
+
                   </>
                 ) : (
                   `${ventas.length} ventas registradas`
@@ -185,9 +188,7 @@ export default function VentasContadoPage() {
               Buscar Ventas
             </h2>
           </div>
-          <p className='text-sm text-gray-600 mb-4'>
-            Busca por cliente, producto, cédula o N° de venta
-          </p>
+         
 
           <div className='relative'>
             <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
@@ -199,7 +200,7 @@ export default function VentasContadoPage() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setBusqueda(e.target.value)
               }
-              placeholder='Buscar por cliente, producto, cédula o N° de venta...'
+              placeholder='Busca por cliente, cédula o N° de venta...'
               className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors'
             />
           </div>
@@ -244,13 +245,6 @@ export default function VentasContadoPage() {
                   </button>
                 )}
               </div>
-
-              {!mostrarTodos && (
-                <div className='text-sm text-gray-500'>
-                  Página {paginaActual} de {totalPaginas} • {ventas.length}{" "}
-                  ventas totales
-                </div>
-              )}
             </div>
           )}
         </div>
