@@ -27,7 +27,7 @@ export default function VentasContadoPage() {
 
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
-  const [elementosPorPagina] = useState(25);
+  const [elementosPorPagina] = useState(20);
   const [mostrarTodos, setMostrarTodos] = useState(false);
 
   // Suscripción tiempo real a ventas al contado
@@ -254,93 +254,38 @@ export default function VentasContadoPage() {
             </div>
           )}
         </div>
-
-        {/* Controles de paginación (abajo) */}
-        {!hayBusqueda &&
-          !mostrarTodos &&
-          totalPaginas > 1 &&
-          ventasFinales.length > 0 && (
-            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mt-6'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <button
-                    onClick={() => irAPagina(1)}
-                    disabled={paginaActual === 1}
-                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                  >
-                    Primera
-                  </button>
-                  <button
-                    onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
-                    disabled={paginaActual === 1}
-                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                  >
-                    ← Anterior
-                  </button>
-                </div>
-
-                <div className='flex items-center gap-1'>
-                  {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
-                    let pagina;
-                    if (totalPaginas <= 5) {
-                      pagina = i + 1;
-                    } else if (paginaActual <= 3) {
-                      pagina = i + 1;
-                    } else if (paginaActual >= totalPaginas - 2) {
-                      pagina = totalPaginas - 4 + i;
-                    } else {
-                      pagina = paginaActual - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pagina}
-                        onClick={() => irAPagina(pagina)}
-                        className={`px-3 py-2 text-sm rounded-lg font-medium ${
-                          paginaActual === pagina
-                            ? "bg-sky-500 text-white"
-                            : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {pagina}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className='flex items-center gap-2'>
-                  <button
-                    onClick={() =>
-                      irAPagina(Math.min(totalPaginas, paginaActual + 1))
-                    }
-                    disabled={paginaActual === totalPaginas}
-                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                  >
-                    Siguiente →
-                  </button>
-                  <button
-                    onClick={() => irAPagina(totalPaginas)}
-                    disabled={paginaActual === totalPaginas}
-                    className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                  >
-                    Última
-                  </button>
-                </div>
-              </div>
-
-              <div className='text-center mt-3 pt-3 border-t border-gray-100'>
-                <p className='text-sm text-gray-500'>
-                  Mostrando {indiceInicio}-{indiceFin} de {ventas.length} ventas
-                  totales
-                </p>
-              </div>
-            </div>
-          )}
-
         {/* Controles de paginación (arriba) */}
         {!hayBusqueda && !mostrarTodos && totalPaginas > 1 && (
           <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6'>
-            <div className='flex items-center justify-between'>
+            {/* Vista móvil */}
+            <div className='flex sm:hidden items-center justify-between'>
+              <button
+                onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
+                disabled={paginaActual === 1}
+                className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+              >
+                ← Anterior
+              </button>
+
+              <div className='flex items-center gap-2'>
+                <span className='text-sm text-gray-600'>
+                  {paginaActual} de {totalPaginas}
+                </span>
+              </div>
+
+              <button
+                onClick={() =>
+                  irAPagina(Math.min(totalPaginas, paginaActual + 1))
+                }
+                disabled={paginaActual === totalPaginas}
+                className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+              >
+                Siguiente →
+              </button>
+            </div>
+
+            {/* Vista desktop */}
+            <div className='hidden sm:flex items-center justify-between'>
               <div className='flex items-center gap-2'>
                 <button
                   onClick={() => irAPagina(1)}
@@ -514,6 +459,118 @@ export default function VentasContadoPage() {
               })}
             </div>
           )}
+          {/* Controles de paginación (abajo) */}
+          {!hayBusqueda &&
+            !mostrarTodos &&
+            totalPaginas > 1 &&
+            ventasFinales.length > 0 && (
+              <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mt-6'>
+                {/* Vista móvil */}
+                <div className='flex sm:hidden items-center justify-between'>
+                  <button
+                    onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
+                    disabled={paginaActual === 1}
+                    className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    ← Anterior
+                  </button>
+
+                  <div className='flex items-center gap-2'>
+                    <span className='text-sm text-gray-600'>
+                      {paginaActual} de {totalPaginas}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      irAPagina(Math.min(totalPaginas, paginaActual + 1))
+                    }
+                    disabled={paginaActual === totalPaginas}
+                    className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+
+                {/* Vista desktop */}
+                <div className='hidden sm:flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      onClick={() => irAPagina(1)}
+                      disabled={paginaActual === 1}
+                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                    >
+                      Primera
+                    </button>
+                    <button
+                      onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
+                      disabled={paginaActual === 1}
+                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                    >
+                      ← Anterior
+                    </button>
+                  </div>
+
+                  <div className='flex items-center gap-1'>
+                    {Array.from(
+                      { length: Math.min(5, totalPaginas) },
+                      (_, i) => {
+                        let pagina;
+                        if (totalPaginas <= 5) {
+                          pagina = i + 1;
+                        } else if (paginaActual <= 3) {
+                          pagina = i + 1;
+                        } else if (paginaActual >= totalPaginas - 2) {
+                          pagina = totalPaginas - 4 + i;
+                        } else {
+                          pagina = paginaActual - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pagina}
+                            onClick={() => irAPagina(pagina)}
+                            className={`px-3 py-2 text-sm rounded-lg font-medium ${
+                              paginaActual === pagina
+                                ? "bg-sky-500 text-white"
+                                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                            }`}
+                          >
+                            {pagina}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+
+                  <div className='flex items-center gap-2'>
+                    <button
+                      onClick={() =>
+                        irAPagina(Math.min(totalPaginas, paginaActual + 1))
+                      }
+                      disabled={paginaActual === totalPaginas}
+                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                    >
+                      Siguiente →
+                    </button>
+                    <button
+                      onClick={() => irAPagina(totalPaginas)}
+                      disabled={paginaActual === totalPaginas}
+                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                    >
+                      Última
+                    </button>
+                  </div>
+                </div>
+
+                <div className='text-center mt-3 pt-3 border-t border-gray-100'>
+                  <p className='text-sm text-gray-500'>
+                    Mostrando {indiceInicio}-{indiceFin} de {ventas.length}{" "}
+                    ventas totales
+                  </p>
+                </div>
+              </div>
+            )}
         </div>
 
         {/* Modal PDF */}
