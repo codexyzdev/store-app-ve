@@ -13,4 +13,7 @@ export { FinanciamientoSummaryCard } from "./FinanciamientoSummaryCard";
 export { FinanciamientoActionsGrid } from "./FinanciamientoActionsGrid";
 export { EmptyFinanciamientosState } from "./EmptyFinanciamientosState";
 export { FinanciamientosListContainer } from "./FinanciamientosListContainer";
-export { FinanciamientoItem } from "./FinanciamientoItem"; 
+export { FinanciamientoItem } from "./FinanciamientoItem";
+
+// Componentes optimizados con scroll infinito
+export { BusquedaFinanciamientos, FiltrosRapidos } from './BusquedaFinanciamientos'; 

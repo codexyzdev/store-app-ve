@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FinanciamientoCard } from "@/components/financiamiento/FinanciamientoCard";
-import { FinanciamientoListItem } from "@/components/financiamiento/FinanciamientoListItem";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useFinanciamientosRedux } from "@/hooks/useFinanciamientosRedux";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
@@ -17,6 +16,12 @@ import {
 } from "@/utils/financiamientoHelpers";
 import { FinanciamientoCuota } from "@/lib/firebase/database";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useFinanciamientosInfiniteScroll } from "@/hooks/useFinanciamientosInfiniteScroll";
+import {
+  BusquedaFinanciamientos,
+  FiltrosRapidos,
+} from "@/components/financiamiento/BusquedaFinanciamientos";
+import { CargandoMasSkeleton } from "@/components/inventario/ProductosSkeleton";
 
 interface FinanciamientoConDatos {
   financiamiento: FinanciamientoCuota;
@@ -41,157 +46,70 @@ interface GrupoFinanciamientosPorCliente {
 }
 
 export default function FinanciamientoCuotaPage() {
-  // Hooks Redux como única fuente de verdad
-  const {
-    financiamientosFiltrados,
-    filters,
+  // Estados locales para filtros
+  const [busquedaLocal, setBusquedaLocal] = useState("");
+  const [estadoLocal, setEstadoLocal] = useState("todos");
+  const [tipoVentaLocal, setTipoVentaLocal] = useState("cuotas");
 
+  // Hooks Redux
+  const {
     loading: financiamientosLoading,
     error: financiamientosError,
     financiamientos,
     cobros,
-    setBusqueda,
-    setEstado,
-    setTipoVenta,
-    updateFiltersWithData,
-    initialized,
   } = useFinanciamientosRedux();
 
   const { clientes, loading: clientesLoading } = useClientesRedux();
   const { productos, loading: productosLoading } = useProductosRedux();
 
-  const [vistaCards, setVistaCards] = useState(true);
+  // Hook de scroll infinito optimizado
+  const {
+    items: gruposOptimizados,
+    isLoading: cargandoMas,
+    hasMore: hayMas,
+    error: errorScroll,
+    loadMore: cargarMas,
+    totalCount: totalElementos,
+    estadisticas,
+  } = useFinanciamientosInfiniteScroll(
+    financiamientos,
+    clientes,
+    productos,
+    cobros,
+    {
+      pageSize: 25,
+      busqueda: busquedaLocal,
+      estado: estadoLocal,
+      tipoVenta: tipoVentaLocal,
+      agruparPorCliente: true,
+    }
+  );
+
+  // Hook para detectar scroll
+  const { sentinelRef } = useInfiniteScroll(cargarMas, {
+    hasMore: hayMas,
+    isLoading: cargandoMas,
+    threshold: 0.1,
+    rootMargin: "200px 0px",
+  });
 
   // Estado de carga combinado
-  const loading = financiamientosLoading || clientesLoading || productosLoading;
-  const error = financiamientosError;
-
-  // Actualizar filtros cuando cambien los datos
-  useEffect(() => {
-    if (clientes.length > 0 && productos.length > 0) {
-      updateFiltersWithData(clientes, productos);
-    }
-  }, [clientes, productos, updateFiltersWithData]);
-
-  // Establecer tipoVenta a "cuotas" al montar y limpiarlo al desmontar
-  useEffect(() => {
-    setTipoVenta("cuotas");
-    return () => {
-      setTipoVenta("todos");
-    };
-  }, [setTipoVenta]);
-
-  // Usar financiamientos filtrados de Redux
-  const financiamientosParaMostrar =
-    initialized && financiamientosFiltrados.length >= 0
-      ? financiamientosFiltrados
-      : financiamientos;
-
-  // Calcular datos para cada financiamiento
-  const PAGE_SIZE = 25;
-
-  const financiamientosConDatos: FinanciamientoConDatos[] =
-    financiamientosParaMostrar.map((financiamiento) => {
-      const clienteInfo = getClienteInfo(financiamiento.clienteId, clientes);
-      const productoNombre = getProductoNombre(
-        financiamiento.productoId,
-        productos
-      );
-      const calculado = calcularFinanciamiento(financiamiento, cobros);
-
-      return {
-        financiamiento,
-        clienteInfo,
-        productoNombre,
-        calculado,
-      };
-    });
-
-  // Agrupar financiamientos por cliente
-  const agruparFinanciamientosPorCliente = (
-    financiamientosData: FinanciamientoConDatos[]
-  ): GrupoFinanciamientosPorCliente[] => {
-    const grupos = new Map<string, FinanciamientoConDatos[]>();
-
-    // Agrupar por clienteId
-    financiamientosData.forEach((item) => {
-      const clienteId = item.financiamiento.clienteId;
-      if (!grupos.has(clienteId)) {
-        grupos.set(clienteId, []);
-      }
-      grupos.get(clienteId)!.push(item);
-    });
-
-    // Convertir a array de grupos
-    return Array.from(grupos.entries()).map(([clienteId, items]) => {
-      // Ordenar por fecha de inicio (más reciente primero) para seleccionar el principal
-      const itemsOrdenados = items.sort(
-        (a, b) =>
-          new Date(b.financiamiento.fechaInicio).getTime() -
-          new Date(a.financiamiento.fechaInicio).getTime()
-      );
-
-      const principal = itemsOrdenados[0];
-
-      return {
-        clienteId,
-        clienteInfo: principal.clienteInfo,
-        financiamientos: itemsOrdenados.map((item) => ({
-          financiamiento: item.financiamiento,
-          productoNombre: item.productoNombre,
-          calculado: item.calculado,
-        })),
-        financiamientoPrincipal: {
-          financiamiento: principal.financiamiento,
-          productoNombre: principal.productoNombre,
-          calculado: principal.calculado,
-        },
-      };
-    });
-  };
-
-  const gruposFinanciamientos = agruparFinanciamientosPorCliente(
-    financiamientosConDatos
-  );
-
-  // Estado para control de items visibles
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-
-  const loadMore = () => {
-    setVisibleCount((prev) =>
-      Math.min(prev + PAGE_SIZE, gruposFinanciamientos.length)
-    );
-  };
-
-  const sentinelRef = useInfiniteScroll(loadMore);
-
-  // Separar grupos por cantidad de financiamientos
-  const gruposMultiples = gruposFinanciamientos.filter(
-    (grupo) => grupo.financiamientos.length > 1
-  );
-  const gruposIndividuales = gruposFinanciamientos.filter(
-    (grupo) => grupo.financiamientos.length === 1
-  );
-
-  // Aplicar paginación a cada sección
-  const gruposMultiplesToRender = gruposMultiples.slice(
-    0,
-    Math.ceil(visibleCount / 2)
-  );
-  const gruposIndividualesToRender = gruposIndividuales.slice(
-    0,
-    Math.ceil(visibleCount / 2)
-  );
+  const cargandoInicial =
+    financiamientosLoading || clientesLoading || productosLoading;
+  const errorGeneral = financiamientosError || errorScroll;
 
   // Manejo de errores
-  if (error) {
+  if (errorGeneral) {
     return (
-      <ErrorMessage message={error} onRetry={() => window.location.reload()} />
+      <ErrorMessage
+        message={errorGeneral}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
-  // Loading state
-  if (loading && financiamientos.length === 0) {
+  // Loading state inicial
+  if (cargandoInicial && financiamientos.length === 0) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
         <div className='container mx-auto px-4 py-8'>
@@ -210,353 +128,128 @@ export default function FinanciamientoCuotaPage() {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-sky-100'>
-      <div className='w-full'>
-        {/* Hero Header Section - Optimizado para móvil */}
-        <div className='bg-white shadow-sm border-b border-gray-100'>
-          <div className='max-w-7xl mx-auto px-4 py-4 sm:py-6'>
-            <div className='flex flex-col gap-3 sm:gap-4'>
-              {/* Título principal */}
-              <div className='text-center'>
-                <div className='flex items-center justify-center gap-2 sm:gap-3 mb-2'>
-                  <div className='w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-slate-700 to-sky-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg'>
-                    <span className='text-lg sm:text-2xl text-white'>💰</span>
-                  </div>
-                  <h1 className='text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent'>
-                    Financiamiento a Cuotas
-                  </h1>
-                </div>
-                <p className='text-xs sm:text-sm lg:text-base text-gray-600 px-2'>
-                  Administra y da seguimiento a todos los financiamientos
-                  activos
-                </p>
-              </div>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
+        {/* Header */}
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8'>
+          <div>
+            <h1 className='text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-700 to-sky-600 bg-clip-text text-transparent flex items-center gap-3'>
+              <span className='text-2xl'>💰</span>
+              Financiamientos a Cuotas
+            </h1>
+            <p className='mt-2 text-lg text-gray-600'>
+              {totalElementos > 0 ? (
+                <>
+                  Mostrando {gruposOptimizados.length} de {totalElementos}{" "}
+                  financiamientos
+                  {busquedaLocal && (
+                    <span className='ml-1'>
+                      para "<span className='font-medium'>{busquedaLocal}</span>
+                      "
+                    </span>
+                  )}
+                </>
+              ) : (
+                "Gestiona los financiamientos de tus clientes"
+              )}
+            </p>
+          </div>
 
-              {/* Botón nuevo - Centrado en móvil */}
-              <div className='flex justify-center'>
+          <div className='mt-4 sm:mt-0'>
+            {/* Botón nuevo financiamiento */}
+            <Link
+              href='/financiamiento-cuota/nuevo'
+              className='inline-flex items-center gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+            >
+              <span className='text-xl'>💰</span>
+              <span className='hidden sm:inline'>Nuevo Financiamiento</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Filtros rápidos */}
+        <FiltrosRapidos
+          onEstadoChange={setEstadoLocal}
+          estadoActivo={estadoLocal}
+          contadores={estadisticas}
+        />
+
+        {/* Búsqueda */}
+        <BusquedaFinanciamientos
+          onBusquedaChange={setBusquedaLocal}
+          busqueda={busquedaLocal}
+          totalResultados={totalElementos}
+          isLoading={cargandoMas}
+        />
+
+        {/* Contenido principal */}
+        {gruposOptimizados.length === 0 && !cargandoMas ? (
+          // Estado vacío
+          <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-12 text-center'>
+            <div className='max-w-md mx-auto'>
+              <span className='text-4xl sm:text-6xl mb-4 block'>💰</span>
+              <h3 className='text-lg sm:text-xl font-semibold text-gray-900 mb-2'>
+                {busquedaLocal || estadoLocal !== "todos"
+                  ? "No se encontraron financiamientos"
+                  : "No hay financiamientos registrados"}
+              </h3>
+              <p className='text-sm sm:text-base text-gray-600 mb-6'>
+                {busquedaLocal || estadoLocal !== "todos"
+                  ? "Intenta ajustar los filtros de búsqueda"
+                  : "Comienza creando tu primer financiamiento en el sistema"}
+              </p>
+              {!busquedaLocal && estadoLocal === "todos" && (
                 <Link
                   href='/financiamiento-cuota/nuevo'
-                  className='w-full sm:w-auto max-w-xs inline-flex items-center justify-center gap-2 sm:gap-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200'
+                  className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
                 >
-                  <span className='text-lg'>💰</span>
-                  <span className='text-sm sm:text-base'>Nuevo</span>
+                  <span>💰</span>
+                  Crear Primer Financiamiento
                 </Link>
-              </div>
+              )}
             </div>
           </div>
-        </div>
-
-        <div className='max-w-7xl mx-auto px-4 py-4 sm:py-6'>
-          {/* Filtros y controles - Optimizado para móvil */}
-          <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6'>
-            <div className='space-y-3 sm:space-y-4'>
-              {/* Search Bar */}
-              <div className='w-full'>
-                <div className='relative'>
-                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <span className='text-gray-400 text-base sm:text-lg'>
-                      🔍
-                    </span>
-                  </div>
-                  <input
-                    type='text'
-                    value={filters.busqueda}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setBusqueda(e.target.value)
+        ) : (
+          <>
+            {/* Lista de financiamientos en tarjetas */}
+            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6'>
+              {gruposOptimizados.map((grupo: any, index: number) => (
+                <div key={grupo.clienteId}>
+                  <FinanciamientoCard
+                    financiamiento={
+                      grupo.financiamientoPrincipal.financiamiento
                     }
-                    placeholder='Buscar por Número de Control'
-                    className='w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-sm sm:text-base'
-                    aria-label='Buscar financiamientos por número de control exacto'
-                    role='searchbox'
-                    title='Ejemplos: F-000001, f-000001, 000001, 1'
+                    clienteInfo={grupo.clienteInfo}
+                    productoNombre={
+                      grupo.financiamientoPrincipal.productoNombre
+                    }
+                    calculado={grupo.financiamientoPrincipal.calculado}
+                    index={index}
+                    todosLosFinanciamientos={grupo.financiamientos}
                   />
                 </div>
+              ))}
+            </div>
 
-                {/* Ayuda de búsqueda - Optimizada para móvil */}
-                <div className='mt-2 flex flex-col sm:flex-row gap-2 text-xs'>
-                  <span className='bg-blue-50 px-2 py-1 rounded-md text-center sm:text-left'>
-                    💡 Búsqueda exacta por Número de Control
-                  </span>
-                  <span className='bg-purple-50 px-2 py-1 rounded-md text-center sm:text-left'>
-                    Ejemplos: F-000001, f-000001, 000001, 1
-                  </span>
+            {/* Indicador de carga infinita */}
+            {hayMas && (
+              <div ref={sentinelRef} className='mt-8'>
+                {cargandoMas && <CargandoMasSkeleton />}
+              </div>
+            )}
+
+            {/* Mensaje de final */}
+            {!hayMas && gruposOptimizados.length > 0 && (
+              <div className='text-center py-8'>
+                <div className='inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-gray-600 text-sm'>
+                  <span>🎉</span>
+                  Has visto todos los financiamientos ({totalElementos} en
+                  total)
                 </div>
               </div>
-
-              {/* Filters Row - Stack en móvil */}
-              <div className='flex flex-col sm:flex-row gap-3'>
-                {/* Status Filter */}
-                <div className='flex-1'>
-                  <select
-                    value={filters.estado}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setEstado(
-                        e.target.value as "todos" | "activo" | "atrasado"
-                      )
-                    }
-                    className='w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white'
-                  >
-                    <option value='todos'>📊 Todos los estados</option>
-                    <option value='activo'>✅ Activos</option>
-                    <option value='atrasado'>⚠️ Atrasados</option>
-                  </select>
-                </div>
-
-                {/* View Mode Toggle */}
-                <div className='flex justify-center sm:justify-start'>
-                  <div className='flex bg-gray-100 rounded-xl p-1'>
-                    <button
-                      onClick={() => setVistaCards(true)}
-                      className={`p-2 sm:p-3 rounded-lg transition-colors ${
-                        vistaCards
-                          ? "bg-white text-indigo-600 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                      title='Vista de tarjetas'
-                      aria-pressed={vistaCards}
-                      aria-label='Cambiar a vista de tarjetas'
-                    >
-                      <span className='text-base'>🔷</span>
-                    </button>
-                    <button
-                      onClick={() => setVistaCards(false)}
-                      className={`p-2 sm:p-3 rounded-lg transition-colors ${
-                        !vistaCards
-                          ? "bg-white text-indigo-600 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                      title='Vista de lista'
-                      aria-pressed={!vistaCards}
-                      aria-label='Cambiar a vista de lista'
-                    >
-                      <span className='text-base'>📋</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Lista de financiamientos */}
-          {gruposFinanciamientos.length === 0 ? (
-            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-12 text-center'>
-              <div className='max-w-md mx-auto'>
-                <span className='text-4xl sm:text-6xl mb-4 block'>💰</span>
-                <h3 className='text-lg sm:text-xl font-semibold text-gray-900 mb-2'>
-                  {filters.busqueda || filters.estado !== "todos"
-                    ? "No se encontraron financiamientos"
-                    : "No hay financiamientos registrados"}
-                </h3>
-                <p className='text-sm sm:text-base text-gray-600 mb-6'>
-                  {filters.busqueda || filters.estado !== "todos"
-                    ? "Intenta ajustar los filtros de búsqueda"
-                    : "Comienza creando tu primer financiamiento en el sistema"}
-                </p>
-                {!filters.busqueda && filters.estado === "todos" && (
-                  <Link
-                    href='/financiamiento-cuota/nuevo'
-                    className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200'
-                  >
-                    <span>💰</span>
-                    Crear Primer Financiamiento
-                  </Link>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className='space-y-8'>
-              {/* Sección: Clientes con Múltiples Financiamientos */}
-              {gruposMultiples.length > 0 && (
-                <div>
-                  <div className='mb-6'>
-                    <div className='flex items-center gap-3 mb-2'>
-                      <div className='w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center'>
-                        <span className='text-white text-sm font-bold'>📊</span>
-                      </div>
-                      <h2 className='text-xl font-bold text-gray-900'>
-                        Clientes Premium
-                      </h2>
-                      <span className='px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium'>
-                        {gruposMultiples.length} cliente
-                        {gruposMultiples.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <p className='text-gray-600 text-sm'>
-                      Clientes con múltiples financiamientos activos
-                    </p>
-                  </div>
-
-                  <div
-                    className={
-                      vistaCards
-                        ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
-                        : "space-y-3 sm:space-y-4"
-                    }
-                  >
-                    {gruposMultiplesToRender.map(
-                      (
-                        grupo: GrupoFinanciamientosPorCliente,
-                        index: number
-                      ) => {
-                        return (
-                          <div key={grupo.clienteId}>
-                            {vistaCards ? (
-                              <FinanciamientoCard
-                                financiamiento={
-                                  grupo.financiamientoPrincipal.financiamiento
-                                }
-                                clienteInfo={grupo.clienteInfo}
-                                productoNombre={
-                                  grupo.financiamientoPrincipal.productoNombre
-                                }
-                                calculado={
-                                  grupo.financiamientoPrincipal.calculado
-                                }
-                                index={index}
-                                todosLosFinanciamientos={grupo.financiamientos}
-                              />
-                            ) : (
-                              <FinanciamientoListItem
-                                financiamiento={
-                                  grupo.financiamientoPrincipal.financiamiento
-                                }
-                                clienteInfo={grupo.clienteInfo}
-                                productoNombre={
-                                  grupo.financiamientoPrincipal.productoNombre
-                                }
-                                calculado={
-                                  grupo.financiamientoPrincipal.calculado
-                                }
-                              />
-                            )}
-                          </div>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Sección: Clientes con Un Solo Financiamiento */}
-              {gruposIndividuales.length > 0 && (
-                <div>
-                  <div className='mb-6'>
-                    <div className='flex items-center gap-3 mb-2'>
-                      <div className='w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center'>
-                        <span className='text-white text-sm font-bold'>💰</span>
-                      </div>
-                      <h2 className='text-xl font-bold text-gray-900'>
-                        Financiamientos Individuales
-                      </h2>
-                      <span className='px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium'>
-                        {gruposIndividuales.length} financiamiento
-                        {gruposIndividuales.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <p className='text-gray-600 text-sm'>
-                      Clientes con un financiamiento activo
-                    </p>
-                  </div>
-
-                  <div
-                    className={
-                      vistaCards
-                        ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
-                        : "space-y-3 sm:space-y-4"
-                    }
-                  >
-                    {gruposIndividualesToRender.map(
-                      (
-                        grupo: GrupoFinanciamientosPorCliente,
-                        index: number
-                      ) => {
-                        return (
-                          <div key={grupo.clienteId}>
-                            {vistaCards ? (
-                              <FinanciamientoCard
-                                financiamiento={
-                                  grupo.financiamientoPrincipal.financiamiento
-                                }
-                                clienteInfo={grupo.clienteInfo}
-                                productoNombre={
-                                  grupo.financiamientoPrincipal.productoNombre
-                                }
-                                calculado={
-                                  grupo.financiamientoPrincipal.calculado
-                                }
-                                index={index + gruposMultiplesToRender.length}
-                                todosLosFinanciamientos={grupo.financiamientos}
-                              />
-                            ) : (
-                              <FinanciamientoListItem
-                                financiamiento={
-                                  grupo.financiamientoPrincipal.financiamiento
-                                }
-                                clienteInfo={grupo.clienteInfo}
-                                productoNombre={
-                                  grupo.financiamientoPrincipal.productoNombre
-                                }
-                                calculado={
-                                  grupo.financiamientoPrincipal.calculado
-                                }
-                              />
-                            )}
-                          </div>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Sentinel para cargar más */}
-          {(gruposMultiplesToRender.length < gruposMultiples.length ||
-            gruposIndividualesToRender.length < gruposIndividuales.length) && (
-            <div ref={sentinelRef} className='h-10' />
-          )}
-        </div>
+            )}
+          </>
+        )}
       </div>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          /* Scrollbar personalizada */
-          .scrollbar-thin {
-            scrollbar-width: thin;
-          }
-          
-          .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-          }
-          
-          .scrollbar-thin::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 3px;
-          }
-          
-          .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-          }
-          
-          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-          }
-        `,
-        }}
-      />
     </div>
   );
 }
