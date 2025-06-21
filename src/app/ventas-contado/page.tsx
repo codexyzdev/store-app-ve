@@ -160,11 +160,36 @@ export default function VentasContadoPage() {
                 </div>
 
                 <div className='flex justify-between items-center mt-auto'>
-                  <span className='text-sm text-gray-500'>Monto</span>
+                  <span className='text-sm text-gray-500'>
+                    {f.montoDescuento && f.montoDescuento > 0
+                      ? "Total Pagado"
+                      : "Monto"}
+                  </span>
                   <span className='text-lg font-bold text-gray-900'>
                     ${f.monto.toLocaleString()}
                   </span>
                 </div>
+
+                {/* Mostrar información de descuento si existe */}
+                {f.montoDescuento && f.montoDescuento > 0 && (
+                  <div className='bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm'>
+                    <div className='flex justify-between items-center mb-1'>
+                      <span className='text-gray-600'>Monto Original:</span>
+                      <span className='font-semibold'>
+                        ${f.montoOriginal?.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className='flex justify-between items-center text-amber-600'>
+                      <span>Descuento Aplicado:</span>
+                      <span className='font-semibold'>
+                        -${f.montoDescuento.toLocaleString()}
+                        {f.descuentoTipo === "porcentaje" &&
+                          f.descuentoValor &&
+                          ` (${f.descuentoValor}%)`}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div className='flex justify-between items-center'>
                   <span className='text-sm text-gray-500'>Fecha</span>

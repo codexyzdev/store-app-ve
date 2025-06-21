@@ -180,6 +180,36 @@ const FacturaVentaContadoPDF: React.FC<FacturaVentaContadoPDFProps> = ({
 
       {/* Total */}
       <View style={styles.totalSection}>
+        {/* Mostrar información de descuento si existe */}
+        {venta.montoDescuento && venta.montoDescuento > 0 && (
+          <>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { fontSize: 10 }]}>
+                SUBTOTAL:
+              </Text>
+              <Text style={[styles.totalValue, { fontSize: 11 }]}>
+                ${venta.montoOriginal?.toLocaleString("es-ES")}
+              </Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text
+                style={[styles.totalLabel, { fontSize: 10, color: "#d97706" }]}
+              >
+                DESCUENTO{" "}
+                {venta.descuentoTipo === "porcentaje" && venta.descuentoValor
+                  ? `(${venta.descuentoValor}%)`
+                  : ""}
+                :
+              </Text>
+              <Text
+                style={[styles.totalValue, { fontSize: 11, color: "#d97706" }]}
+              >
+                -${venta.montoDescuento.toLocaleString("es-ES")}
+              </Text>
+            </View>
+            <View style={[styles.divider, { marginVertical: 5 }]} />
+          </>
+        )}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>TOTAL PAGADO:</Text>
           <Text style={styles.totalValue}>

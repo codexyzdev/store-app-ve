@@ -86,6 +86,11 @@ export interface VentaContado {
   productoId: string;
   productos?: ProductoFinanciamiento[]; // Para ventas con múltiples productos
   descripcion?: string;
+  // Campos de descuento
+  descuentoTipo?: 'porcentaje' | 'monto'; // Tipo de descuento aplicado
+  descuentoValor?: number; // Valor del descuento (% o cantidad)
+  montoOriginal?: number; // Monto antes del descuento
+  montoDescuento?: number; // Cantidad de descuento aplicado
 }
 
 // Funciones CRUD para Clientes

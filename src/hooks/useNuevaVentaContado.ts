@@ -17,6 +17,12 @@ interface FormData {
   descripcion: string;
 }
 
+interface DescuentoData {
+  tipo: 'porcentaje' | 'monto';
+  valor: number;
+  montoDescuento: number;
+}
+
 export const useNuevaVentaContado = () => {
   const router = useRouter();
   const { clientes } = useClientesRedux();
@@ -51,14 +57,22 @@ export const useNuevaVentaContado = () => {
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [busquedaCliente, setBusquedaCliente] = useState("");
 
+  // Estados de descuento
+  const [descuentoData, setDescuentoData] = useState<DescuentoData>({
+    tipo: 'porcentaje',
+    valor: 0,
+    montoDescuento: 0,
+  });
+
   // Calcular monto total automáticamente
   useEffect(() => {
-    const montoTotal = productosCarrito.reduce((acc, p) => acc + p.subtotal, 0);
+    const montoOriginalCalc = productosCarrito.reduce((acc, p) => acc + p.subtotal, 0);
+    const montoFinal = montoOriginalCalc - descuentoData.montoDescuento;
     setFormData((prev) => ({
       ...prev,
-      monto: Math.round(montoTotal).toString(),
+      monto: Math.round(montoFinal).toString(),
     }));
-  }, [productosCarrito]);
+  }, [productosCarrito, descuentoData.montoDescuento]);
 
   // Sincronizar cliente seleccionado con formData
   useEffect(() => {
@@ -82,7 +96,8 @@ export const useNuevaVentaContado = () => {
   const getProductoNombre = (id: string) =>
     productos.find((p) => p.id === id)?.nombre || "";
 
-  const montoTotal = productosCarrito.reduce((acc, p) => acc + p.subtotal, 0);
+  const montoOriginal = productosCarrito.reduce((acc, p) => acc + p.subtotal, 0);
+  const montoTotal = montoOriginal - descuentoData.montoDescuento;
 
   // Funciones del carrito
   const agregarProductoCarrito = () => {
@@ -213,6 +228,13 @@ export const useNuevaVentaContado = () => {
           `Venta al contado de ${productosCarrito.length} producto${
             productosCarrito.length > 1 ? "s" : ""
           }`,
+        // Campos de descuento
+        ...(descuentoData.montoDescuento > 0 && {
+          descuentoTipo: descuentoData.tipo,
+          descuentoValor: descuentoData.valor,
+          montoOriginal: montoOriginal,
+          montoDescuento: descuentoData.montoDescuento,
+        }),
       } as any;
 
       await ventasContadoDB.crear(ventaData);
@@ -261,6 +283,10 @@ export const useNuevaVentaContado = () => {
     }
   };
 
+  const handleDescuentoChange = (descuento: DescuentoData) => {
+    setDescuentoData(descuento);
+  };
+
   return {
     // Estados
     loading,
@@ -277,7 +303,9 @@ export const useNuevaVentaContado = () => {
     // Datos computados
     productosFiltrados,
     clientesFiltrados,
+    montoOriginal,
     montoTotal,
+    descuentoData,
     
     // Funciones de estado
     setModalNuevoCliente,
@@ -295,6 +323,7 @@ export const useNuevaVentaContado = () => {
     handleProductoSeleccionado,
     handleBusquedaClienteChange,
     handleBusquedaProductoChange,
+    handleDescuentoChange,
     updateFormData,
     
     // Helpers

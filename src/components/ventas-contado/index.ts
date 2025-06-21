@@ -4,6 +4,7 @@ export { ClienteSelector } from "./ClienteSelector";
 export { ProductoSelector } from "./ProductoSelector";
 export { ProductoCarrito } from "./ProductoCarrito";
 export { VentaContadoDetalles } from "./VentaContadoDetalles";
+export { VentaContadoDescuento } from "./VentaContadoDescuento";
 export { VentaContadoSummary } from "./VentaContadoSummary";
 export { VentaContadoActionButtons } from "./VentaContadoActionButtons";
 export { VentaContadoSuccessScreen } from "./VentaContadoSuccessScreen"; 

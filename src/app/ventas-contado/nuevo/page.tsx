@@ -10,6 +10,7 @@ import {
   ProductoSelector,
   ProductoCarrito,
   VentaContadoDetalles,
+  VentaContadoDescuento,
   VentaContadoSummary,
   VentaContadoActionButtons,
   VentaContadoSuccessScreen,
@@ -32,7 +33,9 @@ export default function NuevaVentaContadoPage() {
     // Datos computados
     productosFiltrados,
     clientesFiltrados,
+    montoOriginal,
     montoTotal,
+    descuentoData,
 
     // Funciones de estado
     setModalNuevoCliente,
@@ -50,6 +53,7 @@ export default function NuevaVentaContadoPage() {
     handleProductoSeleccionado,
     handleBusquedaClienteChange,
     handleBusquedaProductoChange,
+    handleDescuentoChange,
     updateFormData,
 
     // Helpers
@@ -143,12 +147,20 @@ export default function NuevaVentaContadoPage() {
                   onFormDataChange={updateFormData}
                 />
 
+                {/* Descuento opcional */}
+                <VentaContadoDescuento
+                  montoOriginal={montoOriginal}
+                  onDescuentoChange={handleDescuentoChange}
+                />
+
                 {/* Resumen final */}
                 <VentaContadoSummary
                   clienteSeleccionado={clienteSeleccionado}
                   productosCarrito={productosCarrito}
                   formData={formData}
+                  montoOriginal={montoOriginal}
                   montoTotal={montoTotal}
+                  descuentoData={descuentoData}
                 />
 
                 {/* Botones */}
