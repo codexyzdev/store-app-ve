@@ -52,6 +52,11 @@ export default function FinanciamientoCuotaPage() {
     "nombre" | "cedula" | "numeroControl"
   >("nombre");
 
+  // Estados para paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [elementosPorPagina] = useState(25);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
+
   // Hooks Redux
   const {
     loading: financiamientosLoading,
@@ -62,6 +67,12 @@ export default function FinanciamientoCuotaPage() {
 
   const { clientes, loading: clientesLoading } = useClientesRedux();
   const { productos, loading: productosLoading } = useProductosRedux();
+
+  // Reset página cuando cambie búsqueda o filtros
+  useEffect(() => {
+    setPaginaActual(1);
+    setMostrarTodos(false);
+  }, [busqueda, estadoFiltro]);
 
   // Procesar financiamientos con datos calculados
   const financiamientosConDatos: FinanciamientoConDatos[] = financiamientos
@@ -159,6 +170,20 @@ export default function FinanciamientoCuotaPage() {
 
   const gruposArray = Object.values(gruposFinanciamientos);
 
+  // Aplicar paginación si no se está buscando o si hay muchos resultados
+  const totalResultados = gruposArray.length;
+  const deberiaUsarPaginacion =
+    !busqueda && totalResultados > elementosPorPagina && !mostrarTodos;
+
+  const gruposParaMostrar = deberiaUsarPaginacion
+    ? gruposArray.slice(
+        (paginaActual - 1) * elementosPorPagina,
+        paginaActual * elementosPorPagina
+      )
+    : gruposArray;
+
+  const totalPaginas = Math.ceil(totalResultados / elementosPorPagina);
+
   // Calcular estadísticas
   const estadisticas = {
     todos: financiamientosConDatos.length,
@@ -240,15 +265,28 @@ export default function FinanciamientoCuotaPage() {
               Financiamientos a Cuotas
             </h1>
             <p className='mt-2 text-lg text-gray-600'>
-              {gruposArray.length > 0 ? (
+              {totalResultados > 0 ? (
                 <>
-                  {gruposArray.length} financiamiento
-                  {gruposArray.length !== 1 ? "s" : ""} encontrado
-                  {gruposArray.length !== 1 ? "s" : ""}
-                  {busqueda && (
-                    <span className='ml-1'>
-                      para "<span className='font-medium'>{busqueda}</span>"
-                    </span>
+                  {busqueda ? (
+                    // Mostrando resultados de búsqueda
+                    <>
+                      {totalResultados} resultado
+                      {totalResultados !== 1 ? "s" : ""} encontrado
+                      {totalResultados !== 1 ? "s" : ""} para "
+                      <span className='font-medium'>{busqueda}</span>"
+                    </>
+                  ) : deberiaUsarPaginacion ? (
+                    // Mostrando con paginación
+                    <>
+                      Mostrando {gruposParaMostrar.length} de {totalResultados}{" "}
+                      financiamientos (página {paginaActual} de {totalPaginas})
+                    </>
+                  ) : (
+                    // Mostrando todos
+                    <>
+                      {totalResultados} financiamiento
+                      {totalResultados !== 1 ? "s" : ""} en total
+                    </>
                   )}
                 </>
               ) : (
@@ -357,6 +395,8 @@ export default function FinanciamientoCuotaPage() {
                 onClick={() => {
                   setTipoBusqueda(tipo.key as any);
                   setBusqueda(""); // Limpiar búsqueda al cambiar tipo
+                  setPaginaActual(1); // Reset página
+                  setMostrarTodos(false); // Reset mostrar todos
                 }}
                 className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
                   tipoBusqueda === tipo.key
@@ -395,20 +435,25 @@ export default function FinanciamientoCuotaPage() {
           </div>
 
           {busqueda && (
-            <p className='text-sm text-gray-500 mt-2'>
-              {financiamientosFiltrados.length === 0
-                ? "No se encontraron resultados"
-                : `${financiamientosFiltrados.length} resultado${
-                    financiamientosFiltrados.length !== 1 ? "s" : ""
-                  } encontrado${
-                    financiamientosFiltrados.length !== 1 ? "s" : ""
-                  }`}
-            </p>
+            <div className='mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+              <p className='text-sm text-blue-800 font-medium'>
+                🔍 Búsqueda global activa
+              </p>
+              <p className='text-xs text-blue-600 mt-1'>
+                {totalResultados === 0
+                  ? "No se encontraron resultados en toda la base de datos"
+                  : `${totalResultados} resultado${
+                      totalResultados !== 1 ? "s" : ""
+                    } encontrado${
+                      totalResultados !== 1 ? "s" : ""
+                    } de todos los financiamientos`}
+              </p>
+            </div>
           )}
         </div>
 
         {/* Contenido principal */}
-        {financiamientosFiltradosPorEstado.length === 0 ? (
+        {totalResultados === 0 ? (
           // Estado vacío
           <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-12 text-center'>
             <div className='max-w-md mx-auto'>
@@ -438,7 +483,7 @@ export default function FinanciamientoCuotaPage() {
           <>
             {/* Lista de financiamientos en tarjetas */}
             <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6'>
-              {gruposArray.map((grupo, index) => (
+              {gruposParaMostrar.map((grupo, index) => (
                 <div key={grupo.clienteId}>
                   <FinanciamientoCard
                     financiamiento={
@@ -455,6 +500,106 @@ export default function FinanciamientoCuotaPage() {
                 </div>
               ))}
             </div>
+
+            {/* Controles de paginación */}
+            {deberiaUsarPaginacion && (
+              <div className='mt-8 flex flex-col sm:flex-row items-center justify-between gap-4'>
+                {/* Info de página */}
+                <div className='text-sm text-gray-600'>
+                  Página {paginaActual} de {totalPaginas} • {totalResultados}{" "}
+                  financiamientos en total
+                </div>
+
+                {/* Botones de navegación */}
+                <div className='flex items-center gap-2'>
+                  <button
+                    onClick={() => setPaginaActual(1)}
+                    disabled={paginaActual === 1}
+                    className='px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    Primera
+                  </button>
+                  <button
+                    onClick={() => setPaginaActual(paginaActual - 1)}
+                    disabled={paginaActual === 1}
+                    className='px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    Anterior
+                  </button>
+
+                  {/* Números de página */}
+                  <div className='flex items-center gap-1'>
+                    {Array.from(
+                      { length: Math.min(5, totalPaginas) },
+                      (_, i) => {
+                        let pageNumber;
+                        if (totalPaginas <= 5) {
+                          pageNumber = i + 1;
+                        } else if (paginaActual <= 3) {
+                          pageNumber = i + 1;
+                        } else if (paginaActual >= totalPaginas - 2) {
+                          pageNumber = totalPaginas - 4 + i;
+                        } else {
+                          pageNumber = paginaActual - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => setPaginaActual(pageNumber)}
+                            className={`px-3 py-2 text-sm border rounded-lg ${
+                              paginaActual === pageNumber
+                                ? "bg-blue-500 text-white border-blue-500"
+                                : "border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setPaginaActual(paginaActual + 1)}
+                    disabled={paginaActual === totalPaginas}
+                    className='px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    Siguiente
+                  </button>
+                  <button
+                    onClick={() => setPaginaActual(totalPaginas)}
+                    disabled={paginaActual === totalPaginas}
+                    className='px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    Última
+                  </button>
+                </div>
+
+                {/* Botón para mostrar todos */}
+                <button
+                  onClick={() => setMostrarTodos(true)}
+                  className='px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors'
+                >
+                  Ver todos ({totalResultados})
+                </button>
+              </div>
+            )}
+
+            {/* Botón para volver a paginación */}
+            {mostrarTodos && totalResultados > elementosPorPagina && (
+              <div className='mt-6 text-center'>
+                <button
+                  onClick={() => {
+                    setMostrarTodos(false);
+                    setPaginaActual(1);
+                  }}
+                  className='px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors'
+                >
+                  Volver a paginación
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
