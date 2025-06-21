@@ -5,6 +5,11 @@ import {
   getClienteInfo,
   getProductoNombre,
 } from '@/utils/financiamientoHelpers';
+import {
+  formatNumeroControl,
+  normalizarNumeroControl,
+  esFormatoNumeroControl,
+} from '@/utils/format';
 
 interface VentaContadoConDatos {
   venta: VentaContado;
@@ -21,6 +26,7 @@ interface VentaContadoConDatos {
 interface UseVentasContadoInfiniteScrollOptions {
   pageSize?: number;
   busqueda?: string;
+  tipoBusqueda?: "nombre" | "cedula" | "numeroControl";
   fechaInicio?: string;
   fechaFin?: string;
   soloConDescuento?: boolean;
@@ -56,6 +62,7 @@ export const useVentasContadoInfiniteScroll = (
   const {
     pageSize = 25,
     busqueda = '',
+    tipoBusqueda = 'nombre',
     fechaInicio = '',
     fechaFin = '',
     soloConDescuento = false,
@@ -101,36 +108,43 @@ export const useVentasContadoInfiniteScroll = (
     });
   }, [clientes, productos]);
 
-  // Función para filtrar y ordenar
+  // Función para filtrar y ordenar con búsqueda específica por tipo
   const getFilteredAndSortedData = useCallback(() => {
     let filtered = [...allVentas];
 
-    // Aplicar filtros
+    // Aplicar filtros de búsqueda específica por tipo
     if (debouncedBusqueda.trim()) {
-      const term = debouncedBusqueda.toLowerCase();
-      filtered = filtered.filter((venta) => {
-        const cliente = clientes.find(c => c.id === venta.clienteId);
-        
-        // Buscar en múltiples productos
-        let productosCoinciden = false;
-        if (venta.productos && venta.productos.length > 0) {
-          productosCoinciden = venta.productos.some((p) => {
-            const nombreProducto = productos.find(prod => prod.id === p.productoId)?.nombre || '';
-            return nombreProducto.toLowerCase().includes(term);
-          });
-        } else {
-          // Fallback para ventas con un solo producto
-          const producto = productos.find(p => p.id === venta.productoId)?.nombre || '';
-          productosCoinciden = producto.toLowerCase().includes(term);
-        }
+      const terminoBusqueda = debouncedBusqueda.trim();
+      const terminoLower = terminoBusqueda.toLowerCase();
 
-        return (
-          cliente?.nombre.toLowerCase().includes(term) ||
-          cliente?.telefono?.includes(term) ||
-          cliente?.cedula?.includes(term) ||
-          productosCoinciden ||
-          venta.numeroControl.toString().includes(term)
-        );
+      filtered = filtered.filter((venta) => {
+        switch (tipoBusqueda) {
+          case "cedula":
+            // Búsqueda específica por cédula
+            const cliente = clientes.find((c) => c.id === venta.clienteId);
+            return cliente?.cedula?.toLowerCase().includes(terminoLower);
+
+          case "numeroControl":
+            // Búsqueda específica por número de control
+            const numeroControlFormateado = formatNumeroControl(venta.numeroControl, "C");
+            if (esFormatoNumeroControl(terminoBusqueda)) {
+              const numeroNormalizado = normalizarNumeroControl(terminoBusqueda);
+              return (
+                numeroNormalizado !== null &&
+                venta.numeroControl === numeroNormalizado
+              );
+            }
+            return (
+              numeroControlFormateado.toLowerCase().includes(terminoLower) ||
+              venta.numeroControl.toString().includes(terminoLower)
+            );
+
+          case "nombre":
+          default:
+            // Búsqueda específica por nombre de cliente
+            const clienteNombre = clientes.find((c) => c.id === venta.clienteId);
+            return clienteNombre?.nombre.toLowerCase().includes(terminoLower);
+        }
       });
     }
 
@@ -159,14 +173,20 @@ export const useVentasContadoInfiniteScroll = (
       filtered = filtered.filter(venta => venta.monto <= montoMaximo);
     }
 
-    // Construir datos y ordenar por fecha más reciente
+    // Construir datos y ordenar por número de control descendente (más reciente primero)
     const ventasConDatos = construirVentasConDatos(filtered);
-    return ventasConDatos.sort(
-      (a, b) => new Date(b.venta.fecha).getTime() - new Date(a.venta.fecha).getTime()
-    );
+    const sorted = ventasConDatos.sort((a, b) => {
+      // Ordenar por número de control descendente (más alto = más reciente)
+      return b.venta.numeroControl - a.venta.numeroControl;
+    });
+    
+
+    
+    return sorted;
   }, [
     allVentas,
     debouncedBusqueda,
+    tipoBusqueda,
     fechaInicio,
     fechaFin,
     soloConDescuento,
@@ -249,14 +269,26 @@ export const useVentasContadoInfiniteScroll = (
   // Resetear cuando cambien los filtros
   useEffect(() => {
     reset();
-  }, [debouncedBusqueda, fechaInicio, fechaFin, soloConDescuento, montoMinimo, montoMaximo, reset]);
+  }, [debouncedBusqueda, tipoBusqueda, fechaInicio, fechaFin, soloConDescuento, montoMinimo, montoMaximo, reset]);
 
   // Cargar primera página automáticamente
   useEffect(() => {
-    if (items.length === 0 && !isLoading && hasMore && clientes.length > 0 && productos.length > 0) {
+    if (items.length === 0 && !isLoading && hasMore && clientes.length > 0 && productos.length > 0 && allVentas.length > 0) {
       loadMore();
     }
-  }, [items.length, isLoading, hasMore, clientes.length, productos.length, loadMore]);
+  }, [items.length, isLoading, hasMore, clientes.length, productos.length, allVentas.length, loadMore]);
+
+  // Trigger adicional para cargar cuando los datos estén listos
+  useEffect(() => {
+    if (items.length === 0 && !isLoading && allVentas.length > 0 && clientes.length > 0 && productos.length > 0) {
+      const timer = setTimeout(() => {
+        if (items.length === 0 && hasMore) {
+          loadMore();
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [allVentas.length, clientes.length, productos.length, items.length, isLoading, hasMore, loadMore]);
 
   const totalCount = getFilteredAndSortedData().length;
 

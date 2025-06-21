@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useClientesRedux } from "@/hooks/useClientesRedux";
 import { useProductosRedux } from "@/hooks/useProductosRedux";
+import { useVentasContadoInfiniteScroll } from "@/hooks/useVentasContadoInfiniteScroll";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import {
   formatNumeroControl,
@@ -21,20 +23,20 @@ export default function VentasContadoPage() {
   const { clientes, loading: clientesLoading } = useClientesRedux();
   const { productos, loading: productosLoading } = useProductosRedux();
 
-  // Estados locales
+  // Estados locales para ventas
   const [ventas, setVentas] = useState<VentaContado[]>([]);
   const [loadingVentas, setLoadingVentas] = useState(true);
+
+  // Estados de búsqueda
   const [busqueda, setBusqueda] = useState("");
   const [tipoBusqueda, setTipoBusqueda] = useState<
     "nombre" | "cedula" | "numeroControl"
   >("nombre");
+
+  // Estados de modal
   const [ventaSeleccionada, setVentaSeleccionada] =
     useState<VentaContado | null>(null);
   const [mostrarPDF, setMostrarPDF] = useState(false);
-
-  // Estados para paginación
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [elementosPorPagina] = useState(20);
 
   // Suscripción tiempo real a ventas al contado
   useEffect(() => {
@@ -45,85 +47,32 @@ export default function VentasContadoPage() {
     return () => unsub();
   }, []);
 
-  // Reset página cuando cambie búsqueda
-  useEffect(() => {
-    setPaginaActual(1);
-  }, [busqueda]);
-
-  // Filtrar ventas por búsqueda según el tipo seleccionado
-  const ventasFiltradas = ventas.filter((venta) => {
-    if (!busqueda) return true;
-
-    const terminoBusqueda = busqueda.trim();
-    const terminoLower = terminoBusqueda.toLowerCase();
-
-    switch (tipoBusqueda) {
-      case "cedula":
-        // Búsqueda específica por cédula
-        const cliente = clientes.find((c) => c.id === venta.clienteId);
-        return cliente?.cedula?.toLowerCase().includes(terminoLower);
-
-      case "numeroControl":
-        // Búsqueda específica por número de control
-        const numeroControlFormateado = formatNumeroControl(
-          venta.numeroControl,
-          "C"
-        );
-        if (esFormatoNumeroControl(terminoBusqueda)) {
-          const numeroNormalizado = normalizarNumeroControl(terminoBusqueda);
-          return (
-            numeroNormalizado !== null &&
-            venta.numeroControl === numeroNormalizado
-          );
-        }
-        return (
-          numeroControlFormateado.toLowerCase().includes(terminoLower) ||
-          venta.numeroControl.toString().includes(terminoLower)
-        );
-
-      case "nombre":
-      default:
-        // Búsqueda específica por nombre de cliente
-        const clienteNombre = clientes.find((c) => c.id === venta.clienteId);
-        return clienteNombre?.nombre.toLowerCase().includes(terminoLower);
-    }
+  // Hook de scroll infinito
+  const {
+    items: ventasParaMostrar,
+    isLoading: scrollLoading,
+    hasMore,
+    error: scrollError,
+    loadMore,
+    totalCount,
+    estadisticas,
+  } = useVentasContadoInfiniteScroll(ventas, clientes, productos, {
+    pageSize: 20, // Cargar 20 ventas por lote
+    busqueda,
+    tipoBusqueda,
   });
 
-  // Aplicar paginación si no se está buscando
-  const totalResultados = ventasFiltradas.length;
-  const deberiaUsarPaginacion =
-    !busqueda && totalResultados > elementosPorPagina;
-
-  const ventasParaMostrar = deberiaUsarPaginacion
-    ? ventasFiltradas.slice(
-        (paginaActual - 1) * elementosPorPagina,
-        paginaActual * elementosPorPagina
-      )
-    : ventasFiltradas;
-
-  const totalPaginas = Math.ceil(totalResultados / elementosPorPagina);
-
-  // Funciones de navegación
-  const irAPagina = (pagina: number) => {
-    setPaginaActual(pagina);
-  };
+  // Configurar intersection observer para scroll infinito
+  const { sentinelRef } = useInfiniteScroll(loadMore, {
+    hasMore,
+    isLoading: scrollLoading,
+    threshold: 0.1,
+    rootMargin: "100px",
+  });
 
   const handleVerFactura = (venta: VentaContado) => {
     setVentaSeleccionada(venta);
     setMostrarPDF(true);
-  };
-
-  const getProductosTexto = (productosVenta: any[] | undefined) => {
-    if (!productosVenta) return "Sin productos";
-
-    return productosVenta
-      .map((p) => {
-        const producto = productos.find((prod) => prod.id === p.productoId);
-        return `${producto?.nombre || "Producto no encontrado"} (${
-          p.cantidad
-        })`;
-      })
-      .join(", ");
   };
 
   const cargandoInicial = clientesLoading || productosLoading || loadingVentas;
@@ -154,31 +103,19 @@ export default function VentasContadoPage() {
                 Ventas al Contado
               </h1>
               <p className='text-sm text-gray-600'>
-                {totalResultados > 0 ? (
-                  <>
-                    {busqueda ? (
-                      // Mostrando resultados de búsqueda
-                      <>
-                        {totalResultados} resultado
-                        {totalResultados !== 1 ? "s" : ""} encontrado
-                        {totalResultados !== 1 ? "s" : ""} para "
-                        <span className='font-medium'>{busqueda}</span>"
-                      </>
-                    ) : deberiaUsarPaginacion ? (
-                      // Mostrando con paginación
-                      <>
-                        Mostrando {ventasParaMostrar.length} de{" "}
-                        {totalResultados} ventas (página {paginaActual} de{" "}
-                        {totalPaginas})
-                      </>
-                    ) : (
-                      // Mostrando todas
-                      <>
-                        {totalResultados} venta
-                        {totalResultados !== 1 ? "s" : ""} en total
-                      </>
-                    )}
-                  </>
+                {totalCount > 0 ? (
+                  busqueda ? (
+                    <>
+                      {totalCount} resultado{totalCount !== 1 ? "s" : ""}{" "}
+                      encontrado{totalCount !== 1 ? "s" : ""} para "
+                      <span className='font-medium'>{busqueda}</span>"
+                    </>
+                  ) : (
+                    <>
+                      {ventasParaMostrar.length} de {totalCount} ventas cargadas
+                      {hasMore && ` • Scroll para cargar más`}
+                    </>
+                  )
                 ) : (
                   "Gestiona las ventas al contado de tu negocio"
                 )}
@@ -195,6 +132,67 @@ export default function VentasContadoPage() {
             <span className='sm:hidden'>Nueva</span>
           </Link>
         </div>
+
+        {/* Estadísticas rápidas */}
+        {estadisticas && (
+          <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>📊</span>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-600'>Total Ventas</p>
+                  <p className='text-lg font-bold text-gray-900'>
+                    {estadisticas.totalVentas}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>💰</span>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-600'>Monto Total</p>
+                  <p className='text-lg font-bold text-gray-900'>
+                    ${estadisticas.montoTotal.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>📈</span>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-600'>Promedio</p>
+                  <p className='text-lg font-bold text-gray-900'>
+                    ${estadisticas.promedioVenta.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
+                  <span className='text-lg'>👥</span>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-600'>Hoy</p>
+                  <p className='text-lg font-bold text-gray-900'>
+                    {estadisticas.ventasHoy}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Búsqueda */}
         <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6'>
@@ -232,7 +230,6 @@ export default function VentasContadoPage() {
                 onClick={() => {
                   setTipoBusqueda(tipo.key as any);
                   setBusqueda(""); // Limpiar búsqueda al cambiar tipo
-                  setPaginaActual(1); // Reset página
                 }}
                 className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
                   tipoBusqueda === tipo.key
@@ -276,115 +273,22 @@ export default function VentasContadoPage() {
                 🔍 Búsqueda global activa
               </p>
               <p className='text-xs text-blue-600 mt-1'>
-                {totalResultados === 0
+                {totalCount === 0
                   ? "No se encontraron resultados en toda la base de datos"
-                  : `${totalResultados} resultado${
-                      totalResultados !== 1 ? "s" : ""
+                  : `${totalCount} resultado${
+                      totalCount !== 1 ? "s" : ""
                     } encontrado${
-                      totalResultados !== 1 ? "s" : ""
+                      totalCount !== 1 ? "s" : ""
                     } de todas las ventas`}
               </p>
             </div>
           )}
         </div>
 
-        {/* Controles de paginación (arriba) */}
-        {deberiaUsarPaginacion && totalPaginas > 1 && (
-          <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6'>
-            {/* Vista móvil */}
-            <div className='flex sm:hidden items-center justify-between'>
-              <button
-                onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
-                disabled={paginaActual === 1}
-                className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-              >
-                ← Anterior
-              </button>
-
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>
-                  {paginaActual} de {totalPaginas}
-                </span>
-              </div>
-
-              <button
-                onClick={() =>
-                  irAPagina(Math.min(totalPaginas, paginaActual + 1))
-                }
-                disabled={paginaActual === totalPaginas}
-                className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-              >
-                Siguiente →
-              </button>
-            </div>
-
-            {/* Vista desktop */}
-            <div className='hidden sm:flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <button
-                  onClick={() => irAPagina(1)}
-                  disabled={paginaActual === 1}
-                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                >
-                  Primera
-                </button>
-                <button
-                  onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
-                  disabled={paginaActual === 1}
-                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                >
-                  ← Anterior
-                </button>
-              </div>
-
-              <div className='flex items-center gap-1'>
-                {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
-                  let pagina;
-                  if (totalPaginas <= 5) {
-                    pagina = i + 1;
-                  } else if (paginaActual <= 3) {
-                    pagina = i + 1;
-                  } else if (paginaActual >= totalPaginas - 2) {
-                    pagina = totalPaginas - 4 + i;
-                  } else {
-                    pagina = paginaActual - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pagina}
-                      onClick={() => irAPagina(pagina)}
-                      className={`px-3 py-2 text-sm rounded-lg font-medium ${
-                        paginaActual === pagina
-                          ? "bg-sky-500 text-white"
-                          : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {pagina}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className='flex items-center gap-2'>
-                <button
-                  onClick={() =>
-                    irAPagina(Math.min(totalPaginas, paginaActual + 1))
-                  }
-                  disabled={paginaActual === totalPaginas}
-                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                >
-                  Siguiente →
-                </button>
-                <button
-                  onClick={() => irAPagina(totalPaginas)}
-                  disabled={paginaActual === totalPaginas}
-                  className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                >
-                  Última
-                </button>
-              </div>
-            </div>
+        {/* Error de scroll */}
+        {scrollError && (
+          <div className='mb-6'>
+            <ErrorMessage message={scrollError} />
           </div>
         )}
 
@@ -413,202 +317,120 @@ export default function VentasContadoPage() {
               )}
             </div>
           ) : (
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
-              {ventasParaMostrar.map((venta) => {
-                const cliente = clientes.find((c) => c.id === venta.clienteId);
-                const tieneDescuento =
-                  venta.montoDescuento && venta.montoDescuento > 0;
+            <>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
+                {ventasParaMostrar.map((ventaConDatos) => {
+                  const { venta } = ventaConDatos;
+                  const tieneDescuento =
+                    venta.montoDescuento && venta.montoDescuento > 0;
 
-                return (
-                  <div
-                    key={venta.id}
-                    className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200'
-                    onClick={() => handleVerFactura(venta)}
-                  >
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium text-gray-500'>
-                        N° Venta
-                      </span>
-                      <span className='px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold'>
-                        {formatNumeroControl(venta.numeroControl, "C")}
-                      </span>
-                    </div>
+                  return (
+                    <div
+                      key={venta.id}
+                      className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200'
+                      onClick={() => handleVerFactura(venta)}
+                    >
+                      <div className='flex items-center justify-between'>
+                        <span className='text-sm font-medium text-gray-500'>
+                          N° Venta
+                        </span>
+                        <span className='px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold'>
+                          {formatNumeroControl(venta.numeroControl, "C")}
+                        </span>
+                      </div>
 
-                    <div className='space-y-1'>
-                      <p className='font-semibold text-gray-900'>
-                        {cliente?.nombre || "Cliente no encontrado"}
-                        {cliente?.cedula &&
-                          ` - V${formatearCedula(cliente.cedula)}`}
-                      </p>
-                      <p className='text-sm text-gray-600 line-clamp-2'>
-                        {getProductosTexto(venta.productos)}
-                      </p>
-                    </div>
+                      <div className='space-y-1'>
+                        <p className='font-semibold text-gray-900'>
+                          {ventaConDatos.cliente?.nombre ||
+                            "Cliente no encontrado"}
+                          {ventaConDatos.cliente?.cedula &&
+                            ` - V${formatearCedula(
+                              ventaConDatos.cliente.cedula
+                            )}`}
+                        </p>
+                        <p className='text-sm text-gray-600 line-clamp-2'>
+                          {ventaConDatos.productos}
+                        </p>
+                      </div>
 
-                    <div className='flex justify-between items-center mt-auto'>
-                      <span className='text-sm text-gray-500'>
-                        {tieneDescuento ? "Total Pagado" : "Monto"}
-                      </span>
-                      <span className='text-lg font-bold text-gray-900'>
-                        ${venta.monto.toLocaleString()}
-                      </span>
-                    </div>
+                      <div className='flex justify-between items-center mt-auto'>
+                        <span className='text-sm text-gray-500'>
+                          {tieneDescuento ? "Total Pagado" : "Monto"}
+                        </span>
+                        <span className='text-lg font-bold text-gray-900'>
+                          ${venta.monto.toLocaleString()}
+                        </span>
+                      </div>
 
-                    {/* Mostrar información de descuento si existe */}
-                    {tieneDescuento && (
-                      <div className='bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm'>
-                        <div className='flex justify-between items-center mb-1'>
-                          <span className='text-gray-600'>Monto Original:</span>
-                          <span className='font-semibold'>
-                            ${venta.montoOriginal?.toLocaleString()}
-                          </span>
+                      {/* Mostrar información de descuento si existe */}
+                      {tieneDescuento && (
+                        <div className='bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm'>
+                          <div className='flex justify-between items-center mb-1'>
+                            <span className='text-gray-600'>
+                              Monto Original:
+                            </span>
+                            <span className='font-semibold'>
+                              ${venta.montoOriginal?.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className='flex justify-between items-center text-amber-600'>
+                            <span>Descuento Aplicado:</span>
+                            <span className='font-semibold'>
+                              -${venta.montoDescuento?.toLocaleString()}
+                              {venta.descuentoTipo === "porcentaje" &&
+                                venta.descuentoValor &&
+                                ` (${venta.descuentoValor}%)`}
+                            </span>
+                          </div>
                         </div>
-                        <div className='flex justify-between items-center text-amber-600'>
-                          <span>Descuento Aplicado:</span>
-                          <span className='font-semibold'>
-                            -${venta.montoDescuento?.toLocaleString()}
-                            {venta.descuentoTipo === "porcentaje" &&
-                              venta.descuentoValor &&
-                              ` (${venta.descuentoValor}%)`}
-                          </span>
+                      )}
+
+                      <div className='flex justify-between items-center'>
+                        <span className='text-sm text-gray-500'>Fecha</span>
+                        <span className='text-sm font-medium text-gray-900'>
+                          {new Date(venta.fecha).toLocaleDateString("es-ES")}
+                        </span>
+                      </div>
+
+                      <div className='pt-2 border-t border-gray-100'>
+                        <div className='flex items-center justify-center gap-2 text-sky-600 text-sm font-medium'>
+                          <span>📄</span>
+                          <span>Click para ver factura</span>
                         </div>
                       </div>
-                    )}
-
-                    <div className='flex justify-between items-center'>
-                      <span className='text-sm text-gray-500'>Fecha</span>
-                      <span className='text-sm font-medium text-gray-900'>
-                        {new Date(venta.fecha).toLocaleDateString("es-ES")}
-                      </span>
                     </div>
+                  );
+                })}
+              </div>
 
-                    <div className='pt-2 border-t border-gray-100'>
-                      <div className='flex items-center justify-center gap-2 text-sky-600 text-sm font-medium'>
-                        <span>📄</span>
-                        <span>Click para ver factura</span>
-                      </div>
-                    </div>
+              {/* Sentinel para scroll infinito */}
+              <div ref={sentinelRef} className='h-4 w-full mt-6' />
+
+              {/* Loading más elementos */}
+              {scrollLoading && (
+                <div className='flex items-center justify-center py-8'>
+                  <div className='flex flex-col items-center gap-2'>
+                    <LoadingSpinner size='sm' />
+                    <p className='text-sm text-gray-600'>
+                      Cargando más ventas...
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* Controles de paginación (abajo) */}
-          {deberiaUsarPaginacion &&
-            totalPaginas > 1 &&
-            ventasParaMostrar.length > 0 && (
-              <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mt-6'>
-                {/* Vista móvil */}
-                <div className='flex sm:hidden items-center justify-between'>
-                  <button
-                    onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
-                    disabled={paginaActual === 1}
-                    className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                  >
-                    ← Anterior
-                  </button>
-
-                  <div className='flex items-center gap-2'>
-                    <span className='text-sm text-gray-600'>
-                      {paginaActual} de {totalPaginas}
+              {/* No hay más elementos */}
+              {!hasMore && ventasParaMostrar.length > 0 && (
+                <div className='text-center py-8'>
+                  <div className='inline-flex items-center gap-2 text-gray-500 text-sm'>
+                    <span>✅</span>
+                    <span>
+                      Has visto todas las {totalCount} ventas disponibles
                     </span>
                   </div>
-
-                  <button
-                    onClick={() =>
-                      irAPagina(Math.min(totalPaginas, paginaActual + 1))
-                    }
-                    disabled={paginaActual === totalPaginas}
-                    className='flex items-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                  >
-                    Siguiente →
-                  </button>
                 </div>
-
-                {/* Vista desktop */}
-                <div className='hidden sm:flex items-center justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <button
-                      onClick={() => irAPagina(1)}
-                      disabled={paginaActual === 1}
-                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                    >
-                      Primera
-                    </button>
-                    <button
-                      onClick={() => irAPagina(Math.max(1, paginaActual - 1))}
-                      disabled={paginaActual === 1}
-                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                    >
-                      ← Anterior
-                    </button>
-                  </div>
-
-                  <div className='flex items-center gap-1'>
-                    {Array.from(
-                      { length: Math.min(5, totalPaginas) },
-                      (_, i) => {
-                        let pagina;
-                        if (totalPaginas <= 5) {
-                          pagina = i + 1;
-                        } else if (paginaActual <= 3) {
-                          pagina = i + 1;
-                        } else if (paginaActual >= totalPaginas - 2) {
-                          pagina = totalPaginas - 4 + i;
-                        } else {
-                          pagina = paginaActual - 2 + i;
-                        }
-
-                        return (
-                          <button
-                            key={pagina}
-                            onClick={() => irAPagina(pagina)}
-                            className={`px-3 py-2 text-sm rounded-lg font-medium ${
-                              paginaActual === pagina
-                                ? "bg-sky-500 text-white"
-                                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                            }`}
-                          >
-                            {pagina}
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
-
-                  <div className='flex items-center gap-2'>
-                    <button
-                      onClick={() =>
-                        irAPagina(Math.min(totalPaginas, paginaActual + 1))
-                      }
-                      disabled={paginaActual === totalPaginas}
-                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                    >
-                      Siguiente →
-                    </button>
-                    <button
-                      onClick={() => irAPagina(totalPaginas)}
-                      disabled={paginaActual === totalPaginas}
-                      className='px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-                    >
-                      Última
-                    </button>
-                  </div>
-                </div>
-
-                <div className='text-center mt-3 pt-3 border-t border-gray-100'>
-                  <p className='text-sm text-gray-500'>
-                    Mostrando {(paginaActual - 1) * elementosPorPagina + 1}-
-                    {Math.min(
-                      paginaActual * elementosPorPagina,
-                      totalResultados
-                    )}{" "}
-                    de {totalResultados} ventas totales
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
+            </>
+          )}
         </div>
 
         {/* Modal PDF */}
