@@ -25,6 +25,21 @@ interface FinanciamientoConDatos {
   calculado: FinanciamientoCalculado;
 }
 
+interface GrupoFinanciamientosPorCliente {
+  clienteId: string;
+  clienteInfo: ClienteInfo;
+  financiamientos: Array<{
+    financiamiento: FinanciamientoCuota;
+    productoNombre: string;
+    calculado: FinanciamientoCalculado;
+  }>;
+  financiamientoPrincipal: {
+    financiamiento: FinanciamientoCuota;
+    productoNombre: string;
+    calculado: FinanciamientoCalculado;
+  };
+}
+
 export default function FinanciamientoCuotaPage() {
   // Hooks Redux como única fuente de verdad
   const {
@@ -92,18 +107,81 @@ export default function FinanciamientoCuotaPage() {
       };
     });
 
+  // Agrupar financiamientos por cliente
+  const agruparFinanciamientosPorCliente = (
+    financiamientosData: FinanciamientoConDatos[]
+  ): GrupoFinanciamientosPorCliente[] => {
+    const grupos = new Map<string, FinanciamientoConDatos[]>();
+
+    // Agrupar por clienteId
+    financiamientosData.forEach((item) => {
+      const clienteId = item.financiamiento.clienteId;
+      if (!grupos.has(clienteId)) {
+        grupos.set(clienteId, []);
+      }
+      grupos.get(clienteId)!.push(item);
+    });
+
+    // Convertir a array de grupos
+    return Array.from(grupos.entries()).map(([clienteId, items]) => {
+      // Ordenar por fecha de inicio (más reciente primero) para seleccionar el principal
+      const itemsOrdenados = items.sort(
+        (a, b) =>
+          new Date(b.financiamiento.fechaInicio).getTime() -
+          new Date(a.financiamiento.fechaInicio).getTime()
+      );
+
+      const principal = itemsOrdenados[0];
+
+      return {
+        clienteId,
+        clienteInfo: principal.clienteInfo,
+        financiamientos: itemsOrdenados.map((item) => ({
+          financiamiento: item.financiamiento,
+          productoNombre: item.productoNombre,
+          calculado: item.calculado,
+        })),
+        financiamientoPrincipal: {
+          financiamiento: principal.financiamiento,
+          productoNombre: principal.productoNombre,
+          calculado: principal.calculado,
+        },
+      };
+    });
+  };
+
+  const gruposFinanciamientos = agruparFinanciamientosPorCliente(
+    financiamientosConDatos
+  );
+
   // Estado para control de items visibles
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const loadMore = () => {
     setVisibleCount((prev) =>
-      Math.min(prev + PAGE_SIZE, financiamientosConDatos.length)
+      Math.min(prev + PAGE_SIZE, gruposFinanciamientos.length)
     );
   };
 
   const sentinelRef = useInfiniteScroll(loadMore);
 
-  const itemsToRender = financiamientosConDatos.slice(0, visibleCount);
+  // Separar grupos por cantidad de financiamientos
+  const gruposMultiples = gruposFinanciamientos.filter(
+    (grupo) => grupo.financiamientos.length > 1
+  );
+  const gruposIndividuales = gruposFinanciamientos.filter(
+    (grupo) => grupo.financiamientos.length === 1
+  );
+
+  // Aplicar paginación a cada sección
+  const gruposMultiplesToRender = gruposMultiples.slice(
+    0,
+    Math.ceil(visibleCount / 2)
+  );
+  const gruposIndividualesToRender = gruposIndividuales.slice(
+    0,
+    Math.ceil(visibleCount / 2)
+  );
 
   // Manejo de errores
   if (error) {
@@ -259,7 +337,7 @@ export default function FinanciamientoCuotaPage() {
           </div>
 
           {/* Lista de financiamientos */}
-          {financiamientosConDatos.length === 0 ? (
+          {gruposFinanciamientos.length === 0 ? (
             <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-12 text-center'>
               <div className='max-w-md mx-auto'>
                 <span className='text-4xl sm:text-6xl mb-4 block'>💰</span>
@@ -285,41 +363,156 @@ export default function FinanciamientoCuotaPage() {
               </div>
             </div>
           ) : (
-            <div
-              className={
-                vistaCards
-                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
-                  : "space-y-3 sm:space-y-4"
-              }
-            >
-              {itemsToRender.map(
-                (item: FinanciamientoConDatos, index: number) => {
-                  return (
-                    <div key={item.financiamiento.id}>
-                      {vistaCards ? (
-                        <FinanciamientoCard
-                          financiamiento={item.financiamiento}
-                          clienteInfo={item.clienteInfo}
-                          productoNombre={item.productoNombre}
-                          calculado={item.calculado}
-                        />
-                      ) : (
-                        <FinanciamientoListItem
-                          financiamiento={item.financiamiento}
-                          clienteInfo={item.clienteInfo}
-                          productoNombre={item.productoNombre}
-                          calculado={item.calculado}
-                        />
-                      )}
+            <div className='space-y-8'>
+              {/* Sección: Clientes con Múltiples Financiamientos */}
+              {gruposMultiples.length > 0 && (
+                <div>
+                  <div className='mb-6'>
+                    <div className='flex items-center gap-3 mb-2'>
+                      <div className='w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center'>
+                        <span className='text-white text-sm font-bold'>📊</span>
+                      </div>
+                      <h2 className='text-xl font-bold text-gray-900'>
+                        Clientes Premium
+                      </h2>
+                      <span className='px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium'>
+                        {gruposMultiples.length} cliente
+                        {gruposMultiples.length > 1 ? "s" : ""}
+                      </span>
                     </div>
-                  );
-                }
+                    <p className='text-gray-600 text-sm'>
+                      Clientes con múltiples financiamientos activos
+                    </p>
+                  </div>
+
+                  <div
+                    className={
+                      vistaCards
+                        ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
+                        : "space-y-3 sm:space-y-4"
+                    }
+                  >
+                    {gruposMultiplesToRender.map(
+                      (
+                        grupo: GrupoFinanciamientosPorCliente,
+                        index: number
+                      ) => {
+                        return (
+                          <div key={grupo.clienteId}>
+                            {vistaCards ? (
+                              <FinanciamientoCard
+                                financiamiento={
+                                  grupo.financiamientoPrincipal.financiamiento
+                                }
+                                clienteInfo={grupo.clienteInfo}
+                                productoNombre={
+                                  grupo.financiamientoPrincipal.productoNombre
+                                }
+                                calculado={
+                                  grupo.financiamientoPrincipal.calculado
+                                }
+                                index={index}
+                                todosLosFinanciamientos={grupo.financiamientos}
+                              />
+                            ) : (
+                              <FinanciamientoListItem
+                                financiamiento={
+                                  grupo.financiamientoPrincipal.financiamiento
+                                }
+                                clienteInfo={grupo.clienteInfo}
+                                productoNombre={
+                                  grupo.financiamientoPrincipal.productoNombre
+                                }
+                                calculado={
+                                  grupo.financiamientoPrincipal.calculado
+                                }
+                              />
+                            )}
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sección: Clientes con Un Solo Financiamiento */}
+              {gruposIndividuales.length > 0 && (
+                <div>
+                  <div className='mb-6'>
+                    <div className='flex items-center gap-3 mb-2'>
+                      <div className='w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center'>
+                        <span className='text-white text-sm font-bold'>💰</span>
+                      </div>
+                      <h2 className='text-xl font-bold text-gray-900'>
+                        Financiamientos Individuales
+                      </h2>
+                      <span className='px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium'>
+                        {gruposIndividuales.length} financiamiento
+                        {gruposIndividuales.length > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className='text-gray-600 text-sm'>
+                      Clientes con un financiamiento activo
+                    </p>
+                  </div>
+
+                  <div
+                    className={
+                      vistaCards
+                        ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
+                        : "space-y-3 sm:space-y-4"
+                    }
+                  >
+                    {gruposIndividualesToRender.map(
+                      (
+                        grupo: GrupoFinanciamientosPorCliente,
+                        index: number
+                      ) => {
+                        return (
+                          <div key={grupo.clienteId}>
+                            {vistaCards ? (
+                              <FinanciamientoCard
+                                financiamiento={
+                                  grupo.financiamientoPrincipal.financiamiento
+                                }
+                                clienteInfo={grupo.clienteInfo}
+                                productoNombre={
+                                  grupo.financiamientoPrincipal.productoNombre
+                                }
+                                calculado={
+                                  grupo.financiamientoPrincipal.calculado
+                                }
+                                index={index + gruposMultiplesToRender.length}
+                                todosLosFinanciamientos={grupo.financiamientos}
+                              />
+                            ) : (
+                              <FinanciamientoListItem
+                                financiamiento={
+                                  grupo.financiamientoPrincipal.financiamiento
+                                }
+                                clienteInfo={grupo.clienteInfo}
+                                productoNombre={
+                                  grupo.financiamientoPrincipal.productoNombre
+                                }
+                                calculado={
+                                  grupo.financiamientoPrincipal.calculado
+                                }
+                              />
+                            )}
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )}
 
           {/* Sentinel para cargar más */}
-          {visibleCount < financiamientosConDatos.length && (
+          {(gruposMultiplesToRender.length < gruposMultiples.length ||
+            gruposIndividualesToRender.length < gruposIndividuales.length) && (
             <div ref={sentinelRef} className='h-10' />
           )}
         </div>
@@ -337,6 +530,29 @@ export default function FinanciamientoCuotaPage() {
               opacity: 1;
               transform: translateY(0);
             }
+          }
+
+          /* Scrollbar personalizada */
+          .scrollbar-thin {
+            scrollbar-width: thin;
+          }
+          
+          .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+          }
+          
+          .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+          }
+          
+          .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+          }
+          
+          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
           }
         `,
         }}
